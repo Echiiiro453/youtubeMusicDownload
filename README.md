@@ -41,70 +41,141 @@ This project separates itself from basic downloaders by offering a premium, ad-f
 ![Playlist Download](screenshots/playlist_view.png) 
 -->
 
-### 🚀 How to Run (Source Code)
+### 🛠️ Prerequisites / Pré-requisitos
 
-1. **Backend**:
-   ```bash
-   cd backend
-   python -m venv venv
-   .\venv\Scripts\activate
-   pip install -r requirements.txt
-   uvicorn main:app --reload
-   ```
+Before you start, ensure you have the following installed:
+*Antes de começar, certifique-se de ter instalado:*
 
-2. **Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-3. **FFmpeg**: Ensure FFmpeg is installed and added to your system PATH.
+- **Python 3.10+**: [Download Here](https://www.python.org/downloads/)
+- **Node.js 18+**: [Download Here](https://nodejs.org/)
+- **Git**: [Download Here](https://git-scm.com/)
+- **FFmpeg**: Essential for media processing.
+  - *Windows*: `winget install "FFmpeg (Essentials)"` or download from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/).
+  - *Linux*: `sudo apt install ffmpeg`
+  - *MacOS*: `brew install ffmpeg`
 
 ---
 
-## 🇧🇷 Descrição em Português
+## 🚀 Installation Guide (English)
 
-**Aplicativo avançado para download de músicas e vídeos do YouTube com alta qualidade, metadados automáticos e suporte a letras.**
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Echiiiro453/youtubeMusicDownload.git
+cd youtubeMusicDownload
+```
 
-Este projeto oferece uma experiência premium, sem anúncios, focada em quem ama organizar sua biblioteca musical.
+### 2. Backend Setup
+The backend handles the downloads and audio processing.
 
-### ✨ Funcionalidades
+```bash
+cd backend
+# Create a virtual environment
+python -m venv venv
 
-- **Alta Qualidade**: Downloads de áudio em **MP3 320kbps** e **FLAC**.
-- **Vídeos 4K**: Suporte a downloads de vídeo em até 4K.
-- **Metadados Completos**: Capa do álbum, Artista, Título e Álbum embutidos automaticamente.
-- **🎤 Legendas e Letras**:
-  - O aplicativo busca legendas/letras no YouTube.
-  - Elas são embutidas automaticamente no arquivo MP3/M4A.
-- **Gerenciador de Playlists**:
-  - Baixe playlists inteiras de uma vez.
-  - Selecione apenas as músicas que você quer.
-- **🛡️ Proteção Anti-Bloqueio**:
-  - Sistema inteligente que previne bloqueios do YouTube (Erro 403).
-  - Suporte a cookies para baixar vídeos com restrição de idade.
+# Activate the virtual environment
+# Windows:
+.\venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
 
-### 📸 Capturas de Tela
+# Install Python dependencies
+pip install -r requirements.txt
+```
 
-> *Adicione suas imagens na pasta `screenshots/` e descomente as linhas abaixo*
+### 3. Frontend Setup
+The frontend is the user interface designed with React.
 
-<!-- 
-![Interface Principal](screenshots/interface_pt.png)
--->
+```bash
+# Open a new terminal window/tab
+cd frontend
 
-### 🍪 Configuração de Cookies (Importante)
+# Install Node dependencies
+npm install
+```
 
-Para baixar playlists grandes ou evitar bloqueios, o uso de **cookies.txt** é recomendado.
-1. Use a extensão "Get cookies.txt LOCALLY".
-2. Salve o arquivo como `cookies.txt` na pasta do executável ou carregue via Configurações no app.
+### 4. Running the App
+You need two terminal windows running simultaneously.
+
+**Terminal 1 (Backend):**
+```bash
+cd backend
+.\venv\Scripts\activate
+uvicorn main:app --reload
+```
+
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm run dev
+```
+Open your browser at `http://localhost:5173` to use the app.
 
 ---
 
-## 💻 Tech Stack / Tecnologias
+## 🚀 Guia de Instalação (Português)
 
-- **Backend**: Python, FastAPI, yt-dlp, FFmpeg
-- **Frontend**: React, Vite, TailwindCSS, Lucide Icons
-- **Build**: PyInstaller (Standalone .exe)
+### 1. Clonar o Repositório
+```bash
+git clone https://github.com/Echiiiro453/youtubeMusicDownload.git
+cd youtubeMusicDownload
+```
+
+### 2. Configuração do Backend
+O backend é responsável por baixar e processar os arquivos.
+
+```bash
+cd backend
+# Criar ambiente virtual
+python -m venv venv
+
+# Ativar o ambiente virtual
+# No Windows:
+.\venv\Scripts\activate
+# No Linux/Mac:
+source venv/bin/activate
+
+# Instalar as dependências do Python
+pip install -r requirements.txt
+```
+
+### 3. Configuração do Frontend
+O frontend é a interface visual onde você interage com o app.
+
+```bash
+# Abra um novo terminal
+cd frontend
+
+# Instalar dependências do Node.js
+npm install
+```
+
+### 4. Rodando o Projeto
+Você precisa de dois terminais rodando ao mesmo tempo.
+
+**Terminal 1 (Backend):**
+```bash
+cd backend
+.\venv\Scripts\activate
+uvicorn main:app --reload
+```
+
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm run dev
+```
+Acesse `http://localhost:5173` no seu navegador para usar.
+
+---
+
+## 📖 How to Use / Como Usar
+
+1. **Copy Link**: Copy a YouTube URL (Video, Music, or Playlist).
+2. **Paste**: Paste it into the input field.
+3. **Choose Format**: Select `MP3`, `FLAC` for audio or `MP4` for video.
+4. **Download**: Click the download button and wait for the process to finish.
+   - *Check the "Downloads" folder in the backend directory.*
+
 
 ## 📄 License
 
