@@ -1,122 +1,111 @@
-# 🎵 Music Downloader
-[![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/appmusicaYoutube/)
+# 🎵 YouTube Music Downloader
+[![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/youtubeMusicDownload/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)](https://www.python.org/)
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB)](https://reactjs.org/)
 
-
-Aplicativo avançado para download de músicas e vídeos do YouTube com alta qualidade, metadados automáticos e suporte a letras.
-
-![Interface](https://github.com/user-attachments/assets/placeholder.png)
-
-## ✨ Funcionalidades
-
-- **Alta Qualidade**: Downloads de áudio em MP3 320kbps e FLAC.
-- **Vídeos 4K**: Suporte a downloads de vídeo em até 4K.
-- **Metadados Completos**: Capa do álbum, Artista, Título e Álbum embutidos automaticamente.
-- **🎤 Legendas e Letras**:
-  - O aplicativo busca legendas/letras no YouTube.
-  - Elas são embutidas automaticamente no arquivo MP3/M4A.
-  - Compatível com a maioria dos players de música.
-- **Gerenciador de Playlists**:
-  - Selecione quais vídeos baixar de uma playlist.
-  - Baixe dezenas de músicas de uma vez.
-- **🛡️ Proteção Anti-Bloqueio**:
-  - Sistema inteligente que previne bloqueios do YouTube.
-  - Alerta e bloqueia downloads em massa (>20 itens) se você não estiver autenticado.
-- **Corte e Edição**: Recorte trechos específicos do áudio/vídeo antes de baixar.
+[🇺🇸 English](#-english-description) | [🇧🇷 Português](#-descrição-em-português)
 
 ---
 
-## 🚀 Como Usar (Versão Executável)
+## 🇺🇸 English Description
 
-Se você recebeu o arquivo `AppMusica.exe`:
+**Advanced application for downloading music and videos from YouTube with high quality, automatic metadata, and lyrics support.**
 
-1. **Localize o arquivo**: Geralmente na pasta `backend/dist` ou onde foi descompactado.
-2. **Execute**: Dê dois cliques em `AppMusica.exe`.
-   - *Nota*: Pode demorar alguns segundos para abrir na primeira vez enquanto carrega o servidor interno.
-3. **Acesse**: Uma janela preta do terminal irá abrir (não feche ela!) e o navegador deve abrir automaticamente em `http://localhost:8000`.
+This project separates itself from basic downloaders by offering a premium, ad-free experience with features tailored for music lovers and archivists.
 
----
+### ✨ Key Features
 
-## 🍪 Configuração de Cookies (IMPORTANTE)
+- **High Fidelity Audio**: Download in **MP3 320kbps** or **FLAC** (Lossless).
+- **4K Video Support**: Download videos up to 4K resolution / 60fps.
+- **Smart Metadata**: Automatically finds and embeds:
+  - Album Cover Art 🖼️
+  - Correct Artist & Title 🎵
+  - Release Year 📅
+- **🎤 Lyrics Support**:
+  - Fetches synchronized lyrics from YouTube.
+  - Embeds them into the MP3/M4A file (viewable in players like MusicBee, Apple Music, etc).
+- **Playlist Manager**:
+  - Download entire playlists with a single click.
+  - Selective downloading (choose specific tracks).
+- **🛡️ Anti-Block System**:
+  - Intelligent cookie handling to bypass YouTube's "403 Forbidden" errors.
+  - Supports authenticated downloads for age-restricted content.
 
-O YouTube bloqueia downloads rápidos ou em grande quantidade se você não estiver "logado". Para baixar playlists ou evitar o erro `HTTP Error 403: Forbidden`, você precisa fornecer seus cookies.
+### 📸 Screenshots
 
-### Como conseguir o arquivo `cookies.txt`:
+> *Add your screenshots to the `screenshots/` folder and uncomment lines below*
 
-1. Instale a extensão **"Get cookies.txt LOCALLY"** no seu navegador (Chrome/Edge/Firefox).
-   - [Link para Chrome Store](https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflccgomilepojc)
-2. Acesse o [YouTube](https://www.youtube.com) e faça login na sua conta.
-3. Clique na extensão e depois no botão **"Export"** (selecione "Netscape format" se perguntar, ou apenas baixe).
-4. Salve o arquivo como `cookies.txt`.
+<!-- 
+![Main Interface](screenshots/main_interface.png)
+![Playlist Download](screenshots/playlist_view.png) 
+-->
 
-### Onde colocar o arquivo:
+### 🚀 How to Run (Source Code)
 
-**Opção A (Recomendada - Via App):**
-1. No aplicativo, clique no botão **Configurar** (ícone de engrenagem no topo direito).
-2. Clique em **"Carregar cookies.txt"**.
-3. Selecione o arquivo que você baixou.
-
-**Opção B (Manual):**
-1. Pegue o arquivo `cookies.txt`.
-2. Cole ele na **mesma pasta** onde está o `AppMusica.exe`.
-
----
-
-## ❓ Solução de Problemas
-
-### Erro: "HTTP Error 403: Forbidden"
-- **Causa**: O YouTube bloqueou o download porque detectou comportamento de robô.
-- **Solução**: Você PRECISA configurar o arquivo `cookies.txt` conforme explicado acima.
-
-### Erro: "Video unavailable" (Bloqueio Temporário)
-- **Causa**: Você tentou baixar muitas músicas sem cookies e seu IP foi bloqueado temporariamente (rate-limit).
-- **Solução**: Espere cerca de 1 hora e tente novamente COMP o `cookies.txt` configurado.
-
-### O download não começa
-- Verifique se a janela preta (terminal) do programa ainda está aberta. O navegador precisa dela para funcionar.
-
----
-
-## 💻 Para Desenvolvedores
-
-### Pré-requisitos
-- Python 3.10+
-- Node.js 18+
-- FFmpeg (instalado e no PATH)
-
-### Instalação
-
-1. Clone o repositório.
-2. **Backend**:
+1. **Backend**:
    ```bash
    cd backend
    python -m venv venv
    .\venv\Scripts\activate
    pip install -r requirements.txt
+   uvicorn main:app --reload
    ```
-3. **Frontend**:
+
+2. **Frontend**:
    ```bash
    cd frontend
    npm install
-   ```
-
-### Rodando Localmente
-
-1. **Terminal 1 (Backend)**:
-   ```bash
-   cd backend
-   .\venv\Scripts\activate
-   uvicorn main:app --reload
-   ```
-2. **Terminal 2 (Frontend)**:
-   ```bash
-   cd frontend
    npm run dev
    ```
 
-### Gerando o Executável (.exe)
+3. **FFmpeg**: Ensure FFmpeg is installed and added to your system PATH.
 
-```bash
-cd backend
-# Certifique-se de que o frontend foi buildado (npm run build)
-python -m PyInstaller build.spec
-```
+---
+
+## 🇧🇷 Descrição em Português
+
+**Aplicativo avançado para download de músicas e vídeos do YouTube com alta qualidade, metadados automáticos e suporte a letras.**
+
+Este projeto oferece uma experiência premium, sem anúncios, focada em quem ama organizar sua biblioteca musical.
+
+### ✨ Funcionalidades
+
+- **Alta Qualidade**: Downloads de áudio em **MP3 320kbps** e **FLAC**.
+- **Vídeos 4K**: Suporte a downloads de vídeo em até 4K.
+- **Metadados Completos**: Capa do álbum, Artista, Título e Álbum embutidos automaticamente.
+- **🎤 Legendas e Letras**:
+  - O aplicativo busca legendas/letras no YouTube.
+  - Elas são embutidas automaticamente no arquivo MP3/M4A.
+- **Gerenciador de Playlists**:
+  - Baixe playlists inteiras de uma vez.
+  - Selecione apenas as músicas que você quer.
+- **🛡️ Proteção Anti-Bloqueio**:
+  - Sistema inteligente que previne bloqueios do YouTube (Erro 403).
+  - Suporte a cookies para baixar vídeos com restrição de idade.
+
+### 📸 Capturas de Tela
+
+> *Adicione suas imagens na pasta `screenshots/` e descomente as linhas abaixo*
+
+<!-- 
+![Interface Principal](screenshots/interface_pt.png)
+-->
+
+### 🍪 Configuração de Cookies (Importante)
+
+Para baixar playlists grandes ou evitar bloqueios, o uso de **cookies.txt** é recomendado.
+1. Use a extensão "Get cookies.txt LOCALLY".
+2. Salve o arquivo como `cookies.txt` na pasta do executável ou carregue via Configurações no app.
+
+---
+
+## 💻 Tech Stack / Tecnologias
+
+- **Backend**: Python, FastAPI, yt-dlp, FFmpeg
+- **Frontend**: React, Vite, TailwindCSS, Lucide Icons
+- **Build**: PyInstaller (Standalone .exe)
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
