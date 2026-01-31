@@ -1,0 +1,24 @@
+TERMOS DE USO - APPMUSICA DOWNLOADER
+VERSÃO: 1.0.0 (Build 2026.01.30)
+
+1. FINALIDADE
+Este software foi desenvolvido para fins educacionais e de uso pessoal. 
+O objetivo é permitir o download de conteúdo para visualização offline (Time-Shifting), 
+conforme permitido por diversas legislações, desde que o usuário possua o direito de acesso ao conteúdo.
+
+2. RESPONSABILIDADE
+O desenvolvedor NÃO se responsabiliza pelo uso indevido desta ferramenta.
+É de inteira responsabilidade do usuário:
+- Respeitar os direitos autorais dos criadores.
+- Não distribuir conteúdo pirateado.
+- Utilizar a ferramenta apenas em conformidade com os Termos de Serviço das plataformas acessadas.
+
+3. DISTRIBUIÇÃO
+Este software é fornecido "COMO ESTÁ", sem garantias de qualquer tipo.
+A venda deste software é PROIBIDA.
+
+4. PRIVACIDADE
+Nenhum dado pessoal é coletado ou enviado para servidores externos. 
+Todo o processamento ocorre localmente no computador do usuário ou diretamente com os serviços de mídia (YouTube, etc).
+
+Ao utilizar este software, você concorda com estes termos.

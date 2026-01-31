@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+
+# Distribution and build
+dist/
+build/
+*.spec
+
+# Media files (don't upload user downloads)
+downloads/
+*.mp3
+*.mp4
+*.webm
+*.m4a
+
+# Large Binaries
+*.exe
+*.zip
+*.7z
+backend/ffmpeg-*/
+backend/ffmpeg.exe
+backend/ffprobe.exe
+backend/ffplay.exe
+
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# Cookies (Security)
+cookies.txt
+
+# Debug and Test scripts
+test_*.py
+repro_*.py
+debug_*.py
+verify_*.py
+install_ffmpeg.py
+
+# Temporary snippets
+frontend/*.txt
+LEIA_ISSO_DEBUG.txt
+output.txt
+backend/cookies.txt
