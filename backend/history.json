@@ -1,502 +1,402 @@
 [
   {
-    "title": "The Weeknd - Blinding Lights (Official Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/4NRXx6U8ABQ/maxresdefault.jpg",
-    "file": "The Weeknd - Blinding Lights (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=4NRXx6U8ABQ",
-    "timestamp": "2026-01-30T22:31:32.028710"
-  },
-  {
-    "title": "The Weeknd - After Hours (Audio)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/ygTZZpVkmKg/maxresdefault.jpg",
-    "file": "The Weeknd - After Hours (Audio).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=ygTZZpVkmKg",
-    "timestamp": "2026-01-30T22:31:29.581877"
-  },
-  {
-    "title": "Swedish House Mafia and The Weeknd - Moth To A Flame (Official Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/u9n7Cw-4_HQ/maxresdefault.jpg",
-    "file": "Swedish House Mafia and The Weeknd - Moth To A Flame (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=u9n7Cw-4_HQ",
-    "timestamp": "2026-01-30T22:31:24.595541"
-  },
-  {
-    "title": "The Weeknd, Ariana Grande - Die For You (Remix / Lyric Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/YQ-qToZUybM/maxresdefault.jpg",
-    "file": "The Weeknd, Ariana Grande - Die For You (Remix ⧸ Lyric Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=YQ-qToZUybM",
-    "timestamp": "2026-01-30T22:31:14.726622"
-  },
-  {
-    "title": "The Weeknd - Heartless (Official Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/1DpH-icPpl0/maxresdefault.jpg",
-    "file": "The Weeknd - Heartless (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=1DpH-icPpl0",
-    "timestamp": "2026-01-30T22:31:14.183468"
-  },
-  {
-    "title": "Redbone",
-    "artist": "Donald Glover",
-    "thumbnail": "https://i.ytimg.com/vi_webp/k49I5m1J6Is/maxresdefault.webp",
-    "file": "Redbone.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=k49I5m1J6Is",
-    "timestamp": "2026-01-30T22:31:09.448184"
-  },
-  {
-    "title": "WizTheMc, bees & honey - Show Me Love (Official Music Video)",
-    "artist": "WizTheMc",
-    "thumbnail": "https://i.ytimg.com/vi_webp/Z3aduh5fxCo/maxresdefault.webp",
-    "file": "WizTheMc, bees & honey - Show Me Love (Official Music Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=Z3aduh5fxCo",
-    "timestamp": "2026-01-30T22:31:03.831203"
-  },
-  {
-    "title": "Doja Cat - Streets (Official Video)",
-    "artist": "Doja Cat",
-    "thumbnail": "https://i.ytimg.com/vi/jJdlgKzVsnI/maxresdefault.jpg",
-    "file": "Doja Cat - Streets (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=jJdlgKzVsnI",
-    "timestamp": "2026-01-30T22:30:59.405739"
-  },
-  {
-    "title": "Travis Scott - HIGHEST IN THE ROOM (Official Music Video)",
-    "artist": "Travis Scott",
-    "thumbnail": "https://i.ytimg.com/vi/tfSS1e3kYeo/maxresdefault.jpg",
-    "file": "Travis Scott - HIGHEST IN THE ROOM (Official Music Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=tfSS1e3kYeo",
-    "timestamp": "2026-01-30T22:30:53.737182"
-  },
-  {
-    "title": "Travis Scott - goosebumps (Official Video) ft. Kendrick Lamar",
-    "artist": "Travis Scott",
-    "thumbnail": "https://i.ytimg.com/vi_webp/Dst9gZkq1a8/maxresdefault.webp",
-    "file": "Travis Scott - goosebumps (Official Video) ft. Kendrick Lamar.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=Dst9gZkq1a8",
-    "timestamp": "2026-01-30T22:30:53.228838"
-  },
-  {
-    "title": "Travis Scott - SICKO MODE (Official Video) ft. Drake",
-    "artist": "Travis Scott",
-    "thumbnail": "https://i.ytimg.com/vi_webp/6ONRf7h3Mdk/maxresdefault.webp",
-    "file": "Travis Scott - SICKO MODE (Official Video) ft. Drake.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=6ONRf7h3Mdk",
-    "timestamp": "2026-01-30T22:30:49.870551"
-  },
-  {
-    "title": "No Role Modelz",
-    "artist": "J. Cole",
-    "thumbnail": "https://i.ytimg.com/vi_webp/8HBcV0MtAQg/maxresdefault.webp",
-    "file": "No Role Modelz.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=8HBcV0MtAQg",
-    "timestamp": "2026-01-30T22:30:47.833077"
-  },
-  {
-    "title": "A$AP Rocky - Praise The Lord (Da Shine) (Official Video) ft. Skepta",
-    "artist": "ASAPROCKYUPTOWN",
-    "thumbnail": "https://i.ytimg.com/vi_webp/Kbj2Zss-5GY/maxresdefault.webp",
-    "file": "A$AP Rocky - Praise The Lord (Da Shine) (Official Video) ft. Skepta.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=Kbj2Zss-5GY",
-    "timestamp": "2026-01-30T22:30:44.462147"
-  },
-  {
-    "title": "Hozier - Too Sweet (Official Video)",
-    "artist": "Hozier",
-    "thumbnail": "https://i.ytimg.com/vi/NTpbbQUBbuo/maxresdefault.jpg",
-    "file": "Hozier - Too Sweet (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=NTpbbQUBbuo",
-    "timestamp": "2026-01-30T22:30:34.812759"
-  },
-  {
-    "title": "The Neighbourhood - Sweater Weather (Official Video)",
-    "artist": "The Neighbourhood",
-    "thumbnail": "https://i.ytimg.com/vi_webp/GCdwKhTtNNw/maxresdefault.webp",
-    "file": "The Neighbourhood - Sweater Weather (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=GCdwKhTtNNw",
-    "timestamp": "2026-01-30T22:30:32.984896"
-  },
-  {
-    "title": "Don Toliver - Lose My Mind (feat. Doja Cat) [From F1® The Movie] [Official Music Video]",
-    "artist": "Don Toliver",
-    "thumbnail": "https://i.ytimg.com/vi_webp/WWEs82u37Mw/maxresdefault.webp",
-    "file": "Don Toliver - Lose My Mind (feat. Doja Cat) [From F1® The Movie] [Official Music Video].flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=WWEs82u37Mw",
-    "timestamp": "2026-01-30T22:30:28.922187"
-  },
-  {
-    "title": "The Weeknd - Save Your Tears (Official Music Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/XXYlFuWEuKI/maxresdefault.jpg",
-    "file": "The Weeknd - Save Your Tears (Official Music Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=XXYlFuWEuKI",
-    "timestamp": "2026-01-30T22:30:28.703217"
-  },
-  {
-    "title": "Calvin Harris - Slide (Official Audio) ft. Frank Ocean, Migos",
-    "artist": "Calvin Harris",
-    "thumbnail": "https://i.ytimg.com/vi/8Ee4QjCEHHc/maxresdefault.jpg",
-    "file": "Calvin Harris - Slide (Official Audio) ft. Frank Ocean, Migos.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=8Ee4QjCEHHc",
-    "timestamp": "2026-01-30T22:30:12.176283"
-  },
-  {
-    "title": "Drake - Hotline Bling",
-    "artist": "Drake",
-    "thumbnail": "https://i.ytimg.com/vi/uxpDa-c-4Mc/maxresdefault.jpg",
-    "file": "Drake - Hotline Bling.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=uxpDa-c-4Mc",
-    "timestamp": "2026-01-30T22:30:11.990688"
-  },
-  {
-    "title": "The Black Eyed Peas - Meet Me Halfway (Official Music Video)",
-    "artist": "Black Eyed Peas",
-    "thumbnail": "https://i.ytimg.com/vi_webp/I7HahVwYpwo/maxresdefault.webp",
-    "file": "The Black Eyed Peas - Meet Me Halfway (Official Music Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=I7HahVwYpwo",
-    "timestamp": "2026-01-30T22:29:55.944038"
-  },
-  {
-    "title": "Sabrina Carpenter - Espresso",
-    "artist": "Sabrina Carpenter",
-    "thumbnail": "https://i.ytimg.com/vi/eVli-tstM5E/maxresdefault.jpg",
-    "file": "Sabrina Carpenter - Espresso.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=eVli-tstM5E",
-    "timestamp": "2026-01-30T22:29:55.766119"
-  },
-  {
-    "title": "Dua Lipa - Levitating Featuring DaBaby (Official Music Video)",
-    "artist": "Dua Lipa",
-    "thumbnail": "https://i.ytimg.com/vi_webp/TUVcZfQe-Kw/sddefault.webp?v=654d72e5",
-    "file": "Dua Lipa - Levitating Featuring DaBaby (Official Music Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=TUVcZfQe-Kw",
-    "timestamp": "2026-01-30T22:29:50.492230"
-  },
-  {
-    "title": "Calvin Harris & Disciples - How Deep Is Your Love",
-    "artist": "Calvin Harris",
-    "thumbnail": "https://i.ytimg.com/vi_webp/EgqUJOudrcM/maxresdefault.webp",
-    "file": "Calvin Harris & Disciples - How Deep Is Your Love.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=EgqUJOudrcM",
-    "timestamp": "2026-01-30T22:29:41.131437"
-  },
-  {
-    "title": "The Weeknd - I Feel It Coming ft. Daft Punk (Official Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/qFLhGq0060w/maxresdefault.jpg",
-    "file": "The Weeknd - I Feel It Coming ft. Daft Punk (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=qFLhGq0060w",
-    "timestamp": "2026-01-30T22:29:39.016098"
-  },
-  {
-    "title": "Daft Punk - Get Lucky (Feat. Pharrell Williams)",
-    "artist": "EXPO STORY",
-    "thumbnail": "https://i.ytimg.com/vi/DvE7O3bLQgE/maxresdefault.jpg",
-    "file": "Daft Punk - Get Lucky (Feat. Pharrell Williams).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=DvE7O3bLQgE",
-    "timestamp": "2026-01-30T22:29:25.516310"
-  },
-  {
-    "title": "Empire Of The Sun - We Are The People (Official Music Video)",
-    "artist": "Empire Of The Sun",
-    "thumbnail": "https://i.ytimg.com/vi_webp/hN5X4kGhAtU/maxresdefault.webp",
-    "file": "Empire Of The Sun - We Are The People (Official Music Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=hN5X4kGhAtU",
-    "timestamp": "2026-01-30T22:29:22.697880"
-  },
-  {
-    "title": "Coldplay - Adventure Of A Lifetime (Official Video)",
-    "artist": "Coldplay",
-    "thumbnail": "https://i.ytimg.com/vi/QtXby3twMmI/sddefault.jpg",
-    "file": "Coldplay - Adventure Of A Lifetime (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=QtXby3twMmI",
-    "timestamp": "2026-01-30T22:29:20.683613"
-  },
-  {
-    "title": "Post Malone - Circles",
-    "artist": "Post Malone",
-    "thumbnail": "https://i.ytimg.com/vi/wXhTHyIgQ_U/maxresdefault.jpg",
-    "file": "Post Malone - Circles.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=wXhTHyIgQ_U",
-    "timestamp": "2026-01-30T22:29:14.351731"
-  },
-  {
-    "title": "Childish Gambino - Feels Like Summer (Official Video)",
-    "artist": "Donald Glover",
-    "thumbnail": "https://i.ytimg.com/vi_webp/F1B9Fk_SgI0/maxresdefault.webp",
-    "file": "Childish Gambino - Feels Like Summer (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=F1B9Fk_SgI0",
-    "timestamp": "2026-01-30T22:29:06.507930"
-  },
-  {
-    "title": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/Mx92lTYxrJQ/maxresdefault.jpg",
-    "file": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=Mx92lTYxrJQ",
-    "timestamp": "2026-01-30T22:29:03.330600"
-  },
-  {
-    "title": "Kendrick Lamar & SZA - luther",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi/sNY_2TEmzho/maxresdefault.jpg",
-    "file": "Kendrick Lamar & SZA - luther.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=sNY_2TEmzho",
-    "timestamp": "2026-01-30T22:29:02.085351"
-  },
-  {
-    "title": "The Weeknd - Reminder (Official Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/JZjAg6fK-BQ/maxresdefault.jpg",
-    "file": "The Weeknd - Reminder (Official Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=JZjAg6fK-BQ",
-    "timestamp": "2026-01-30T22:28:47.683603"
-  },
-  {
-    "title": "Kendrick Lamar - LOVE. ft. Zacari",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi_webp/ox7RsX1Ee34/maxresdefault.webp",
-    "file": "Kendrick Lamar - LOVE. ft. Zacari.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=ox7RsX1Ee34",
-    "timestamp": "2026-01-30T22:28:46.639775"
-  },
-  {
-    "title": "Justin Bieber - Confident (Audio) ft. Chance The Rapper",
-    "artist": "Justin Bieber",
-    "thumbnail": "https://i.ytimg.com/vi_webp/qnD1hwjR3WU/maxresdefault.webp",
-    "file": "Justin Bieber - Confident (Audio) ft. Chance The Rapper.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=qnD1hwjR3WU",
-    "timestamp": "2026-01-30T22:28:43.754370"
-  },
-  {
-    "title": "The Weeknd, Madonna, Playboi Carti - Popular (Visualizer)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi_webp/xnvkStb2jT0/maxresdefault.webp",
-    "file": "The Weeknd, Madonna, Playboi Carti - Popular (Visualizer).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=xnvkStb2jT0",
-    "timestamp": "2026-01-30T22:28:42.898696"
-  },
-  {
-    "title": "Tyler, The Creator - SEE YOU AGAIN (ft. Kali Uchis)",
-    "artist": "Minimal Sounds",
-    "thumbnail": "https://i.ytimg.com/vi_webp/NmvVhovjJI0/maxresdefault.webp",
-    "file": "Tyler, The Creator - SEE YOU AGAIN (ft. Kali Uchis).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=NmvVhovjJI0",
-    "timestamp": "2026-01-30T22:28:28.569259"
-  },
-  {
-    "title": "Kanye West - Flashing Lights (Alternate Intro)",
-    "artist": "prod. OCEVN",
-    "thumbnail": "https://i.ytimg.com/vi/O0Cw1SLdxxE/maxresdefault.jpg",
-    "file": "Kanye West - Flashing Lights (Alternate Intro).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=O0Cw1SLdxxE",
-    "timestamp": "2026-01-30T22:28:27.839707"
-  },
-  {
-    "title": "Disclosure - Latch ft. Sam Smith",
-    "artist": "Disclosure",
-    "thumbnail": "https://i.ytimg.com/vi_webp/93ASUImTedo/maxresdefault.webp",
-    "file": "Disclosure - Latch ft. Sam Smith.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=93ASUImTedo",
-    "timestamp": "2026-01-30T22:28:25.040817"
-  },
-  {
     "title": "Passionfruit",
-    "artist": "Drake",
-    "thumbnail": "https://i.ytimg.com/vi_webp/COz9lDCFHjw/maxresdefault.webp",
     "file": "Passionfruit.flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=COz9lDCFHjw",
-    "timestamp": "2026-01-30T22:28:11.935111"
+    "url": "https://www.youtube.com/watch?v=COz9lDCFHjw",
+    "timestamp": "2026-02-01T20:39:19.067421"
   },
   {
-    "title": "The Weeknd, Playboi Carti - Timeless",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/5EpyN_6dqyk/maxresdefault.jpg",
-    "file": "The Weeknd, Playboi Carti - Timeless.flac",
+    "title": "Doja Cat - So High (Official Video)",
+    "file": "Doja Cat - So High (Official Video).flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=5EpyN_6dqyk",
-    "timestamp": "2026-01-30T22:28:09.768780"
+    "url": "https://www.youtube.com/watch?v=8LJsMUkxIWY",
+    "timestamp": "2026-02-01T20:39:14.006276"
   },
   {
-    "title": "Post Malone, Swae Lee - Sunflower (Spider-Man: Into the Spider-Verse) (Official Video)",
-    "artist": "Post Malone",
-    "thumbnail": "https://i.ytimg.com/vi_webp/ApXoWvfEYVU/maxresdefault.webp",
-    "file": "Post Malone, Swae Lee - Sunflower (Spider-Man： Into the Spider-Verse) (Official Video).flac",
+    "title": "The Weeknd - Save Your Tears (Official Music Video)",
+    "file": "The Weeknd - Save Your Tears (Official Music Video).flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=ApXoWvfEYVU",
-    "timestamp": "2026-01-30T22:28:08.165485"
-  },
-  {
-    "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/maxresdefault.jpg",
-    "file": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=34Na4j8AVgA",
-    "timestamp": "2026-01-30T22:28:04.829493"
-  },
-  {
-    "title": "The Weeknd, Kendrick Lamar - Pray For Me (Official Lyric Video)",
-    "artist": "The Weeknd",
-    "thumbnail": "https://i.ytimg.com/vi/XR7Ev14vUh8/maxresdefault.jpg",
-    "file": "The Weeknd, Kendrick Lamar - Pray For Me (Official Lyric Video).flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=XR7Ev14vUh8",
-    "timestamp": "2026-01-30T22:28:04.461946"
-  },
-  {
-    "title": "Kendrick Lamar - Not Like Us",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi/H58vbez_m4E/maxresdefault.jpg",
-    "file": "Kendrick Lamar - Not Like Us.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=H58vbez_m4E",
-    "timestamp": "2026-01-30T22:27:48.654299"
+    "url": "https://www.youtube.com/watch?v=XXYlFuWEuKI",
+    "timestamp": "2026-02-01T20:39:13.864874"
   },
   {
     "title": "French Montana - Unforgettable ft. Swae Lee",
-    "artist": "French Montana",
-    "thumbnail": "https://i.ytimg.com/vi/CTFtOOh47oo/maxresdefault.jpg",
     "file": "French Montana - Unforgettable ft. Swae Lee.flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=CTFtOOh47oo",
-    "timestamp": "2026-01-30T22:27:48.481439"
+    "url": "https://www.youtube.com/watch?v=CTFtOOh47oo",
+    "timestamp": "2026-02-01T20:39:13.508058"
   },
   {
-    "title": "Kendrick Lamar - Swimming Pools (Drank)",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi_webp/B5YNiCfWC3A/maxresdefault.webp",
-    "file": "Kendrick Lamar - Swimming Pools (Drank).flac",
+    "title": "The Weeknd, Playboi Carti - Timeless",
+    "file": "The Weeknd, Playboi Carti - Timeless.flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=B5YNiCfWC3A",
-    "timestamp": "2026-01-30T22:27:31.660229"
+    "url": "https://www.youtube.com/watch?v=5EpyN_6dqyk",
+    "timestamp": "2026-02-01T20:38:46.352393"
   },
   {
-    "title": "Kendrick Lamar - HUMBLE.",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi_webp/tvTRZJ-4EyI/maxresdefault.webp",
-    "file": "Kendrick Lamar - HUMBLE..flac",
+    "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
+    "file": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk.flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=tvTRZJ-4EyI",
-    "timestamp": "2026-01-30T22:27:31.467272"
-  },
-  {
-    "title": "Money Trees",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi_webp/Iy-dJwHVX84/maxresdefault.webp",
-    "file": "Money Trees.flac",
-    "quality": "flac",
-    "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=Iy-dJwHVX84",
-    "timestamp": "2026-01-30T22:27:21.908359"
+    "url": "https://www.youtube.com/watch?v=34Na4j8AVgA",
+    "timestamp": "2026-02-01T20:38:36.589462"
   },
   {
     "title": "Kendrick Lamar, SZA - All The Stars",
-    "artist": "Kendrick Lamar",
-    "thumbnail": "https://i.ytimg.com/vi_webp/JQbjS0_ZfJ0/maxresdefault.webp",
     "file": "Kendrick Lamar, SZA - All The Stars.flac",
     "quality": "flac",
     "mode": "audio",
-    "original_url": "https://www.youtube.com/watch?v=JQbjS0_ZfJ0",
-    "timestamp": "2026-01-30T22:27:21.530025"
+    "url": "https://www.youtube.com/watch?v=JQbjS0_ZfJ0",
+    "timestamp": "2026-02-01T20:38:32.213944"
   },
   {
-    "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
-    "artist": null,
-    "thumbnail": "https://i.ytimg.com/vi_webp/dQw4w9WgXcQ/maxresdefault.webp",
-    "file": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster).mp4",
-    "quality": "1080p",
-    "mode": "video",
-    "original_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "timestamp": "2026-01-30T22:06:24.043522"
+    "title": "The Weeknd, Kendrick Lamar - Pray For Me (Official Lyric Video)",
+    "file": "The Weeknd, Kendrick Lamar - Pray For Me (Official Lyric Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=XR7Ev14vUh8",
+    "timestamp": "2026-02-01T20:38:31.601364"
+  },
+  {
+    "title": "Daft Punk - Get Lucky (Feat. Pharrell Williams)",
+    "file": "Daft Punk - Get Lucky (Feat. Pharrell Williams).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=DvE7O3bLQgE",
+    "timestamp": "2026-02-01T20:27:45.552621"
+  },
+  {
+    "title": "Calvin Harris - Feels (Official Video) ft. Pharrell Williams, Katy Perry, Big Sean",
+    "file": "Calvin Harris - Feels (Official Video) ft. Pharrell Williams, Katy Perry, Big Sean.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=ozv4q2ov3Mk",
+    "timestamp": "2026-02-01T20:27:43.316583"
+  },
+  {
+    "title": "The Black Eyed Peas - Meet Me Halfway (Official Music Video)",
+    "file": "The Black Eyed Peas - Meet Me Halfway (Official Music Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=I7HahVwYpwo",
+    "timestamp": "2026-02-01T20:27:42.238019"
+  },
+  {
+    "title": "The Neighbourhood - Sweater Weather (Official Video)",
+    "file": "The Neighbourhood - Sweater Weather (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=GCdwKhTtNNw",
+    "timestamp": "2026-02-01T20:27:35.273850"
+  },
+  {
+    "title": "Maroon 5 - Cold ft. Future (Official Music Video)",
+    "file": "Maroon 5 - Cold ft. Future (Official Music Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=XatXy6ZhKZw",
+    "timestamp": "2026-02-01T20:27:19.952259"
+  },
+  {
+    "title": "Money Trees",
+    "file": "Money Trees.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=Iy-dJwHVX84",
+    "timestamp": "2026-02-01T20:27:16.540398"
+  },
+  {
+    "title": "Drake - Hotline Bling",
+    "file": "Drake - Hotline Bling.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=uxpDa-c-4Mc",
+    "timestamp": "2026-02-01T20:27:16.378955"
+  },
+  {
+    "title": "Kendrick Lamar - Swimming Pools (Drank)",
+    "file": "Kendrick Lamar - Swimming Pools (Drank).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=B5YNiCfWC3A",
+    "timestamp": "2026-02-01T20:27:16.084077"
+  },
+  {
+    "title": "Travis Scott - SICKO MODE (Official Video) ft. Drake",
+    "file": "Travis Scott - SICKO MODE (Official Video) ft. Drake.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=6ONRf7h3Mdk",
+    "timestamp": "2026-02-01T20:26:43.694771"
+  },
+  {
+    "title": "Don Toliver - No Pole [Official Visualizer]",
+    "file": "Don Toliver - No Pole [Official Visualizer].flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=fCeiUX59_FM",
+    "timestamp": "2026-02-01T20:26:41.333153"
+  },
+  {
+    "title": "The Weeknd, Ariana Grande - Die For You (Remix / Lyric Video)",
+    "file": "The Weeknd, Ariana Grande - Die For You (Remix ⧸ Lyric Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=YQ-qToZUybM",
+    "timestamp": "2026-02-01T20:26:41.120237"
+  },
+  {
+    "title": "The Weeknd - Reminder (Official Video)",
+    "file": "The Weeknd - Reminder (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=JZjAg6fK-BQ",
+    "timestamp": "2026-02-01T20:26:26.016494"
+  },
+  {
+    "title": "The Weeknd - After Hours (Audio)",
+    "file": "The Weeknd - After Hours (Audio).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=ygTZZpVkmKg",
+    "timestamp": "2026-02-01T20:26:16.844577"
+  },
+  {
+    "title": "DJ Snake - Middle ft. Bipolar Sunshine",
+    "file": "DJ Snake - Middle ft. Bipolar Sunshine.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=IvPT2QuCIOA",
+    "timestamp": "2026-02-01T20:26:12.206008"
+  },
+  {
+    "title": "Kali Uchis - Moonlight (Official Lyric Video)",
+    "file": "Kali Uchis - Moonlight (Official Lyric Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=8F7Q-4PZCjA",
+    "timestamp": "2026-02-01T20:26:07.456141"
+  },
+  {
+    "title": "Childish Gambino - Feels Like Summer (Official Video)",
+    "file": "Childish Gambino - Feels Like Summer (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=F1B9Fk_SgI0",
+    "timestamp": "2026-02-01T20:26:01.633727"
+  },
+  {
+    "title": "The Weeknd - Out of Time",
+    "file": "The Weeknd - Out of Time.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=2fDzCWNS3ig",
+    "timestamp": "2026-02-01T20:25:47.166067"
+  },
+  {
+    "title": "Daft Punk - Instant Crush (Official Video) ft. Julian Casablancas",
+    "file": "Daft Punk - Instant Crush (Official Video) ft. Julian Casablancas.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=a5uQMwRMHcs",
+    "timestamp": "2026-02-01T20:25:45.868873"
+  },
+  {
+    "title": "The Weeknd - Take My Breath (Official Music Video)",
+    "file": "The Weeknd - Take My Breath (Official Music Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=rhTl_OyehF8",
+    "timestamp": "2026-02-01T20:25:37.342314"
+  },
+  {
+    "title": "Dua Lipa - Levitating Featuring DaBaby (Official Music Video)",
+    "file": "Dua Lipa - Levitating Featuring DaBaby (Official Music Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=TUVcZfQe-Kw",
+    "timestamp": "2026-02-01T20:25:33.858567"
+  },
+  {
+    "title": "Post Malone - Circles",
+    "file": "Post Malone - Circles.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=wXhTHyIgQ_U",
+    "timestamp": "2026-02-01T20:25:18.294177"
+  },
+  {
+    "title": "Post Malone - I Like You (A Happier Song) w. Doja Cat [Official Music Video]",
+    "file": "Post Malone - I Like You (A Happier Song) w. Doja Cat [Official Music Video].flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=7aekxC_monc",
+    "timestamp": "2026-02-01T20:25:14.001907"
+  },
+  {
+    "title": "Justin Bieber - Confident (Audio) ft. Chance The Rapper",
+    "file": "Justin Bieber - Confident (Audio) ft. Chance The Rapper.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=qnD1hwjR3WU",
+    "timestamp": "2026-02-01T20:25:13.631851"
+  },
+  {
+    "title": "Post Malone, Swae Lee - Sunflower (Spider-Man: Into the Spider-Verse) (Official Video)",
+    "file": "Post Malone, Swae Lee - Sunflower (Spider-Man： Into the Spider-Verse) (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=ApXoWvfEYVU",
+    "timestamp": "2026-02-01T20:25:04.720678"
+  },
+  {
+    "title": "Tyler, The Creator - SEE YOU AGAIN (ft. Kali Uchis)",
+    "file": "Tyler, The Creator - SEE YOU AGAIN (ft. Kali Uchis).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=NmvVhovjJI0",
+    "timestamp": "2026-02-01T20:25:02.230652"
+  },
+  {
+    "title": "Redbone",
+    "file": "Redbone.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=k49I5m1J6Is",
+    "timestamp": "2026-02-01T20:25:01.760372"
+  },
+  {
+    "title": "The Weeknd - Is There Someone Else?",
+    "file": "The Weeknd - Is There Someone Else？.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=1XqIWr_WqM4",
+    "timestamp": "2026-02-01T20:24:48.868327"
+  },
+  {
+    "title": "Calvin Harris & Disciples - How Deep Is Your Love",
+    "file": "Calvin Harris & Disciples - How Deep Is Your Love.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=EgqUJOudrcM",
+    "timestamp": "2026-02-01T20:24:44.113621"
+  },
+  {
+    "title": "Aaron Smith - Dancin - Krono Remix (Official Video) ft. Luvli",
+    "file": "Aaron Smith - Dancin - Krono Remix (Official Video) ft. Luvli.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=6Nb-prB-4P0",
+    "timestamp": "2026-02-01T20:24:44.017506"
+  },
+  {
+    "title": "Swedish House Mafia and The Weeknd - Moth To A Flame (Official Video)",
+    "file": "Swedish House Mafia and The Weeknd - Moth To A Flame (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=u9n7Cw-4_HQ",
+    "timestamp": "2026-02-01T20:24:30.545208"
+  },
+  {
+    "title": "Tory Lanez - The Color Violet [Official Audio]",
+    "file": "Tory Lanez - The Color Violet [Official Audio].flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=07fhkAoCnig",
+    "timestamp": "2026-02-01T20:24:19.512567"
+  },
+  {
+    "title": "The Weeknd - Can't Feel My Face (Official Video)",
+    "file": "The Weeknd - Can't Feel My Face (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=KEI4qSrkPAs",
+    "timestamp": "2026-02-01T20:24:15.269129"
+  },
+  {
+    "title": "Doja Cat - Say So (Official Video)",
+    "file": "Doja Cat - Say So (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=pok8H_KF1FA",
+    "timestamp": "2026-02-01T20:24:05.470588"
+  },
+  {
+    "title": "Sabrina Carpenter - Espresso",
+    "file": "Sabrina Carpenter - Espresso.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=eVli-tstM5E",
+    "timestamp": "2026-02-01T20:24:04.876506"
+  },
+  {
+    "title": "The Weeknd - I Feel It Coming ft. Daft Punk (Official Video)",
+    "file": "The Weeknd - I Feel It Coming ft. Daft Punk (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=qFLhGq0060w",
+    "timestamp": "2026-02-01T20:23:50.251407"
+  },
+  {
+    "title": "The Weeknd - Heartless (Official Video)",
+    "file": "The Weeknd - Heartless (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=1DpH-icPpl0",
+    "timestamp": "2026-02-01T20:23:45.680254"
+  },
+  {
+    "title": "Disclosure - Latch ft. Sam Smith",
+    "file": "Disclosure - Latch ft. Sam Smith.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=93ASUImTedo",
+    "timestamp": "2026-02-01T20:23:43.608305"
+  },
+  {
+    "title": "French Montana - Unforgettable ft. Swae Lee",
+    "file": "French Montana - Unforgettable ft. Swae Lee.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=CTFtOOh47oo",
+    "timestamp": "2026-02-01T20:23:33.580084"
+  },
+  {
+    "title": "The Weeknd, Madonna, Playboi Carti - Popular (Visualizer)",
+    "file": "The Weeknd, Madonna, Playboi Carti - Popular (Visualizer).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=xnvkStb2jT0",
+    "timestamp": "2026-02-01T20:23:30.072948"
+  },
+  {
+    "title": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video)",
+    "file": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=Mx92lTYxrJQ",
+    "timestamp": "2026-02-01T20:23:29.937901"
+  },
+  {
+    "title": "Passionfruit",
+    "file": "Passionfruit.flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=COz9lDCFHjw",
+    "timestamp": "2026-02-01T20:23:09.594300"
+  },
+  {
+    "title": "The Weeknd - Save Your Tears (Official Music Video)",
+    "file": "The Weeknd - Save Your Tears (Official Music Video).flac",
+    "quality": "flac",
+    "mode": "audio",
+    "url": "https://www.youtube.com/watch?v=XXYlFuWEuKI",
+    "timestamp": "2026-02-01T20:23:09.469548"
   }
 ]

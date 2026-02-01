@@ -52,3 +52,14 @@ frontend/*.txt
 LEIA_ISSO_DEBUG.txt
 output.txt
 backend/cookies.txt
+backend/downloads.db
+backend/debug_info.txt
+backend/downloads/
+backend/yt_dlp.log
+backend/crash_log.txt
+backend/build_log.txt
+backend/history.json
+*.db
+*.db-journal
+*.db-shm
+*.db-wal

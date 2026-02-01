@@ -4,6 +4,18 @@ import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import qrcodeImg from './assets/qrcode_custom.jpg';
+// import { useGlobalDownloads } from './hooks/useGlobalDownloads'; // REMOVED (Polling)
+
+// Helper para detectar modo automaticamente (Music vs Video)
+const detectMode = (url) => {
+  if (!url) return 'video';
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('music.youtube.com') ||
+    lowerUrl.includes('shorts')) {
+    return 'audio';
+  }
+  return 'video';
+};
 
 function App() {
   // Step: 'search' | 'confirm' | 'downloading' | 'result'
@@ -17,6 +29,16 @@ function App() {
   const [status, setStatus] = useState(null); // 'success', 'error'
   const [message, setMessage] = useState('');
   const [downloadInfo, setDownloadInfo] = useState(null);
+
+  // Auto-detect mode when URL changes
+  useEffect(() => {
+    if (url) {
+      const detected = detectMode(url);
+      if (detected === 'audio') {
+        setMode('audio');
+      }
+    }
+  }, [url]);
 
   // Advanced Toasts
   const [toasts, setToasts] = useState([]);
@@ -88,7 +110,22 @@ function App() {
   // ===== API CONFIG =====
   // Single Port 8000 (Backend handles concurrency via Task Queue)
   const API_URL = "http://localhost:8000";
-  const getApiUrl = (endpoint) => `${API_URL}${endpoint}`;
+  const getApiUrl = (endpoint = '') => `${API_URL}${endpoint}`;
+
+  // GLOBAL DOWNLOADS STATE (Polling Strategy)
+  const [globalJobs, setGlobalJobs] = useState({});
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get(getApiUrl('/download/jobs'));
+        setGlobalJobs(res.data);
+      } catch (e) {
+        // Silent error to avoid spam
+      }
+    }, 2000); // 2s polling to prevent freeze
+    return () => clearInterval(interval);
+  }, []);
 
 
 
@@ -169,9 +206,13 @@ function App() {
       setPlaylistVideos(res.data.videos);
       setShowPlaylistModal(true);
 
-      // Selecionar todos por padrão
-      const allIndices = new Set(res.data.videos.map(v => v.index));
-      setSelectedVideos(allIndices);
+      // Selecionar apenas os PENDENTES por padrão
+      const pendingIndices = new Set(
+        res.data.videos
+          .filter(v => v.status !== 'downloaded')
+          .map(v => v.index)
+      );
+      setSelectedVideos(pendingIndices);
 
     } catch (error) {
       console.error('❌ Erro ao buscar playlist:', error);
@@ -184,6 +225,10 @@ function App() {
   };
 
   const toggleVideoSelection = (index) => {
+    // Safety check
+    const video = playlistVideos.find(v => v.index === index);
+    if (video && video.status === 'downloaded') return;
+
     const newSelected = new Set(selectedVideos);
     if (newSelected.has(index)) {
       newSelected.delete(index);
@@ -194,8 +239,13 @@ function App() {
   };
 
   const selectAllVideos = () => {
-    const allIndices = new Set(playlistVideos.map(v => v.index));
-    setSelectedVideos(allIndices);
+    // Select ONLY pending
+    const pendingIndices = new Set(
+      playlistVideos
+        .filter(v => v.status !== 'downloaded')
+        .map(v => v.index)
+    );
+    setSelectedVideos(pendingIndices);
   };
 
   const deselectAllVideos = () => {
@@ -243,6 +293,8 @@ function App() {
       uniqueId: Date.now() + Math.random() + idx,
       pitch: mode === 'audio' ? pitch : 0,
       speed: mode === 'audio' ? speed : 1.0,
+      speed: mode === 'audio' ? speed : 1.0,
+      playlist_id: video.playlistIdRef, // Pass ref from backend
       status: 'pending',
       progress: 0,
       addedAt: Date.now()
@@ -262,6 +314,33 @@ function App() {
       const startBtn = document.getElementById('start-downloads-btn');
       if (startBtn) startBtn.click();
     }, 500);
+  };
+
+  // ===== REDOWNLOAD LOGIC =====
+  const executeRetry = async (video, playlistId) => {
+    try {
+      if (!playlistId) {
+        addToast('Playlist ID desconhecido.', 'error');
+        return;
+      }
+      addToast(`Reiniciando download: ${video.title}`, 'info');
+      const res = await axios.post(getApiUrl('/download/retry'), {
+        playlist_id: playlistId,
+        video_id: video.id
+      });
+
+      // Optimistic update
+      setPlaylistVideos(prev => prev.map(v =>
+        v.id === video.id ? { ...v, status: 'pending' } : v
+      ));
+
+      // Select it
+      toggleVideoSelection(video.index);
+
+    } catch (e) {
+      console.error(e);
+      addToast('Erro ao rebaixar.', 'error');
+    }
   };
 
 
@@ -413,7 +492,9 @@ function App() {
         organize: organizeByArtist,
         title: item.title,
         artist: item.uploader,
-        cover_path: item.thumbnail
+        cover_path: item.thumbnail,
+        playlist_id: item.playlist_id, // For DB persistence
+        video_id: item.id              // For DB persistence
       });
 
       const { job_id } = startRes.data;
@@ -521,7 +602,7 @@ function App() {
         url: metadata.url,
         quality,
         mode,
-        playlist,
+        playlist: false,
         start_time: trim ? startTime : null,
         end_time: trim ? endTime : null,
         pitch: mode === 'audio' ? pitch : 0,
@@ -849,7 +930,7 @@ function App() {
                     </button>
                   </div>
 
-                  <div className="grid gap-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="grid gap-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollfoo">
                     {searchResults.map((video) => (
                       <div
                         key={video.id}
@@ -925,47 +1006,34 @@ function App() {
 
               {step === 'confirm' && (
                 <div className="space-y-4">
-                  {/* Playlist Toggle */}
+                  {/* Playlist Manager Button */}
                   {metadata.is_playlist && (
-                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
+                    <div className="mb-4 space-y-2">
+                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 flex items-center gap-3">
                         <div className="p-2 bg-purple-500/20 rounded-lg">
                           <FileText className="w-5 h-5 text-purple-400" />
                         </div>
                         <div>
                           <h4 className="font-bold text-white">Playlist Detectada</h4>
-                          <p className="text-xs text-secondary">Este vídeo faz parte de uma playlist.</p>
+                          <p className="text-xs text-secondary">Use o botão abaixo para selecionar músicas.</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${!playlist ? 'text-white' : 'text-secondary'}`}>Apenas este</span>
-                        <button
-                          onClick={() => setPlaylist(!playlist)}
-                          className={`w-12 h-6 rounded-full transition-colors relative ${playlist ? 'bg-purple-500' : 'bg-surface border border-white/10'}`}
-                        >
-                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${playlist ? 'translate-x-6' : 'translate-x-0'}`} />
-                        </button>
-                        <span className={`text-sm font-medium ${playlist ? 'text-white' : 'text-secondary'}`}>Tudo</span>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Playlist Manager Button */}
-                  {metadata.is_playlist && (
-                    <button
-                      onClick={fetchPlaylistDetails}
-                      disabled={playlistLoading}
-                      className="w-full mb-2 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg"
-                    >
-                      {playlistLoading ? (
-                        <>⏳ Carregando playlist...</>
-                      ) : (
-                        <>
-                          <FileText size={20} />
-                          Ver e Selecionar Músicas
-                        </>
-                      )}
-                    </button>
+                      <button
+                        onClick={fetchPlaylistDetails}
+                        disabled={playlistLoading}
+                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        {playlistLoading ? (
+                          <>⏳ Carregando playlist...</>
+                        ) : (
+                          <>
+                            <FileText size={20} />
+                            Ver e Selecionar Músicas
+                          </>
+                        )}
+                      </button>
+                    </div>
                   )}
 
                   {/* Trim Toggle */}
@@ -1385,6 +1453,7 @@ function App() {
                       removeFromQueue={removeFromQueue}
                       setCurrentSong={setCurrentSong}
                       updateQueueItem={updateQueueItem}
+                      job={globalJobs[item.jobId]} // Pass Global Job State
                     />
                   ))
                 )}
@@ -1465,10 +1534,17 @@ function App() {
                     {selectedVideos.size} de {playlistVideos.length} selecionadas
                   </span>
                   <button
-                    onClick={selectAllVideos}
+                    onClick={() => {
+                      const pendingIndices = new Set(
+                        playlistVideos
+                          .filter(v => v.status !== 'downloaded')
+                          .map(v => v.index)
+                      );
+                      setSelectedVideos(pendingIndices);
+                    }}
                     className="px-4 py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 rounded-lg text-sm font-medium transition-colors"
                   >
-                    Selecionar Todas
+                    Selecionar Novos
                   </button>
                   <button
                     onClick={deselectAllVideos}
@@ -1488,10 +1564,16 @@ function App() {
                   playlistVideos.map((video) => (
                     <div
                       key={video.index}
-                      onClick={() => toggleVideoSelection(video.index)}
-                      className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all ${selectedVideos.has(video.index)
-                        ? 'bg-purple-600/30 border-2 border-purple-500'
-                        : 'bg-white/5 border-2 border-transparent hover:bg-white/10'
+                      onClick={() => {
+                        if (video.status === 'downloaded') return;
+                        toggleVideoSelection(video.index);
+                      }}
+                      className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all ${video.status === 'downloaded' ? 'opacity-50 cursor-default' : ''
+                        } ${selectedVideos.has(video.index)
+                          ? 'bg-purple-600/30 border-2 border-purple-500'
+                          : video.status === 'downloaded'
+                            ? 'bg-white/5 border-2 border-transparent'
+                            : 'bg-white/5 border-2 border-transparent hover:bg-white/10'
                         }`}
                     >
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${selectedVideos.has(video.index)
@@ -1506,7 +1588,28 @@ function App() {
                         className="w-24 h-16 object-cover rounded-lg flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-medium truncate">{video.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-white font-medium truncate">{video.title}</h4>
+                          {video.status === 'downloaded' && (
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-wider rounded border border-green-500/30">
+                                Já Baixado
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // We need playlist ID here. 
+                                  // Since we didn't store it in state yet, let's look at how we can get it.
+                                  // We can attach it to the video object in fetchPlaylistDetails
+                                  executeRetry(video, video.playlistIdRef);
+                                }}
+                                className="text-xs text-purple-400 hover:text-purple-300 underline"
+                              >
+                                Rebaixar
+                              </button>
+                            </div>
+                          )}
+                        </div>
                         <div className="text-gray-400 text-sm flex items-center gap-2">
                           <span>{video.uploader}</span>
                           {video.duration_string && video.duration_string !== '0:00' && (

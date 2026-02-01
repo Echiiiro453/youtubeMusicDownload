@@ -13,6 +13,36 @@ from urllib.request import Request, urlopen
 from fastapi.staticfiles import StaticFiles
 import sys
 import time
+import os
+
+# Helper for Persistence (EXE vs Script)
+def get_base_dir():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+# Error categorization constants
+TRANSIENT_ERRORS = (
+    "rate-limited",
+    "try again later",
+    "HTTP Error 429",
+    "temporarily unavailable",
+    "network is unreachable",
+)
+
+LOGIN_ERRORS = (
+    "Sign in required",
+    "account problem",
+    "private video",
+)
+
+FORMAT_ERRORS = (
+    "Requested format is not available",
+    "requested format is not available",
+)
+
+def is_match(err_msg: str, fragments) -> bool:
+    return any(f.lower() in err_msg.lower() for f in fragments)
 
 import sys
 import time
@@ -21,7 +51,122 @@ import asyncio
 import uuid
 from dataclasses import dataclass, asdict
 from typing import Optional, Dict, Any, Tuple, Set
-from fastapi import WebSocket, WebSocketDisconnect
+from dataclasses import dataclass, asdict
+import sqlite3
+from pathlib import Path
+
+# ====== BANCO DE DADOS (PERSISTÊNCIA) ======
+DB_PATH = os.path.join(get_base_dir(), "downloads.db")
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS downloads (
+                playlist_id TEXT,
+                video_id    TEXT,
+                title       TEXT,
+                file_path   TEXT,
+                status      TEXT,      -- downloaded, error
+                created_at  REAL,
+                url         TEXT,      -- Added for redownload
+                PRIMARY KEY (playlist_id, video_id)
+            );
+        """)
+        # Migration for existing tables (safe add column)
+        try:
+            cur.execute("ALTER TABLE downloads ADD COLUMN url TEXT;")
+        except: 
+            pass # Column likely exists
+            
+        conn.commit()
+        conn.close()
+        print("Banco de dados SQLite inicializado.")
+    except Exception as e:
+        print(f"Erro ao inicializar DB: {e}")
+
+def mark_downloaded_db(playlist_id: str, video_id: str, title: str, file_path: str, url: str = None):
+    if not playlist_id or not video_id: return
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT OR REPLACE INTO downloads
+            (playlist_id, video_id, title, file_path, status, created_at, url)
+            VALUES (?, ?, ?, ?, 'downloaded', ?, ?);
+        """, (playlist_id, video_id, title, file_path, time.time(), url))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Erro ao salvar no DB: {e}")
+
+def mark_error_db(playlist_id: str, video_id: str, title: str, error_msg: str):
+    if not playlist_id or not video_id: return
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT OR REPLACE INTO downloads
+            (playlist_id, video_id, title, file_path, status, created_at)
+            VALUES (?, ?, ?, '', ?, ?);
+        """, (playlist_id, video_id, title, f"error:{error_msg[:180]}", time.time()))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Erro ao salvar erro no DB: {e}")
+
+def get_downloaded_ids(playlist_id: str) -> list[str]:
+    if not playlist_id: return []
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT video_id FROM downloads
+            WHERE playlist_id = ? AND status = 'downloaded';
+        """, (playlist_id,))
+        rows = cur.fetchall()
+        conn.close()
+        return [r["video_id"] for r in rows]
+    except:
+        return []
+
+def mark_missing_db(playlist_id: str, video_id: str):
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE downloads
+            SET status = 'missing'
+            WHERE playlist_id = ? AND video_id = ?;
+        """, (playlist_id, video_id))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Erro ao marcar missing: {e}")
+
+def get_download_record(playlist_id: str, video_id: str) -> dict:
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT playlist_id, video_id, title, url
+            FROM downloads
+            WHERE playlist_id = ? AND video_id = ?;
+        """, (playlist_id, video_id))
+        row = cur.fetchone()
+        conn.close()
+        return dict(row) if row else None
+    except:
+        return None
+
+# WebSocket removed as we use polling
+
 
 app = FastAPI()
 
@@ -42,6 +187,8 @@ class JobState:
     created_at: float = 0.0
     started_at: Optional[float] = None
     finished_at: Optional[float] = None
+    last_update: float = 0.0
+    last_update: float = 0.0  # For throttling notifications
 
 # Dicionário global que armazena o estado de todos os jobs
 jobs: Dict[str, JobState] = {}
@@ -51,12 +198,28 @@ download_lock = threading.Lock()
 active_downloads = set()
 
 
-# Configuração CORS
+# CONFIGURAÇÃO CORS
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "http://localhost:8000",  # For standalone exe
+    "http://localhost:8000",
+    "*" # Debug
 ]
+
+# DEBUG: Middleware para logar todas as requisições
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"REQUEST: {request.method} {request.url}")
+    return await call_next(request)
+
+# DEBUG: Imprimir rotas no startup
+@app.on_event("startup")
+async def startup_event():
+    print("\n=== ROTAS REGISTRADAS ===")
+    for route in app.routes:
+        print(f"Reviewing route: {route.__class__.__name__} -> {getattr(route, 'path', 'No Path')}")
+    print("=========================\n")
+    init_db() # Initialize SQLite DB
 
 app.add_middleware(
     CORSMiddleware,
@@ -80,48 +243,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 from typing import Optional
 
-# Gerenciador de conexões WebSocket
-websocket_connections: Dict[str, Set[WebSocket]] = {}  # job_id -> set de conexões
+# Polling Endpoint (Replaces WebSocket)
+@app.get("/download/jobs")
+async def get_all_jobs():
+    """Return current state of all jobs for polling"""
+    return {job_id: asdict(state) for job_id, state in jobs.items()}
 
+# Legacy notification (No-op now since we use polling)
 async def notify_job_update(job_id: str):
-    """
-    Notifica todas as conexões WebSocket de um job.
-    """
-    if job_id in websocket_connections and job_id in jobs:
-        job_state = asdict(jobs[job_id])
-        # Converter conexão (set) para lista para evitar erro de runtime durante iteração
-        for conn in list(websocket_connections[job_id]):
-            try:
-                await conn.send_json(job_state)
-            except:
-                websocket_connections[job_id].discard(conn)
-                
-@app.websocket("/ws/download/{job_id}")
-async def websocket_download(websocket: WebSocket, job_id: str):
-    """
-    WebSocket por job_id: cliente recebe updates em tempo real.
-    """
-    await websocket.accept()
-    
-    # Registrar conexão
-    if job_id not in websocket_connections:
-        websocket_connections[job_id] = set()
-    websocket_connections[job_id].add(websocket)
-    
-    try:
-        # Enviar status inicial imediatamente
-        if job_id in jobs:
-            await websocket.send_json(asdict(jobs[job_id]))
-        
-        # Manter conexão aberta
-        while True:
-            await asyncio.sleep(1)
-            
-    except WebSocketDisconnect:
-        if job_id in websocket_connections:
-            websocket_connections[job_id].discard(websocket)
-            if not websocket_connections[job_id]:
-                del websocket_connections[job_id]
+    pass
+
 
 # Modelos
 class DownloadRequest(BaseModel):
@@ -140,6 +271,8 @@ class DownloadRequest(BaseModel):
     browser_cookies: Optional[str] = None # 'firefox', 'chrome', 'safari', 'edge'
     cookies_path: Optional[str] = None # Path to specific cookies.txt
     eq_preset: Optional[str] = None # 'bass', 'soft', 'treble', 'vocal'
+    playlist_id: Optional[str] = None # ID da playlist para persistência
+    video_id: Optional[str] = None    # ID do vídeo para persistência
 
 class InfoRequest(BaseModel):
     url: str
@@ -194,10 +327,7 @@ def progress_hook(d):
         current_progress['status'] = 'processing'
 
 # Helper for Persistence (EXE vs Script)
-def get_base_dir():
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.abspath(__file__))
+
 
 HISTORY_FILE = os.path.join(get_base_dir(), 'history.json')
 
@@ -298,7 +428,7 @@ async def get_info(request: DownloadRequest):
             'nocheckcertificate': True,
             'ignoreerrors': False, # Mostrar erro real
             'no_warnings': False,
-            'js_runtimes': {'node': {}},
+            'js_runtimes': {'node': {'executable': r'C:\Program Files\nodejs\node.exe'}},
             'noplaylist': False,  # Allow playlist detection
             'extract_flat': 'in_playlist', # Fast extraction for playlists
             'cookiefile': get_cookies_path(),
@@ -472,12 +602,19 @@ def get_playlist_details(request: InfoRequest):
         if 'entries' not in playlist_info:
             raise HTTPException(status_code=400, detail="URL não é uma playlist")
         
+        # Obter IDs já baixados desta playlist
+        playlist_id = playlist_info.get('id', '')
+        downloaded_ids = set(get_downloaded_ids(playlist_id)) if playlist_id else set()
+        
         # Processar vídeos
         videos = []
         for idx, entry in enumerate(playlist_info['entries']):
             if entry is None:  # Vídeo privado/deletado
                 continue
-                
+            
+            entry_id = entry.get('id', '')
+            status = 'downloaded' if entry_id in downloaded_ids else 'pending'
+            
             # Formatar duração
             duration = entry.get('duration', 0)
             duration_str = entry.get('duration_string', '0:00')
@@ -489,20 +626,23 @@ def get_playlist_details(request: InfoRequest):
             
             videos.append({
                 "index": idx,
-                "id": entry.get('id', ''),
+                "id": entry_id,
                 "title": entry.get('title', 'Sem título'),
                 "thumbnail": entry.get('thumbnail') or entry.get('thumbnails', [{}])[0].get('url'),
                 "duration": duration,
                 "duration_string": duration_str,
                 "uploader": entry.get('uploader', entry.get('channel', 'Desconhecido')),
-                "url": entry.get('url') or entry.get('webpage_url') or f"https://www.youtube.com/watch?v={entry.get('id')}"
+                "url": entry.get('url') or entry.get('webpage_url') or f"https://www.youtube.com/watch?v={entry_id}",
+                "status": status, # 'downloaded' or 'pending'
+                "playlistIdRef": playlist_id # Reference for retry
             })
         
         return {
             "status": "success",
-            "playlist_id": playlist_info.get('id', ''),
+            "playlist_id": playlist_id,
             "title": playlist_info.get('title', 'Playlist'),
             "total_videos": len(videos),
+            "downloaded_count": len([v for v in videos if v['status'] == 'downloaded']), # Info extra
             "uploader": playlist_info.get('uploader', playlist_info.get('channel', 'Desconhecido')),
             "videos": videos
         }
@@ -566,32 +706,66 @@ def build_ydl_opts(job_id: str, request: DownloadRequest) -> Dict[str, Any]:
     postprocessors = []
 
     if request.mode == 'video':
-        format_str = 'bestvideo+bestaudio/best'
+        # SPEED OPTIMIZATION: Prefer MP4 containers directly (avoids complex mkv muxing sometimes)
+        format_str = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+        
         if request.quality == '4k':
-            format_str = 'bestvideo+bestaudio/best'
+             # 4k often requires webm/mkv for VP9/AV1, so we keep flexible but prefer mp4 if avail
+            format_str = 'bestvideo[height>=2160]+bestaudio/best'
         elif request.quality.endswith('p') and request.quality[:-1].isdigit():
             height = int(request.quality[:-1])
-            format_str = f'bestvideo[height<={height}]+bestaudio/best[height<={height}]'
+            # Strict height cap, prefer efficient codecs
+            format_str = f'bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best[height<={height}]'
         
         postprocessors.append({'key': 'FFmpegThumbnailsConvertor', 'format': 'jpg'})
         postprocessors.append({'key': 'EmbedThumbnail'})
         postprocessors.append({'key': 'FFmpegMetadata'})
 
     else:
+        # ====== OTIMIZAÇÃO MÚSICA (AUDIO-ONLY) ======
+        # Baixa apenas o stream de áudio (muito mais rápido que vídeo+audio)
+        format_str = 'bestaudio/best'
+        
+        # Add FFmpeg extract audio post-processor
+        # Configuração Otimizada para velocidade vs qualidade
+        audio_extract = {
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192', # Default high quality
+        }
+        
         if request.quality == 'flac':
-             postprocessors.append({'key': 'FFmpegExtractAudio', 'preferredcodec': 'flac'})
+             audio_extract['preferredcodec'] = 'flac'
+             format_str = 'bestaudio/best' # FLAC needs good source
         elif request.quality == 'best': 
-             postprocessors.append({'key': 'FFmpegExtractAudio', 'preferredcodec': 'm4a'})
-        elif request.quality == 'high':  
-             postprocessors.append({'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'})
+             audio_extract['preferredcodec'] = 'm4a'
+             format_str = 'bestaudio[ext=m4a]/best'
         elif request.quality == 'medium':
-             postprocessors.append({'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '128'})
-        else: 
-             postprocessors.append({'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '320'})
+             audio_extract['preferredcodec'] = 'mp3'
+             audio_extract['preferredquality'] = '128'
+        elif request.quality == 'high':
+             audio_extract['preferredcodec'] = 'mp3'
+             audio_extract['preferredquality'] = '192'
+        else: # Ultra / Default
+             audio_extract['preferredcodec'] = 'mp3'
+             audio_extract['preferredquality'] = '320' # VBR 0 (~245kbps avg) or CBR 320
+             
+             # Se for mp3, usar VBR '5' se o usuário não pediu 320 explicito?
+             # O usuário sugeriu "preferredquality": "5" (VBR), mas 320 é CBR. 
+             # Vamos manter o mapeamento de qualidade existente para consistência mas com codec certo.
+             if request.quality == 'ultra':
+                 audio_extract['preferredquality'] = '320'
 
+        postprocessors.append(audio_extract)
+        
+        # Embed Metadata & Cover
         postprocessors.append({'key': 'FFmpegThumbnailsConvertor', 'format': 'jpg'})
         postprocessors.append({'key': 'EmbedThumbnail'})
         postprocessors.append({'key': 'FFmpegMetadata'})
+        
+        # Force single thread for FFmpeg to prevent CPU contention with download threads
+        # ydl_opts['postprocessor_args'] = {'FFmpegExtractAudio': ['-threads', '0']} # Auto defaults to 0 usually, but making explicit if needed
+
 
     # Audio Filters
     postprocessor_args = {}
@@ -639,19 +813,24 @@ def build_ydl_opts(job_id: str, request: DownloadRequest) -> Dict[str, Any]:
                         pass
                     jobs[job_id].title = d.get('info_dict', {}).get('title') or jobs[job_id].title
                     
-                    # Notificar WebSocket (Thread Safe)
-                    if main_event_loop:
-                        asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
+                    # Notificar WebSocket - REMOVED (Polling strategy)
+                    # if main_event_loop:
+                    #     asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
             except Exception as e:
                 print(f"Hook error: {e}")
         elif d['status'] == 'finished':
             if job_id in jobs:
                 jobs[job_id].progress = 100
                 jobs[job_id].status = 'processing'
-                if main_event_loop:
-                    asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
+                # if main_event_loop:
+                #     asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
 
     ydl_opts = {
+        # ANTI-RATE-LIMIT (300+ OK)
+        "sleep_requests": 1,
+        "sleep_interval": 5,
+        "max_sleep_interval": 15,
+
         'format': format_str,
         'outtmpl': os.path.join(downloads_dir, '%(title)s.%(ext)s'),
         'quiet': False, 
@@ -683,126 +862,254 @@ def build_ydl_opts(job_id: str, request: DownloadRequest) -> Dict[str, Any]:
         ydl_opts['force_keyframes_at_cuts'] = True
 
     # Cover path overrides
-    if request.cover_path:
+    if request.cover_path and os.path.exists(request.cover_path):
         ydl_opts['writethumbnail'] = False
         postprocessors = [p for p in postprocessors if p.get('key') != 'EmbedThumbnail']
         ydl_opts['postprocessors'] = postprocessors
 
+    # Remove legacy concurrent fragments and retries from here as they will be set per strategy
+    # ydl_opts['concurrent_fragments'] = 8  # Moved to apply_common
+    
     return ydl_opts
 
-def blocking_download(job_id: str, request: DownloadRequest):
-    print(f"[{job_id}] INICIO do download: {request.url}")
-    # This function is the synchronous worker
-    ydl_opts = build_ydl_opts(job_id, request)
+def apply_common_yt_dlp_options(ydl_opts, job_id, request):
+    """Enriches the base ydl_opts with common settings like output path, logger, etc."""
     downloads_dir = os.path.join(get_base_dir(), "downloads")
+    os.makedirs(downloads_dir, exist_ok=True)
     
-    # ===== ESTRATÉGIA MULTI-MÉTODO =====
-    # Define strategies as lambdas that return a dict of extra ydl_opts or None if not applicable
-    strategies = [
-        # 1. Cookies arquivo (usuário)
-        lambda: {"cookiefile": request.cookies_path} if request.cookies_path and os.path.exists(request.cookies_path) else None,
-        
-        # 2. Cookies browser
-        lambda: {"cookiesfrombrowser": (request.browser_cookies, None, None, None)} if request.browser_cookies else None,
-        
-        # 3. Rotação player_clients (iOS, Android, TV)
-        lambda: {"extractor_args": {"youtube": {"player_client": ["ios", "android", "tv", "web"]}}},
-        
-        # 4. Impersonate (Chrome)
-        lambda: {"impersonate": "chrome110"}
-    ]
+    # Resource Path
+    resource_dir = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False):
+        if hasattr(sys, '_MEIPASS'):
+            resource_dir = sys._MEIPASS
+        else:
+            resource_dir = os.path.join(os.path.dirname(sys.executable), '_internal')
+            
+    # Common Options
+    common_opts = {
+        'outtmpl': os.path.join(downloads_dir, '%(title)s.%(ext)s'),
+        'quiet': False,
+        'nocheckcertificate': True,
+        'ignoreerrors': False,
+        'no_warnings': False,
+        'writethumbnail': True,
+        'ffmpeg_location': resource_dir,
+        'js_runtimes': {'node': {'executable': r'C:\Program Files\nodejs\node.exe'}}, 
+        'noplaylist': True,
+        'no_overwrites': True,
+        'retries': 5,
+        'fragment_retries': 3,
+        'sleep_requests': 1,
+        'sleep_interval': 2,
+        'max_sleep_interval': 6,
+    }
     
-    success = False
-    last_error = None
-    info = None
-    final_filename = None
+    ydl_opts.update(common_opts)
+    
+    # Ranges
+    start_sec = parse_time(request.start_time)
+    end_sec = parse_time(request.end_time)
+    if start_sec is not None or end_sec is not None:
+        def range_func(info_dict, ydl):
+            return [{'start_time': start_sec, 'end_time': end_sec}]
+        ydl_opts['download_ranges'] = range_func
+        ydl_opts['force_keyframes_at_cuts'] = True
 
-    for i, strategy_func in enumerate(strategies):
+    # Post Processors handling for Metadata/Cover
+    # (Re-use existing logic logic for postprocessors construction based on request)
+    # Ideally we should extract the postprocessor construction logic to a helper too, 
+    # but for now we will assume the caller 'build_ydl_opts_for_strategy' or the loop handles it.
+    # To keep it simple, we will reuse the logic from the old 'build_ydl_opts' BUT 
+    # since that function was doing EVERYTHING, we need to be careful.
+    
+    # LET'S RE-IMPLEMENT A LIGHTWEIGHT HELPER FOR POSTPROCESSORS
+    postprocessors = []
+    postprocessor_args = {}
+    
+    # ... (Logic for Audio/Video filters would go here, effectively duplicating or moving it)
+    # For safely refactoring, let's keep build_ydl_opts as a 'base builder' but strip the strategy parts
+    pass 
+
+def build_ydl_opts_for_strategy(job_id: str, request, strategy: dict):
+    # Base options for this strategy
+    ydl_opts = {
+        'format': strategy['format'],
+        'concurrent_fragments': 4, # Less aggressive to avoid rate limits during retries
+    }
+    
+    # Cookies
+    if strategy.get("use_cookies") and request.cookies_path:
+        ydl_opts["cookiefile"] = request.cookies_path
+    elif strategy.get("use_cookies") and get_cookies_path():
+        ydl_opts["cookiefile"] = get_cookies_path()
+        
+    # Client
+    client = strategy.get("client")
+    if client:
+        ydl_opts.setdefault("extractor_args", {})
+        ydl_opts["extractor_args"]["youtube"] = {
+            "player_client": [client]
+        }
+        
+    # Impersonate
+    if strategy.get("impersonate"):
+        ydl_opts["impersonate"] = strategy.get("impersonate")
+
+    # Inherit complexity from legacy function (Postprocessors, Filters, Paths)
+    # We call the legacy function to get the 'heavy lifting' opts, then override with strategy
+    # This is a bit hacky but safer than rewriting 200 lines of codec logic right now.
+    
+    base_opts = build_ydl_opts(job_id, request) # Call the OLD function to get paths/filters
+    
+    # Merge strategy overrides
+    base_opts.update(ydl_opts)
+    
+    return base_opts
+
+def download_with_retries(job_id: str, request: DownloadRequest):
+    """
+    Smart Retry Pipeline for downloads.
+    Cycles through strategies: Web -> Cookies -> IOs -> Fallback.
+    """
+    print(f"[{job_id}] STARTING SMART DOWNLOAD: {request.url}")
+    
+    strategies = [
+        # 1. Standard Audio/Video (Web Client, No Cookies if possible)
+        {
+            "name": "standard_web",
+            "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            "use_cookies": True, # Try with cookies if avail, safe default
+            "client": "web",
+        },
+        # 2. TV Client (Often bypasses agegates)
+        {
+            "name": "tv_client",
+            "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            "use_cookies": True,
+            "client": "tv",
+        },
+        # 3. Android Client
+        {
+            "name": "android_client",
+            "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            "use_cookies": True,
+            "client": "android",
+        },
+         # 4. iOS Client
+        {
+            "name": "ios_client",
+            "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            "use_cookies": True,
+            "client": "ios",
+        },
+        # 5. Quality Fallback (720p / different audio) if Video
+        {
+            "name": "fallback_quality",
+            "format": "bestvideo[height<=720]+bestaudio/best" if request.mode == 'video' else "bestaudio[protocol^=http]",
+            "use_cookies": True,
+            "client": "web",
+        },
+    ]
+
+    st = jobs.get(job_id)
+    if not st: return
+
+    for idx, strat in enumerate(strategies, start=1):
+        st.error = None # Clear previous error
+        
+        # Only notify 'trying' if it's not the first one to avoid UI flicker
+        if idx > 1:
+            st.status = f"retry_method_{idx}" # Frontend can show "Retrying (Method 2)..."
+            if main_event_loop:
+                 asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
+        
+        print(f"[{job_id}] Strategy {idx}/{len(strategies)}: {strat['name']}")
+        
         try:
-            # Re-build base opts to avoid pollution from previous attempts
-            ydl_opts = build_ydl_opts(job_id, request)
+            ydl_opts = build_ydl_opts_for_strategy(job_id, request, strat)
             
-            extra_opts = strategy_func()
-            if extra_opts is None and i < 2: 
-                # Strategies 1 & 2 are skipped if no cookies provided
-                continue
-                
-            if extra_opts:
-                ydl_opts.update(extra_opts)
-            
-            print(f"[{job_id}] Tentando Estratégia {i+1}...")
-            
+            # Execute Download
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(request.url, download=True)
-                if 'entries' in info: info = info['entries'][0]
                 
-                # Check for 1080p if that was the goal
-                if request.quality == '1080p' or (request.quality.endswith('p') and int(request.quality[:-1]) >= 1080):
-                    height = info.get("height", 0)
-                    if height and height >= 1080:
-                        print(f"[{job_id}] ✅ 1080p confirmado com estratégia {i+1}")
-                
+                # Check for 1080p success if requested
+                if request.quality == '1080p' and request.mode == 'video':
+                     h = info.get("height", 0)
+                     print(f"[{job_id}] Downloaded height: {h}")
+
                 filename = ydl.prepare_filename(info)
                 final_filename = os.path.splitext(os.path.basename(filename))[0]
                 
-                # Apply same suffix logic
+                # Suffix logic (copied from blocking_download)
                 if request.mode == 'video': final_filename += '.mp4'
                 elif request.quality == 'flac': final_filename += '.flac'
                 elif request.quality == 'best': final_filename += '.m4a'
                 else: final_filename += '.mp3'
-            
-            success = True
-            break
-            
+                
+                # Success!
+                st.status = "processing"
+                st.progress = 100.0
+                st.filename = final_filename
+                
+                # History (simplified)
+                try:
+                    save_to_history({
+                        "title": info.get('title'),
+                        "file": final_filename,
+                        "quality": request.quality,
+                        "mode": request.mode,
+                        "url": request.url
+                    })
+                except: pass
+                
+                # Save to DB (Persistence)
+                mark_downloaded_db(request.playlist_id, request.video_id, info.get('title', 'Unknown'), final_filename, request.url)
+
+                if main_event_loop:
+                    asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
+                return # Exit success
+
         except Exception as e:
-            print(f"[{job_id}] Estratégia {i+1} falhou: {e}")
-            last_error = e
+            msg = str(e)
+            print(f"[{job_id}] Strategy {idx} failed: {msg}")
+            
+            # 1. Rate Limit
+            if is_match(msg, TRANSIENT_ERRORS):
+                print(f"[{job_id}] RATE LIMIT DETECTED. Cooling down...")
+                st.status = "rate_limited" 
+                # Backoff: 5s, 10s, 15s...
+                time.sleep(5 * idx) 
+                continue # Try next strategy (or duplicate same strategy if we wanted)
+
+            # 2. Login Required
+            if is_match(msg, LOGIN_ERRORS):
+                print(f"[{job_id}] LOGIN REQUIRED. Stopping.")
+                st.status = "error"
+                st.error = "Login necessário (YouTube bloqueou o vídeo). Atualize o cookies.txt."
+                mark_error_db(request.playlist_id, request.video_id, f"Login Required", st.error) # DB
+                if main_event_loop:
+                    asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
+                return # Stop completely
+                
+            # 3. Format Error
+            if is_match(msg, FORMAT_ERRORS):
+                 print(f"[{job_id}] Format unavailable. Trying next...")
+                 continue
+
+            # Generic error -> Try next
             time.sleep(1)
+            continue
+            
+    # If we fall through here, all failed
+    st.status = "error"
+    st.error = "Falha em todos os métodos de download (possível link inválido ou bloqueio de IP)."
+    mark_error_db(request.playlist_id, request.video_id, "All strategies failed", st.error) # DB
+    if main_event_loop:
+        asyncio.run_coroutine_threadsafe(notify_job_update(job_id), main_event_loop)
 
-    if not success:
-        if last_error: raise last_error
-        else: raise Exception("Todas as estratégias de download falharam.")
-
-    # Post-processing (Metadata)
-    if request.title or request.artist or request.cover_path:
-         try:
-             output_file = os.path.join(downloads_dir, final_filename)
-             if os.path.exists(output_file):
-                 temp_output = os.path.join(downloads_dir, f"tagged_{final_filename}")
-                 cmd = ['ffmpeg', '-y', '-i', output_file]
-                 if request.cover_path and os.path.exists(request.cover_path):
-                     cmd.extend(['-i', request.cover_path])
-                     cmd.extend(['-map', '0:0', '-map', '1:0', '-c', 'copy', '-id3v2_version', '3', '-metadata:s:v', 'title=Album cover', '-metadata:s:v', 'comment=Cover (front)'])
-                 else:
-                     cmd.extend(['-c', 'copy'])
-                 if request.title: cmd.extend(['-metadata', f'title={request.title}'])
-                 if request.artist: cmd.extend(['-metadata', f'artist={request.artist}'])
-                 cmd.append(temp_output)
-                 subprocess.run(cmd, check=True, capture_output=True)
-                 os.replace(temp_output, output_file)
-         except Exception as e:
-             print(f"[{job_id}] Erro ao aplicar tags: {e}")
-
-    # History
-    try:
-        save_to_history({
-            "title": request.title if request.title else info.get('title'),
-            "artist": request.artist if request.artist else info.get('artist'),
-            "thumbnail": info.get('thumbnail'),
-            "file": final_filename,
-            "quality": request.quality,
-            "mode": request.mode,
-            "original_url": request.url
-        })
-    except Exception as e:
-        print(f"[{job_id}] Erro histórico: {e}")
-
-    # Update Job State (Success)
-    st = jobs.get(job_id)
-    if st:
-        st.filename = final_filename
-    
-    print(f"[{job_id}] FIM do download: {request.url}")
+def blocking_download(job_id: str, request: DownloadRequest):
+    # Wrapper to maintain compatibility but use new logic
+    download_with_retries(job_id, request)
 
 async def run_download(job_id: str, request: DownloadRequest):
     await asyncio.to_thread(blocking_download, job_id, request)
@@ -818,11 +1125,36 @@ async def worker_loop():
         
         async with download_sem:
             try:
-                await run_download(job_id, request)
-                if st:
-                    st.status = "done"
-                    st.finished_at = time.time()
-                    await notify_job_update(job_id)
+                # TIMEOUT: 5 minutos (300 segundos) para evitar travamentos infinitos
+                task = asyncio.create_task(run_download(job_id, request))
+                done, pending = await asyncio.wait([task], timeout=300)
+
+                if pending:
+                    # Se não terminou em 5min, cancela e marca timeout
+                    for t in pending: t.cancel()
+                    if st:
+                        st.status = "timeout"
+                        st.error = "Download cancelado por tempo excedido (timeout 5min)"
+                        await notify_job_update(job_id)
+                else:
+                    # Se terminou com sucesso (ou erro interno tratado), pega o exception se houver
+                    try:
+                        await task
+                        # Se chegou aqui, run_download terminou ok
+                        if st and st.status not in ["error", "timeout", "done"]: 
+                             # 'done' é setado dentro do blocking_download normalmente, mas garantindo
+                             pass 
+                        
+                        if st and st.status == "processing": # Se parou em processing no blocking_download
+                             st.status = "done"
+                             st.finished_at = time.time()
+                             await notify_job_update(job_id)
+                             
+                    except Exception as task_error:
+                        raise task_error # Vai para o except abaixo
+
+            except asyncio.CancelledError:
+                 if st: st.status = "cancelled"
             except Exception as e:
                 # Should be handled in run_download/blocking_download, but just in case
                 if st:
@@ -839,6 +1171,8 @@ async def worker_loop():
                     st.finished_at = time.time()
             finally:
                 download_queue.task_done()
+                if st and st.status in ["done", "error", "timeout"]:
+                     await notify_job_update(job_id)
 
 @app.on_event("startup")
 async def startup_event():
@@ -846,9 +1180,52 @@ async def startup_event():
     global main_event_loop
     main_event_loop = asyncio.get_running_loop()
     
-    # Start 2 workers (consuming 4 semaphore slots max)
-    asyncio.create_task(worker_loop())
-    asyncio.create_task(worker_loop())
+    # Start workers based on MAX_CONCURRENT_DOWNLOADS
+    for _ in range(MAX_CONCURRENT_DOWNLOADS):
+        asyncio.create_task(worker_loop())
+
+class RetryRequest(BaseModel):
+    playlist_id: str
+    video_id: str
+
+@app.post("/download/retry")
+async def retry_download(req: RetryRequest):
+    print(f"Redownload requested for {req.video_id} in {req.playlist_id}")
+    rec = get_download_record(req.playlist_id, req.video_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Registro não encontrado no histórico para este vídeo.")
+
+    # Mark as 'missing' so it's treated as pending
+    mark_missing_db(req.playlist_id, req.video_id)
+
+    # Validate URL
+    url = rec.get("url")
+    if not url:
+        url = f"https://www.youtube.com/watch?v={rec['video_id']}"
+
+    # Re-queue
+    download_req = DownloadRequest(
+        url=url,
+        playlist_id=req.playlist_id,
+        video_id=req.video_id,
+        title=rec.get("title"),
+        quality="best", # Default to best
+        mode="audio"    # Default to audio (safe guess, or we could store mode too)
+    )
+
+    job_id = str(uuid.uuid4())
+    # Register job immediately
+    jobs[job_id] = JobState(
+        id=job_id,
+        status="queued",
+        progress=0.0,
+        created_at=time.time(),
+        title=rec.get("title") or "Redownload",
+    )
+    
+    await download_queue.put((job_id, download_req))
+    
+    return {"status": "ok", "job_id": job_id, "message": "Enfileirado novamente"}
 
 @app.post("/download/enqueue")
 async def enqueue_download(req: DownloadRequest):

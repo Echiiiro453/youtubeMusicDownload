@@ -1,39 +1,36 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Play, X } from 'lucide-react';
-import { useDownloadStatus } from '../hooks/useDownloadStatus';
 
-export const QueueItem = ({ item, getApiUrl, removeFromQueue, setCurrentSong, updateQueueItem }) => {
-    // Se o item já tem jobId (foi enfileirado), usa o hook. 
-    // Se ainda estiver 'pending' (não enviado ao backend), jobId será undefined e hook não conecta.
-    const { status: wsStatus, progress: wsProgress, title: wsTitle, error } = useDownloadStatus(item.jobId, getApiUrl());
+export const QueueItem = ({ item, removeFromQueue, setCurrentSong, job }) => {
+    // 💡 Estado Global: job vem das props (App.jsx)
+    // Se não tiver job (ainda não existe no backend), usa dados locais do item
 
-    // Sincronizar estado do WS com o pai (App.jsx)
-    useEffect(() => {
-        if (wsStatus && wsStatus !== item.status) {
-            updateQueueItem(item.uniqueId, {
-                status: wsStatus,
-                progress: wsProgress,
-                // Só atualiza título se vier do WS
-                ...(wsTitle ? { title: wsTitle } : {}),
-                ...(error ? { error } : {})
-            });
-        } else if (wsProgress !== item.progress && wsStatus === item.status) {
-            // Otimização: atualizar apenas progresso se status for o mesmo
-            updateQueueItem(item.uniqueId, { progress: wsProgress });
-        }
-    }, [wsStatus, wsProgress, wsTitle, error, item.uniqueId, updateQueueItem, item.status, item.progress]);
-
-    // Decidir o que mostrar: dados do WS (prioridade) ou do item local
-    const displayStatus = wsStatus || item.status;
-    const displayProgress = wsProgress !== undefined ? wsProgress : item.progress;
-    const displayTitle = wsTitle || item.title;
+    // Decidir o que mostrar: dados do Global WS (prioridade) ou do item local
+    const displayStatus = job?.status || item.status;
+    const displayProgress = job?.progress !== undefined ? job?.progress : item.progress;
+    const displayTitle = job?.title || item.title;
+    const error = job?.error;
 
     const getStatusText = () => {
         if (displayStatus === 'pending') return 'Aguardando Início';
         if (displayStatus === 'queued') return 'Na Fila';
+
+        if (displayStatus === 'timeout') return '⏰ Tempo excedido';
+
+        // Se já concluiu (100% progress e done)
+        if (displayStatus === 'done' || displayStatus === 'completed') return 'Concluído ✅';
+
+        // Se está processando metadados final (backend avisa 'processing')
+        if (displayStatus === 'processing') return `Finalizando...`;
+
+        // Se o download terminou (progress > 98) mas status ainda não virou 'done'
+        if ((displayStatus === 'downloading' || displayStatus === 'running') && displayProgress >= 98) {
+            return 'Finalizando...';
+        }
+
+        // Estado normal de download
         if (displayStatus === 'running' || displayStatus === 'downloading') return `Baixando ${displayProgress.toFixed(1)}%`;
-        if (displayStatus === 'processing') return 'Processando...';
-        if (displayStatus === 'done' || displayStatus === 'completed') return 'Concluído';
+
         if (displayStatus === 'error') return 'Erro';
         return displayStatus;
     };
@@ -57,8 +54,8 @@ export const QueueItem = ({ item, getApiUrl, removeFromQueue, setCurrentSong, up
                 <h4 className="text-white font-medium truncate text-sm">{displayTitle}</h4>
                 <div className="flex items-center justify-between mt-1">
                     <span className={`text-xs font-bold ${isDownloading ? 'text-primary' :
-                            isCompleted ? 'text-green-400' :
-                                isError ? 'text-red-400' : 'text-gray-500'
+                        isCompleted ? 'text-green-400' :
+                            isError ? 'text-red-400' : 'text-gray-500'
                         }`}>
                         {getStatusText()}
                         {isError && error && ` - ${error}`}
