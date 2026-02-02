@@ -21,6 +21,47 @@ def get_base_dir():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
+def get_data_dir():
+    # 1. Android (Chaquopy)
+    try:
+        from com.chaquo.python import Python
+        context = Python.getPlatform().getApplication()
+        return str(context.getFilesDir().getAbsolutePath())
+    except:
+        pass
+        
+    # 2. Windows/Desktop (PyInstaller)
+    if getattr(sys, 'frozen', False):
+        base = os.path.dirname(sys.executable)
+        # Se estiver em Program Files, use APPDATA para poder escrever
+        if "Program Files" in base:
+            appdata = os.environ.get('APPDATA')
+            if appdata:
+                path = os.path.join(appdata, "AppMusica")
+                os.makedirs(path, exist_ok=True)
+                return path
+        return base
+    
+    # 3. Development
+    return os.path.dirname(os.path.abspath(__file__))
+
+def get_downloads_dir():
+    # 1. Android
+    try:
+        from com.chaquo.python import Python
+        from android.os import Environment
+        return str(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath())
+    except:
+        pass
+        
+    # 2. Desktop (Saved in User Downloads if in Program Files, else relative)
+    data_dir = get_data_dir()
+    if "Program Files" in os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else False:
+        user_home = os.path.expanduser("~")
+        return os.path.join(user_home, "Downloads", "AppMusica")
+        
+    return os.path.join(data_dir, "downloads")
+
 # Error categorization constants
 TRANSIENT_ERRORS = (
     "rate-limited",
@@ -56,7 +97,7 @@ import sqlite3
 from pathlib import Path
 
 # ====== BANCO DE DADOS (PERSISTÊNCIA) ======
-DB_PATH = os.path.join(get_base_dir(), "downloads.db")
+DB_PATH = os.path.join(get_data_dir(), "downloads.db")
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
@@ -338,11 +379,11 @@ def progress_hook(d):
 # Helper for Persistence (EXE vs Script)
 
 
-HISTORY_FILE = os.path.join(get_base_dir(), 'history.json')
+HISTORY_FILE = os.path.join(get_data_dir(), 'history.json')
 
 def get_cookies_path():
     # 1. User provided (dist/cookies.txt)
-    user_path = os.path.join(get_base_dir(), 'cookies.txt')
+    user_path = os.path.join(get_data_dir(), 'cookies.txt')
     if os.path.exists(user_path):
         return user_path
     
@@ -700,7 +741,7 @@ def build_ydl_opts(job_id: str, request: DownloadRequest) -> Dict[str, Any]:
             st.progress = 100.0
 
     # Reusing existing logic for paths and options
-    downloads_dir = os.path.join(get_base_dir(), "downloads")
+    downloads_dir = get_downloads_dir()
     os.makedirs(downloads_dir, exist_ok=True)
     
     # Resource Path
@@ -883,7 +924,7 @@ def build_ydl_opts(job_id: str, request: DownloadRequest) -> Dict[str, Any]:
 
 def apply_common_yt_dlp_options(ydl_opts, job_id, request):
     """Enriches the base ydl_opts with common settings like output path, logger, etc."""
-    downloads_dir = os.path.join(get_base_dir(), "downloads")
+    downloads_dir = get_downloads_dir()
     os.makedirs(downloads_dir, exist_ok=True)
     
     # Resource Path
@@ -1285,14 +1326,14 @@ def clear_history():
 
 @app.get("/auth_status")
 def get_auth_status():
-    cookie_path = os.path.join(get_base_dir(), "cookies.txt")
+    cookie_path = os.path.join(get_data_dir(), "cookies.txt")
     if os.path.exists(cookie_path) and os.path.getsize(cookie_path) > 0:
         return {"authenticated": True}
     return {"authenticated": False}
 
 @app.post("/open_folder")
 def open_folder():
-    downloads_dir = os.path.join(get_base_dir(), "downloads")
+    downloads_dir = get_downloads_dir()
     if os.path.exists(downloads_dir):
         os.startfile(downloads_dir)
     return {"status": "opened"}
@@ -1303,7 +1344,7 @@ import shutil
 @app.post("/upload_cookies")
 async def upload_cookies(file: UploadFile = File(...)):
     try:
-        cookie_path = os.path.join(get_base_dir(), "cookies.txt")
+        cookie_path = os.path.join(get_data_dir(), "cookies.txt")
         
         with open(cookie_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -1316,7 +1357,7 @@ async def upload_cookies(file: UploadFile = File(...)):
 @app.post("/upload_cover")
 async def upload_cover(file: UploadFile = File(...)):
     try:
-        temp_dir = os.path.join(get_base_dir(), "temp_covers")
+        temp_dir = os.path.join(get_data_dir(), "temp_covers")
         os.makedirs(temp_dir, exist_ok=True)
         
         # Save with original extension
@@ -1362,7 +1403,7 @@ def accept_terms():
 
 @app.get("/terms/content")
 def get_terms_content():
-    path = os.path.join(get_base_dir(), "TERMOS_DE_USO.txt")
+    path = os.path.join(get_data_dir(), "TERMOS_DE_USO.txt")
     if not os.path.exists(path):
         return {"content": "Termos de uso não encontrados."}
     with open(path, "r", encoding="utf-8") as f:
@@ -1409,7 +1450,7 @@ if __name__ == "__main__":
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
             try:
                 terms_src = os.path.join(sys._MEIPASS, 'TERMOS_DE_USO.txt')
-                terms_dst = os.path.join(os.path.dirname(sys.executable), 'TERMOS_DE_USO.txt')
+                terms_dst = os.path.join(get_data_dir(), 'TERMOS_DE_USO.txt')
                 if os.path.exists(terms_src) and not os.path.exists(terms_dst):
                     shutil.copy2(terms_src, terms_dst)
                     print(f"📄 Termos de Uso extraídos para: {terms_dst}")

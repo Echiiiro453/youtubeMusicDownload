@@ -816,6 +816,7 @@ function App() {
         isAuthenticated={isAuthenticated}
         organizeByArtist={organizeByArtist}
         setOrganizeByArtist={setOrganizeByArtist}
+        apiUrl={API_URL}
         onUploadSuccess={() => {
           checkAuth();
           alert("Cookies atualizados com sucesso!");
@@ -1796,7 +1797,7 @@ function SkeletonPlaylistItem() {
   );
 }
 
-function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, setOrganizeByArtist, onUploadSuccess }) {
+function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, setOrganizeByArtist, onUploadSuccess, apiUrl }) {
   if (!isOpen) return null;
 
   const handleFileUpload = async (e) => {
@@ -1812,7 +1813,7 @@ function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, set
     formData.append('file', file);
 
     try {
-      await axios.post('http://localhost:8000/upload_cookies', formData, {
+      await axios.post(`${apiUrl}/upload_cookies`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       onUploadSuccess();
@@ -1829,7 +1830,7 @@ function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, set
       // Tentar fechar a janela primeiro (se possível)
       try { window.close(); } catch (e) { }
 
-      await axios.post('http://localhost:8000/shutdown');
+      await axios.post(`${apiUrl}/shutdown`);
 
       // Feedback visual se a janela não fechar
       document.body.innerHTML = `
