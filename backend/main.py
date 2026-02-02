@@ -21,6 +21,29 @@ def get_base_dir():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
+def get_resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    # Also check the script/exe directory
+    path = os.path.join(base_path, relative_path)
+    if os.path.exists(path): return path
+    
+    # Check next to main.py
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
+    if os.path.exists(path): return path
+    
+    # Check next to exe
+    if getattr(sys, 'frozen', False):
+        path = os.path.join(os.path.dirname(sys.executable), relative_path)
+        if os.path.exists(path): return path
+        
+    return relative_path
+
 def get_data_dir():
     # 1. Android (Chaquopy)
     try:
@@ -1403,9 +1426,9 @@ def accept_terms():
 
 @app.get("/terms/content")
 def get_terms_content():
-    path = os.path.join(get_data_dir(), "TERMOS_DE_USO.txt")
+    path = get_resource_path("TERMOS_DE_USO.txt")
     if not os.path.exists(path):
-        return {"content": "Termos de uso não encontrados."}
+        return {"content": "Termos de uso não encontrados. Verifique se o arquivo TERMOS_DE_USO.txt existe no diretório do aplicativo."}
     with open(path, "r", encoding="utf-8") as f:
         return {"content": f.read()}
 
@@ -1447,9 +1470,9 @@ if __name__ == "__main__":
         multiprocessing.freeze_support()
         
         # Extract Terms of Use if running as exe
-        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        if getattr(sys, 'frozen', False):
             try:
-                terms_src = os.path.join(sys._MEIPASS, 'TERMOS_DE_USO.txt')
+                terms_src = get_resource_path('TERMOS_DE_USO.txt')
                 terms_dst = os.path.join(get_data_dir(), 'TERMOS_DE_USO.txt')
                 if os.path.exists(terms_src) and not os.path.exists(terms_dst):
                     shutil.copy2(terms_src, terms_dst)
