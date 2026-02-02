@@ -23,26 +23,30 @@ def get_base_dir():
 
 def get_resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
+    if hasattr(sys, '_MEIPASS'):
         # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    # Also check the script/exe directory
-    path = os.path.join(base_path, relative_path)
-    if os.path.exists(path): return path
-    
-    # Check next to main.py
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
-    if os.path.exists(path): return path
-    
-    # Check next to exe
-    if getattr(sys, 'frozen', False):
-        path = os.path.join(os.path.dirname(sys.executable), relative_path)
+        path = os.path.join(sys._MEIPASS, relative_path)
         if os.path.exists(path): return path
+
+    # Check next to main.py or next to exe
+    path = os.path.join(get_base_dir(), relative_path)
+    if os.path.exists(path): return path
+    
+    # Check current working directory
+    path = os.path.join(os.getcwd(), relative_path)
+    if os.path.exists(path): return path
         
     return relative_path
+
+FALLBACK_TERMS = """
+TERMOS DE USO - APPMUSICA
+
+Ao utilizar este aplicativo, você concorda com os seguintes termos:
+1. Este software é destinado exclusivamente para uso pessoal e educacional.
+2. O usuário é o único responsável pelo conteúdo baixado e pelo respeito aos direitos autorais.
+3. Não nos responsabilizamos pelo uso indevido desta ferramenta.
+4. O uso continuado implica na aceitação destes termos.
+"""
 
 def get_data_dir():
     # 1. Android (Chaquopy)
@@ -1427,10 +1431,15 @@ def accept_terms():
 @app.get("/terms/content")
 def get_terms_content():
     path = get_resource_path("TERMOS_DE_USO.txt")
-    if not os.path.exists(path):
-        return {"content": "Termos de uso não encontrados. Verifique se o arquivo TERMOS_DE_USO.txt existe no diretório do aplicativo."}
-    with open(path, "r", encoding="utf-8") as f:
-        return {"content": f.read()}
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return {"content": f.read()}
+        except Exception as e:
+            print(f"Error reading terms: {e}")
+    
+    # Return professional fallback if file is missing
+    return {"content": FALLBACK_TERMS}
 
 # App Execution and Static Files
 # App Execution and Static Files
