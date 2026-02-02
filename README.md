@@ -1,106 +1,84 @@
-# 🎵 Multi-Platform Music Downloader
+# 🎵 Multi-Platform Music Downloader (AppMusica)
+
 [![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/youtubeMusicDownload/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/Platforms-Desktop%20|%20Mobile%20|%20Web-brightgreen)](#)
 
-Uma solução completa e profissional para download de músicas e vídeos, agora disponível para **Desktop (Windows)** e **Mobile (Android)**.
+[🇺🇸 English](#-english) | [🇧🇷 Português](#-português)
 
 ---
 
-## 🌟 Visão Geral
-Este projeto evoluiu de uma simples página web para um ecossistema multiplataforma robusto. Ele utiliza o poder do **yt-dlp** e **FFmpeg** no backend (Python) com interfaces modernas em **React** (Web/Desktop) e **React Native** (Android).
+## 🇺🇸 English
 
-### ✨ Funcionalidades Principais
-- **Áudio de Alta Fidelidade**: Suporte a MP3 (320kbps), M4A e FLAC (Lossless).
-- **Vídeo em 4K**: Download de vídeos em alta resolução até 60fps.
-- **Metadados Inteligentes**: Inserção automática de capas de álbum, artistas, títulos e letras 🎤.
-- **Multi-Plataforma**: 
-  - **🖥️ Desktop**: Aplicativo nativo ultra-leve construído com **Tauri (Rust)**.
-  - **📱 Mobile**: APK standalone com backend embutido via **Chaquopy**.
-  - **🌐 Web**: Interface responsiva e rápida.
-- **Playlist Manager**: Seleção individual ou download em lote de playlists completas.
-- **Magic Search**: Busque músicas colando links do Spotify ou Apple Music.
+### 🌟 Overview
+AppMusica is a professional multi-platform solution for downloading music and videos from YouTube, now available for **Desktop (Windows)** and **Mobile (Android)**.
 
----
+### ✨ Key Features
+- **High Fidelity Audio**: Support for MP3 (320kbps), M4A, and FLAC (Lossless).
+- **4K Video**: Download high-resolution videos up to 60fps.
+- **Smart Metadata**: Automatic embedding of album covers, artists, titles, and **lyrics** 🎤.
+- **Multi-Platform**: 
+  - **🖥️ Desktop**: Ultra-lightweight native app built with **Tauri (Rust)**.
+  - **📱 Mobile**: Standalone APK with embedded Python backend via **Chaquopy**.
+- **Magic Search**: Search for songs by pasting Spotify or Apple Music links.
+- **Smart Retry**: Intelligent system to bypass YouTube blocks (403 errors).
 
-## 🏗️ Estrutura do Projeto
-O repositório está organizado de forma modular para suportar todas as plataformas:
-
+### 🏗️ Project Structure
 ```text
 youtubeMusicDownload/
-├── 📂 backend/           # Lógica central em Python (FastAPI + yt-dlp)
-├── 📂 frontend/          # Interface Web/Desktop principal
-│   └── 📂 src-tauri/     # Configurações nativas do Desktop (Rust)
-├── 📂 mobile/            # Aplicativo Android (React Native + Chaquopy)
-├── 📂 docs/              # Landing Page do projeto (GitHub Pages)
-└── 📄 README.md          # Esta documentação
+├── 📂 backend/           # Core Python Logic (FastAPI + yt-dlp)
+├── 📂 frontend/          # Web/Desktop Interface (React)
+│   └── 📂 src-tauri/     # Native Desktop Configs (Rust)
+├── 📂 mobile/            # Android App (React Native + Chaquopy)
+└── 📄 README.md          # Documentation
 ```
+
+### 🖥️ Desktop Setup (Tauri)
+1. Install [Rust](https://rustup.rs/) and [Node.js](https://nodejs.org/).
+2. `cd frontend && npm install`
+3. `npm run tauri dev` (Dev mode) or `npm run tauri build` (Generate .exe).
+
+### 📱 Mobile Setup (Android)
+1. Open `mobile/android` in **Android Studio**.
+2. Gradle will auto-sync with **Chaquopy** and **FFmpeg**.
+3. Connect your device and run: `cd mobile && npx react-native run-android`.
 
 ---
 
-## 🖥️ Como rodar: Desktop (Tauri + Rust)
-A versão Desktop é a mais recomendada para uso pessoal, oferecendo performance nativa e transparência **Acrylic**.
+## 🇧🇷 Português
 
-### Pré-requisitos
-- **Rust**: [Instalar via rustup.rs](https://rustup.rs/)
-- **Node.js**: v18+
+### 🌟 Visão Geral
+O AppMusica é uma solução profissional multiplataforma para download de músicas e vídeos do YouTube, agora disponível para **Desktop (Windows)** e **Mobile (Android)**.
 
-### Instruções
-```bash
-cd frontend
-npm install
-# Rodar em modo dev
-npm run tauri dev
-# Gerar instalador (.exe / .msi)
-npm run tauri build
+### ✨ Funcionalidades Principais
+- **Áudio de Alta Fidelidade**: Suporte para MP3 (320kbps), M4A e FLAC (Lossless).
+- **Vídeo em 4K**: Download de vídeos em alta resolução até 60fps.
+- **Metadados Inteligentes**: Inserção automática de capas, artistas, títulos e **letras** 🎤.
+- **Multi-Plataforma**: 
+  - **🖥️ Desktop**: App nativo leve construído com **Tauri (Rust)**.
+  - **📱 Mobile**: APK independente com backend Python embutido via **Chaquopy**.
+- **Magic Search**: Busque músicas colando links do Spotify ou Apple Music.
+- **Smart Retry**: Sistema inteligente para ignorar bloqueios do YouTube (erros 403).
+
+### 🏗️ Estrutura do Projeto
+```text
+youtubeMusicDownload/
+├── 📂 backend/           # Lógica central em Python
+├── 📂 frontend/          # Interface Web/Desktop
+│   └── 📂 src-tauri/     # Configurações Tauri (Rust)
+├── 📂 mobile/            # App Android (React Native)
+└── 📄 README.md          # Documentação
 ```
 
----
+### 🖥️ Configuração Desktop (Tauri)
+1. Instale o [Rust](https://rustup.rs/) e o [Node.js](https://nodejs.org/).
+2. `cd frontend && npm install`
+3. `npm run tauri dev` (Modo dev) ou `npm run tauri build` (Gerar .exe).
 
-## 📱 Como rodar: Mobile (Android)
-O aplicativo mobile roda o backend Python nativamente no seu celular!
-
-### Pré-requisitos
-- **Android Studio**
-- **Java 17+**
-
-### Instruções
-1. Abra a pasta `mobile/android` no Android Studio.
-2. O Gradle irá sincronizar automaticamente (baixando o Chaquopy e FFmpeg).
-3. Conecte seu celular e rode:
-```bash
-cd mobile
-npm install
-npx react-native run-android
-```
+### 📱 Configuração Mobile (Android)
+1. Abra `mobile/android` no **Android Studio**.
+2. O Gradle irá sincronizar o **Chaquopy** e **FFmpeg** automaticamente.
+3. Conecte seu celular e rode: `cd mobile && npx react-native run-android`.
 
 ---
-
-## 🌐 Como rodar: Web (Legacy/Dev)
-Para rodar a versão web clássica no navegador:
-
-**Terminal 1 (Backend):**
-```bash
-cd backend
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-**Terminal 2 (Frontend):**
-```bash
-cd frontend
-npm run dev
-```
-
----
-
-## 📊 Roadmap de Evolução
-Confira os próximos passos do projeto no [ROADMAP.md](ROADMAP.md).
-
-## 📄 Licença
-Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
-
----
-*Desenvolvido com ❤️ por [Echiiiro453](https://github.com/Echiiiro453)*
+*Developed with ❤️ by [Echiiiro453](https://github.com/Echiiiro453)*
