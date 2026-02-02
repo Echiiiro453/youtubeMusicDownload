@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/cli": "^2.9.6",
+    "@tauri-apps/plugin-shell": "^2.3.4",
     "axios": "^1.13.4",
     "clsx": "^2.1.1",
     "framer-motion": "^12.29.2",

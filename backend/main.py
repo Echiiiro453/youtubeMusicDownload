@@ -79,6 +79,15 @@ def init_db():
                 PRIMARY KEY (playlist_id, video_id)
             );
         """)
+        
+        # Table for general settings (acceptance of terms, etc)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key     TEXT PRIMARY KEY,
+                value   TEXT
+            );
+        """)
+
         # Migration for existing tables (safe add column)
         try:
             cur.execute("ALTER TABLE downloads ADD COLUMN url TEXT;")
@@ -1326,6 +1335,38 @@ async def upload_cover(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Erro no upload da capa: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/terms/status")
+def get_terms_status():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM app_settings WHERE key = 'terms_accepted'")
+        row = cur.fetchone()
+        conn.close()
+        return {"accepted": row['value'] == 'true' if row else False}
+    except:
+        return {"accepted": False}
+
+@app.post("/terms/accept")
+def accept_terms():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('terms_accepted', 'true')")
+        conn.commit()
+        conn.close()
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/terms/content")
+def get_terms_content():
+    path = os.path.join(get_base_dir(), "TERMOS_DE_USO.txt")
+    if not os.path.exists(path):
+        return {"content": "Termos de uso não encontrados."}
+    with open(path, "r", encoding="utf-8") as f:
+        return {"content": f.read()}
 
 # App Execution and Static Files
 # App Execution and Static Files

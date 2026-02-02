@@ -1,105 +1,90 @@
-# 🎵 YouTube Music Downloader
+# 🎵 Multi-Platform Music Downloader
 [![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/youtubeMusicDownload/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)](https://www.python.org/)
-[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB)](https://reactjs.org/)
+[![Platforms](https://img.shields.io/badge/Platforms-Desktop%20|%20Mobile%20|%20Web-brightgreen)](#)
 
-[🇺🇸 English](#-english-description) | [🇧🇷 Português](#-descrição-em-português)
-
----
-
-## 🇺🇸 English Description
-
-**Advanced application for downloading music and videos from YouTube with high quality, automatic metadata, and lyrics support.**
-
-This project separates itself from basic downloaders by offering a premium, ad-free experience with features tailored for music lovers and archivists.
-
-### ✨ Key Features
-
-- **High Fidelity Audio**: Download in **MP3 320kbps** or **FLAC** (Lossless).
-- **4K Video Support**: Download videos up to 4K resolution / 60fps.
-- **Smart Metadata**: Automatically finds and embeds:
-  - Album Cover Art 🖼️
-  - Correct Artist & Title 🎵
-  - Release Year 📅
-- **🎤 Lyrics Support**:
-  - Fetches synchronized lyrics from YouTube.
-  - Embeds them into the MP3/M4A file (viewable in players like MusicBee, Apple Music, etc).
-- **Playlist Manager**:
-  - Download entire playlists with a single click.
-  - Selective downloading (choose specific tracks).
-- **🛡️ Anti-Block System**:
-  - Intelligent cookie handling to bypass YouTube's "403 Forbidden" errors.
-  - Supports authenticated downloads for age-restricted content.
-
-### 📸 Screenshots
-
-> *Add your screenshots to the `screenshots/` folder and uncomment lines below*
-
-<!-- 
-![Main Interface](screenshots/main_interface.png)
-![Playlist Download](screenshots/playlist_view.png) 
--->
-
-### 🛠️ Prerequisites / Pré-requisitos
-
-Before you start, ensure you have the following installed:
-*Antes de começar, certifique-se de ter instalado:*
-
-- **Python 3.10+**: [Download Here](https://www.python.org/downloads/)
-- **Node.js 18+**: [Download Here](https://nodejs.org/)
-- **Git**: [Download Here](https://git-scm.com/)
-- **FFmpeg**: Essential for media processing.
-  - *Windows*: `winget install "FFmpeg (Essentials)"` or download from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/).
-  - *Linux*: `sudo apt install ffmpeg`
-  - *MacOS*: `brew install ffmpeg`
+Uma solução completa e profissional para download de músicas e vídeos, agora disponível para **Desktop (Windows)** e **Mobile (Android)**.
 
 ---
 
-## 🚀 Installation Guide (English)
+## 🌟 Visão Geral
+Este projeto evoluiu de uma simples página web para um ecossistema multiplataforma robusto. Ele utiliza o poder do **yt-dlp** e **FFmpeg** no backend (Python) com interfaces modernas em **React** (Web/Desktop) e **React Native** (Android).
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Echiiiro453/youtubeMusicDownload.git
-cd youtubeMusicDownload
+### ✨ Funcionalidades Principais
+- **Áudio de Alta Fidelidade**: Suporte a MP3 (320kbps), M4A e FLAC (Lossless).
+- **Vídeo em 4K**: Download de vídeos em alta resolução até 60fps.
+- **Metadados Inteligentes**: Inserção automática de capas de álbum, artistas, títulos e letras 🎤.
+- **Multi-Plataforma**: 
+  - **🖥️ Desktop**: Aplicativo nativo ultra-leve construído com **Tauri (Rust)**.
+  - **📱 Mobile**: APK standalone com backend embutido via **Chaquopy**.
+  - **🌐 Web**: Interface responsiva e rápida.
+- **Playlist Manager**: Seleção individual ou download em lote de playlists completas.
+- **Magic Search**: Busque músicas colando links do Spotify ou Apple Music.
+
+---
+
+## 🏗️ Estrutura do Projeto
+O repositório está organizado de forma modular para suportar todas as plataformas:
+
+```text
+youtubeMusicDownload/
+├── 📂 backend/           # Lógica central em Python (FastAPI + yt-dlp)
+├── 📂 frontend/          # Interface Web/Desktop principal
+│   └── 📂 src-tauri/     # Configurações nativas do Desktop (Rust)
+├── 📂 mobile/            # Aplicativo Android (React Native + Chaquopy)
+├── 📂 docs/              # Landing Page do projeto (GitHub Pages)
+└── 📄 README.md          # Esta documentação
 ```
 
-### 2. Backend Setup
-The backend handles the downloads and audio processing.
+---
 
+## 🖥️ Como rodar: Desktop (Tauri + Rust)
+A versão Desktop é a mais recomendada para uso pessoal, oferecendo performance nativa e transparência **Acrylic**.
+
+### Pré-requisitos
+- **Rust**: [Instalar via rustup.rs](https://rustup.rs/)
+- **Node.js**: v18+
+
+### Instruções
 ```bash
-cd backend
-# Create a virtual environment
-python -m venv venv
-
-# Activate the virtual environment
-# Windows:
-.\venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# Install Python dependencies
-pip install -r requirements.txt
-```
-
-### 3. Frontend Setup
-The frontend is the user interface designed with React.
-
-```bash
-# Open a new terminal window/tab
 cd frontend
-
-# Install Node dependencies
 npm install
+# Rodar em modo dev
+npm run tauri dev
+# Gerar instalador (.exe / .msi)
+npm run tauri build
 ```
 
-### 4. Running the App
-You need two terminal windows running simultaneously.
+---
+
+## 📱 Como rodar: Mobile (Android)
+O aplicativo mobile roda o backend Python nativamente no seu celular!
+
+### Pré-requisitos
+- **Android Studio**
+- **Java 17+**
+
+### Instruções
+1. Abra a pasta `mobile/android` no Android Studio.
+2. O Gradle irá sincronizar automaticamente (baixando o Chaquopy e FFmpeg).
+3. Conecte seu celular e rode:
+```bash
+cd mobile
+npm install
+npx react-native run-android
+```
+
+---
+
+## 🌐 Como rodar: Web (Legacy/Dev)
+Para rodar a versão web clássica no navegador:
 
 **Terminal 1 (Backend):**
 ```bash
 cd backend
+python -m venv venv
 .\venv\Scripts\activate
+pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
@@ -108,75 +93,14 @@ uvicorn main:app --reload
 cd frontend
 npm run dev
 ```
-Open your browser at `http://localhost:5173` to use the app.
 
 ---
 
-## 🚀 Guia de Instalação (Português)
+## 📊 Roadmap de Evolução
+Confira os próximos passos do projeto no [ROADMAP.md](ROADMAP.md).
 
-### 1. Clonar o Repositório
-```bash
-git clone https://github.com/Echiiiro453/youtubeMusicDownload.git
-cd youtubeMusicDownload
-```
-
-### 2. Configuração do Backend
-O backend é responsável por baixar e processar os arquivos.
-
-```bash
-cd backend
-# Criar ambiente virtual
-python -m venv venv
-
-# Ativar o ambiente virtual
-# No Windows:
-.\venv\Scripts\activate
-# No Linux/Mac:
-source venv/bin/activate
-
-# Instalar as dependências do Python
-pip install -r requirements.txt
-```
-
-### 3. Configuração do Frontend
-O frontend é a interface visual onde você interage com o app.
-
-```bash
-# Abra um novo terminal
-cd frontend
-
-# Instalar dependências do Node.js
-npm install
-```
-
-### 4. Rodando o Projeto
-Você precisa de dois terminais rodando ao mesmo tempo.
-
-**Terminal 1 (Backend):**
-```bash
-cd backend
-.\venv\Scripts\activate
-uvicorn main:app --reload
-```
-
-**Terminal 2 (Frontend):**
-```bash
-cd frontend
-npm run dev
-```
-Acesse `http://localhost:5173` no seu navegador para usar.
+## 📄 Licença
+Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
 ---
-
-## 📖 How to Use / Como Usar
-
-1. **Copy Link**: Copy a YouTube URL (Video, Music, or Playlist).
-2. **Paste**: Paste it into the input field.
-3. **Choose Format**: Select `MP3`, `FLAC` for audio or `MP4` for video.
-4. **Download**: Click the download button and wait for the process to finish.
-   - *Check the "Downloads" folder in the backend directory.*
-
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+*Desenvolvido com ❤️ por [Echiiiro453](https://github.com/Echiiiro453)*

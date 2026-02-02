@@ -3,6 +3,7 @@ import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { WindowControls } from './components/WindowControls';
 import qrcodeImg from './assets/qrcode_custom.jpg';
 // import { useGlobalDownloads } from './hooks/useGlobalDownloads'; // REMOVED (Polling)
 
@@ -107,6 +108,11 @@ function App() {
   // Player
   const [currentSong, setCurrentSong] = useState(null);
 
+  // Terms of Use
+  const [showTerms, setShowTerms] = useState(false);
+  const [termsContent, setTermsContent] = useState('');
+  const [termsLoading, setTermsLoading] = useState(true);
+
   // ===== API CONFIG =====
   // Single Port 8000 (Backend handles concurrency via Task Queue)
   const API_URL = "http://localhost:8000";
@@ -131,7 +137,34 @@ function App() {
 
   React.useEffect(() => {
     checkAuth();
+    checkTermsStatus();
   }, []);
+
+  const checkTermsStatus = async () => {
+    try {
+      const res = await axios.get(getApiUrl('/terms/status'));
+      if (!res.data.accepted) {
+        const contentRes = await axios.get(getApiUrl('/terms/content'));
+        setTermsContent(contentRes.data.content);
+        setShowTerms(true);
+      }
+    } catch (e) {
+      console.error("Terms check failed", e);
+    } finally {
+      setTermsLoading(false);
+    }
+  };
+
+  const handleAcceptTerms = async () => {
+    try {
+      await axios.post(getApiUrl('/terms/accept'));
+      setShowTerms(false);
+      addToast('Termos aceitos. Bem-vindo!', 'success');
+    } catch (e) {
+      console.error(e);
+      addToast('Erro ao aceitar termos.', 'error');
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -292,7 +325,6 @@ function App() {
       url: video.url,
       uniqueId: Date.now() + Math.random() + idx,
       pitch: mode === 'audio' ? pitch : 0,
-      speed: mode === 'audio' ? speed : 1.0,
       speed: mode === 'audio' ? speed : 1.0,
       playlist_id: video.playlistIdRef, // Pass ref from backend
       status: 'pending',
@@ -696,7 +728,72 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-white flex flex-col items-center justify-center p-4 font-sans selection:bg-primary selection:text-white relative">
-      <div className="absolute top-4 right-4 z-50 flex gap-2">
+      <AnimatePresence>
+        {showTerms && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-[#121214] border border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl"
+            >
+              <div className="p-8 space-y-6">
+                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                  <div className="p-4 bg-primary/10 rounded-2xl">
+                    <AlertCircle className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Termos de Uso</h2>
+                    <p className="text-secondary text-sm">Leia atentamente antes de continuar</p>
+                  </div>
+                </div>
+
+                <div className="max-h-[40vh] overflow-y-auto pr-4 custom-scroll text-gray-300 space-y-4 font-mono text-sm bg-white/5 p-6 rounded-2xl whitespace-pre-wrap">
+                  {termsLoading ? (
+                    <div className="flex flex-col items-center justify-center gap-4 py-8">
+                      <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                      <p>Carregando termos...</p>
+                    </div>
+                  ) : termsContent}
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <p className="text-xs text-secondary text-center">
+                    Ao clicar em "Concordar e Continuar", você afirma que leu e aceita em sua totalidade os termos descritos acima.
+                  </p>
+                  <button
+                    onClick={handleAcceptTerms}
+                    className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 active:scale-95"
+                  >
+                    <Check size={24} />
+                    <span>Concordar e Continuar</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Title Bar */}
+      <div
+        data-tauri-drag-region
+        className="fixed top-0 left-0 right-0 h-10 flex items-center justify-between px-4 z-[100] group"
+      >
+        <div className="flex items-center gap-2 pointer-events-none">
+          <Music className="w-4 h-4 text-primary opacity-50" />
+          <span className="text-[10px] font-bold tracking-widest text-secondary uppercase opacity-30 group-hover:opacity-60 transition-opacity">
+            Music Downloader
+          </span>
+        </div>
+        <WindowControls />
+      </div>
+
+      <div className="absolute top-12 right-4 z-50 flex gap-2">
         <button
           onClick={() => setShowDonate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-pink-500/20 text-pink-300 border border-pink-500/30 hover:bg-pink-500/30"

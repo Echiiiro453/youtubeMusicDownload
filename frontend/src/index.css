@@ -6,9 +6,9 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
+
   color-scheme: dark;
-  background-color: #09090b;
+  background-color: transparent;
   color: #fafafa;
 }
 
@@ -16,4 +16,14 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  /* Subtle window border */
+  box-sizing: border-box;
+}
+
+#root {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }

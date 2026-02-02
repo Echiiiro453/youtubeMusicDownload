@@ -151,6 +151,8 @@
 - Upload de cookies
 - Support para Spotify/Apple Music (Magic Search)
 - Playlist Manager Avançado (Básico funcional ✅)
+- [x] Migração para Android (React Native + Chaquopy) ✅
+- [x] Empacotamento Profissional Desktop (Tauri) ✅
 
 **Em Progresso:** 🔄
 - Melhorias na UI de Playlist
