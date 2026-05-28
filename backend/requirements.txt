@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+yt-dlp
+requests
+pydantic
+mutagen
+python-multipart

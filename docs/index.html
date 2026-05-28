@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppMusica - O Melhor Downloader de Músicas</title>
+    <meta name="description"
+        content="Baixe músicas e vídeos do YouTube em alta qualidade, com capas, letras e metadados automáticos.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+        <div class="globe globe-3"></div>
+    </div>
+
+    <header class="navbar">
+        <div class="logo">AppMusica 🎵</div>
+        <nav>
+            <a href="#features">Funcionalidades</a>
+            <a href="#how-to">Como Usar</a>
+            <a href="https://github.com/Echiiiro453/youtubeMusicDownload" target="_blank" class="github-link">GitHub</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span class="badge">Desktop (Windows) Disponível</span>
+            <h1>Sua música,<br> <span class="gradient-text">Em qualquer lugar.</span></h1>
+            <p>O downloader definitivo. Baixe playlists inteiras, vídeos em 4K e músicas com qualidade de estúdio agora no seu **Windows**.</p>
+
+            <div class="platform-badges" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white"
+                    alt="Windows Support">
+            </div>
+
+            <div class="cta-group">
+                <a href="https://github.com/Echiiiro453/youtubeMusicDownload/releases" class="btn primary-btn">
+                    <span>Baixar Installer</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                </a>
+                <a href="#features" class="btn secondary-btn">Saiba Mais</a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <strong>4K</strong>
+                    <span>Video Support</span>
+                </div>
+                <div class="stat">
+                    <strong>320</strong>
+                    <span>kbps Audio</span>
+                </div>
+                <div class="stat">
+                    <strong>100%</strong>
+                    <span>Grátis</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-image">
+            <div class="app-window">
+                <div class="window-header">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <!-- Placeholder for App Screenshot -->
+                <div class="window-content placeholder-glow">
+                    <div class="music-card">
+                        <div class="cover-art"></div>
+                        <div class="track-info">
+                            <div class="line-lg"></div>
+                            <div class="line-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <h2>Por que escolher o <span class="gradient-text">AppMusica</span>?</h2>
+        <div class="grid">
+            <div class="card">
+                <div class="icon">🎧</div>
+                <h3>Alta Fidelidade</h3>
+                <p>Baixe áudios em MP3 320kbps ou FLAC sem perdas. Qualidade de estúdio diretamente no seu PC.</p>
+            </div>
+            <div class="card">
+                <div class="icon">🖼️</div>
+                <h3>Metadados Automáticos</h3>
+                <p>Nós encontramos a capa do álbum, nome do artista correto e ano de lançamento para você.</p>
+            </div>
+            <div class="card">
+                <div class="icon">📜</div>
+                <h3>Destaque: Lyrics</h3>
+                <p>Letras sincronizadas são embutidas automaticamente. Cante junto no seu player favorito.</p>
+            </div>
+            <div class="card">
+                <div class="icon">⚡</div>
+                <h3>Playlists Massivas</h3>
+                <p>Baixe centenas de músicas de uma vez só com nosso gerenciador de filas inteligente.</p>
+            </div>
+            <div class="card">
+                <div class="icon">🛡️</div>
+                <h3>Anti-Bloqueio</h3>
+                <p>Sistema inteligente de cookies impede que o YouTube bloqueie seus downloads.</p>
+            </div>
+            <div class="card">
+                <div class="icon">🎬</div>
+                <h3>Vídeo 4K</h3>
+                <p>Não é só música. Baixe clipes e vídeos em resolução máxima (4K/60fps).</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2026 AppMusica. Open Source Project.</p>
+        <div class="socials">
+            <a href="#">Twitter</a>
+            <a href="#">GitHub</a>
+        </div>
+    </footer>
+
+    <script>
+        // Simple Intersection Observer for scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        });
+
+        document.querySelectorAll('.card, .hero-content, .hero-image').forEach((el) => {
+            el.classList.add('hidden');
+            observer.observe(el);
+        });
+    </script>
+</body>
+
+</html>
