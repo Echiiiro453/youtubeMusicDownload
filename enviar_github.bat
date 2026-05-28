@@ -13,7 +13,7 @@ echo Digite o link do seu repositorio no GitHub.
 echo Exemplo: https://github.com/SeuNome/SeuProjeto.git
 set /p GIT_URL="Link do GitHub: "
 
-"C:\Program Files\Git\cmd\git.exe" remote add origin %GIT_URL%
+"C:\Program Files\Git\cmd\git.exe" remote set-url origin %GIT_URL% 2>nul || "C:\Program Files\Git\cmd\git.exe" remote add origin %GIT_URL%
 "C:\Program Files\Git\cmd\git.exe" branch -M main
 
 echo.
