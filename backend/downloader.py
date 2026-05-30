@@ -225,12 +225,7 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
     
     start_sec = parse_time(request.start_time)
     end_sec = parse_time(request.end_time)
-    if start_sec is not None or end_sec is not None:
-        def range_func(info_dict, ydl):
-            return [{'start_time': start_sec, 'end_time': end_sec}]
-        ydl_opts['download_ranges'] = range_func
-        ydl_opts['force_keyframes_at_cuts'] = True
-
+    # Removido download_ranges para baixar o arquivo completo e recortar depois
     if request.cover_path and os.path.exists(request.cover_path):
         ydl_opts['writethumbnail'] = False
         postprocessors = [p for p in postprocessors if p.get('key') != 'EmbedThumbnail']
@@ -299,9 +294,6 @@ def download_with_retries(job_id: str, request):
             ydl_opts = build_ydl_opts_for_strategy(job_id, request, strat)
             
             def execute_ydl(opts):
-                if opts.get('download_ranges') is not None and st.status != 'cancelled':
-                    st.status = 'trimming'
-                    
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     info = ydl.extract_info(request.url, download=True)
                     filename = ydl.prepare_filename(info)
@@ -314,6 +306,30 @@ def download_with_retries(job_id: str, request):
                     else: full_final_path = base_path + '.mp3'
                     
                     final_filename_relative = os.path.relpath(full_final_path, get_downloads_dir())
+                    
+                    # Local Trimming Post-Download
+                    if (start_sec is not None or end_sec is not None) and os.path.exists(full_final_path):
+                        st.status = 'trimming'
+                        print(f"  \033[94m➔ Recortando vídeo localmente ({start_sec} - {end_sec})...\033[0m")
+                        trimmed_path = full_final_path + '.trimmed' + os.path.splitext(full_final_path)[1]
+                        
+                        cmd = ['ffmpeg', '-y', '-i', full_final_path]
+                        if start_sec is not None:
+                            cmd.extend(['-ss', str(start_sec)])
+                        if end_sec is not None:
+                            cmd.extend(['-to', str(end_sec)])
+                        cmd.extend(['-c', 'copy', trimmed_path])
+                        
+                        try:
+                            import subprocess
+                            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                            os.remove(full_final_path)
+                            os.rename(trimmed_path, full_final_path)
+                            print(f"    \033[32m✔ Recorte concluído!\033[0m")
+                        except Exception as e:
+                            print(f"    \033[31m✖ Erro ao recortar localmente: {e}\033[0m")
+                            if os.path.exists(trimmed_path):
+                                os.remove(trimmed_path)
                     
                     # Apply Premium Metadata
                     if request.mode != 'video':
