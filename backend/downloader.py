@@ -91,8 +91,6 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
             height = int(request.quality[:-1])
             format_str = f'bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best'
         
-        postprocessors.append({'key': 'FFmpegThumbnailsConvertor', 'format': 'jpg'})
-        postprocessors.append({'key': 'EmbedThumbnail'})
         postprocessors.append({'key': 'FFmpegMetadata'})
     else:
         audio_extract = {'key': 'FFmpegExtractAudio'}
