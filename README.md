@@ -37,6 +37,21 @@ youtubeMusicDownload/
 3. Setup Backend: `cd backend && pip install -r requirements.txt`
 4. Build Portable `.exe`: `python build_exe.py`
 
+### 🐧 Linux Usage
+**Option 1: Wine/Proton (Recommended)**
+Since the compiled release is a Windows executable (`.exe`), the easiest way to run it on Linux is via [Wine](https://www.winehq.org/) or [Proton](https://github.com/ValveSoftware/Proton) (via Steam or [Bottles](https://usebottles.com/)).
+```bash
+wine AppMusica.exe
+```
+
+**Option 2: Native Execution (Source Code)**
+To run natively from the source code, you must install the `pywebview` dependencies for Linux (GTK and WebKit2):
+```bash
+sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
+```
+Then follow the standard Desktop Setup instructions above.
+
+
 ---
 
 ## 🇧🇷 Português
@@ -69,6 +84,21 @@ youtubeMusicDownload/
 2. Frontend: `cd frontend && npm install && npm run build`
 3. Backend: `cd backend && pip install -r requirements.txt`
 4. Compilar `.exe` portátil: `python build_exe.py`
+
+### 🐧 Uso no Linux
+**Opção 1: Wine/Proton (Recomendado)**
+Como o aplicativo final é um executável Windows (`.exe`), a maneira mais fácil e rápida de rodar no Linux é usando o [Wine](https://www.winehq.org/) ou o [Proton](https://github.com/ValveSoftware/Proton) (através da Steam ou do [Bottles](https://usebottles.com/)).
+```bash
+wine AppMusica.exe
+```
+
+**Opção 2: Execução Nativa (Código Fonte)**
+Para rodar nativamente pelo código fonte, você precisa instalar as dependências do `pywebview` para Linux (GTK e WebKit2) no seu terminal (Ubuntu/Debian):
+```bash
+sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
+```
+Depois, basta seguir as instruções de Configuração Desktop acima normalmente.
+
 
 ---
 *Developed with ❤️ by [Echiiiro453](https://github.com/Echiiiro453)*
