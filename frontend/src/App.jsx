@@ -1443,22 +1443,30 @@ function App() {
                   <div className="relative w-full h-4 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${progress.percent}%` }}
-                      transition={{ ease: "linear" }}
-                      className="absolute h-full bg-primary"
+                      animate={{ width: progress.status === 'trimming' ? '100%' : `${progress.percent}%` }}
+                      transition={{ 
+                        ease: "linear",
+                        repeat: progress.status === 'trimming' ? Infinity : 0,
+                        duration: progress.status === 'trimming' ? 2 : 0.3
+                      }}
+                      className={`absolute h-full bg-primary ${progress.status === 'trimming' ? 'opacity-50' : ''}`}
                     />
                   </div>
 
                   <div className="flex justify-between text-sm text-secondary px-1">
                     <span>
-                      {progress.percent < 99
+                      {progress.status === 'trimming'
+                        ? 'Recortando Vídeo (Aguarde)...'
+                        : progress.percent < 99
                         ? 'Baixando...'
                         : 'Processando (Mixagem/Capa)...'}
                     </span>
-                    <span className="font-mono">{Math.round(progress.percent)}%</span>
+                    <span className="font-mono">
+                      {progress.status === 'trimming' ? '⏳' : `${Math.round(progress.percent)}%`}
+                    </span>
                   </div>
 
-                  {progress.percent < 99 && (
+                  {progress.percent < 99 && progress.status !== 'trimming' && (
                     <div className="flex justify-between text-xs text-secondary/70 px-1 font-mono">
                       <span>{progress.downloaded || '---'} / {progress.total || '---'}</span>
                       <span>{progress.speed || 'Calculando...'}</span>

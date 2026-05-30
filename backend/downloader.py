@@ -299,6 +299,9 @@ def download_with_retries(job_id: str, request):
             ydl_opts = build_ydl_opts_for_strategy(job_id, request, strat)
             
             def execute_ydl(opts):
+                if opts.get('download_ranges') is not None and st.status != 'cancelled':
+                    st.status = 'trimming'
+                    
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     info = ydl.extract_info(request.url, download=True)
                     filename = ydl.prepare_filename(info)
