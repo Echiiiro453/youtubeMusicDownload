@@ -63,10 +63,6 @@ function App() {
     } catch (e) { console.error(e); }
   };
 
-  // Trim State
-  const [trim, setTrim] = useState(false);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
 
   // Audio Features
   const [pitch, setPitch] = useState(0); // -12 to +12
@@ -724,8 +720,6 @@ function App() {
         quality,
         mode,
         playlist: false,
-        start_time: trim ? startTime : null,
-        end_time: trim ? endTime : null,
         pitch: mode === 'audio' ? pitch : 0,
         speed: mode === 'audio' ? speed : 1.0
       });
@@ -1176,70 +1170,6 @@ function App() {
                     </div>
                   )}
 
-                  {/* Trim Toggle */}
-                  <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4 mb-2">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Scissors className="w-5 h-5 text-blue-400" />
-                        <span className="font-bold text-white">Recortar Trecho</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const newTrim = !trim;
-                          setTrim(newTrim);
-                          if (newTrim) {
-                            if (!startTime) setStartTime("00:00");
-                            if (!endTime && metadata.duration_string) setEndTime(metadata.duration_string);
-                          }
-                        }}
-                        className={`w-12 h-6 rounded-full transition-colors relative ${trim ? 'bg-blue-500' : 'bg-surface border border-white/10'}`}
-                      >
-                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${trim ? 'translate-x-6' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
-
-                    <AnimatePresence>
-                      {trim && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="flex gap-4 pt-2">
-                            <div className="flex-1">
-                              <label className="text-xs text-secondary mb-1 block">Início (MM:SS ou S)</label>
-                              <input
-                                type="text"
-                                placeholder="00:00"
-                                className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white text-center font-mono focus:border-blue-500 outline-none"
-                                value={startTime}
-                                onChange={(e) => setStartTime(e.target.value)}
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <label className="text-xs text-secondary mb-1 block">Fim (MM:SS ou S)</label>
-                              <input
-                                type="text"
-                                placeholder="00:00"
-                                className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white text-center font-mono focus:border-blue-500 outline-none"
-                                value={endTime}
-                                onChange={(e) => setEndTime(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2">
-                            <span className="text-yellow-500 text-sm">⚠️</span>
-                            <p className="text-xs text-yellow-200/80 leading-relaxed">
-                              <strong className="text-yellow-400 block mb-0.5">Recorte de Alta Velocidade Ativado</strong>
-                              O vídeo completo será baixado em velocidade máxima primeiro. Em seguida, o corte será feito localmente e o arquivo original apagado. Isso evita a lentidão extrema do YouTube.
-                            </p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
                   {/* Mode Toggle */}
                   <div className="flex bg-surface/50 p-1 rounded-xl">
                     <button
@@ -1450,30 +1380,22 @@ function App() {
                   <div className="relative w-full h-4 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: progress.status === 'trimming' ? '100%' : `${progress.percent}%` }}
-                      transition={{ 
-                        ease: "linear",
-                        repeat: progress.status === 'trimming' ? Infinity : 0,
-                        duration: progress.status === 'trimming' ? 2 : 0.3
-                      }}
-                      className={`absolute h-full bg-primary ${progress.status === 'trimming' ? 'opacity-50' : ''}`}
+                      animate={{ width: `${progress.percent}%` }}
+                      transition={{ ease: "linear" }}
+                      className="absolute h-full bg-primary"
                     />
                   </div>
 
                   <div className="flex justify-between text-sm text-secondary px-1">
                     <span>
-                      {progress.status === 'trimming'
-                        ? 'Recortando Vídeo (Aguarde)...'
-                        : progress.percent < 99
+                      {progress.percent < 99
                         ? 'Baixando...'
                         : 'Processando (Mixagem/Capa)...'}
                     </span>
-                    <span className="font-mono">
-                      {progress.status === 'trimming' ? '⏳' : `${Math.round(progress.percent)}%`}
-                    </span>
+                    <span className="font-mono">{Math.round(progress.percent)}%</span>
                   </div>
 
-                  {progress.percent < 99 && progress.status !== 'trimming' && (
+                  {progress.percent < 99 && (
                     <div className="flex justify-between text-xs text-secondary/70 px-1 font-mono">
                       <span>{progress.downloaded || '---'} / {progress.total || '---'}</span>
                       <span>{progress.speed || 'Calculando...'}</span>
