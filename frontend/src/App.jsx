@@ -1149,7 +1149,7 @@ function App() {
                         </div>
                         <div>
                           <h4 className="font-bold text-white">Playlist Detectada</h4>
-                          <p className="text-xs text-secondary">Use o botão abaixo para selecionar músicas.</p>
+                          <p className="text-xs text-secondary">Use o botão abaixo para baixar a playlist completa.</p>
                         </div>
                       </div>
 
@@ -1424,7 +1424,9 @@ function App() {
                       className="flex-1 bg-primary hover:bg-blue-600 rounded-xl font-boldshadow-lg flex items-center justify-center gap-2 transition-all"
                     >
                       <Download className="w-5 h-5" />
-                      Baixar Agora
+                      {metadata.is_playlist && (metadata.url?.includes('v=') || metadata.url?.includes('youtu.be/')) 
+                        ? 'Baixar Apenas este Vídeo' 
+                        : 'Baixar Agora'}
                     </button>
                   </div>
                 </div>
