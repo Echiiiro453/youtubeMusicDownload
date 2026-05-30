@@ -1228,6 +1228,13 @@ function App() {
                               />
                             </div>
                           </div>
+                          <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2">
+                            <span className="text-yellow-500 text-sm">⚠️</span>
+                            <p className="text-xs text-yellow-200/80 leading-relaxed">
+                              <strong className="text-yellow-400 block mb-0.5">Recorte de Alta Velocidade Ativado</strong>
+                              O vídeo completo será baixado em velocidade máxima primeiro. Em seguida, o corte será feito localmente e o arquivo original apagado. Isso evita a lentidão extrema do YouTube.
+                            </p>
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
