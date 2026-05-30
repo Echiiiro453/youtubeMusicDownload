@@ -153,7 +153,7 @@ async def get_info(request: DownloadRequest):
         
         info = None
         last_err = None
-        for client in ['tv', 'android', 'ios', 'web']:
+        for client in ['tv_embedded', 'web_embedded', 'ios_music', 'android_music', 'tv', 'web']:
             try:
                 if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -217,7 +217,7 @@ def get_playlist_details(request: InfoRequest):
         if request.limit > 0: ydl_opts['playlistend'] = request.limit
         
         playlist_info = None
-        for client in ['web', 'android', 'tv']:
+        for client in ['web_embedded', 'tv_embedded', 'web', 'android']:
             try:
                 if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:

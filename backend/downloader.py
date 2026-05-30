@@ -254,13 +254,14 @@ def build_ydl_opts_for_strategy(job_id: str, request, strategy: dict):
 def download_with_retries(job_id: str, request):
     print(f"\n\033[1;35m[🎧] INICIANDO SMART DOWNLOAD:\033[0m \033[36m{request.url}\033[0m")
     strategies = [
+        {"name": "tv_embedded", "use_cookies": True, "client": "tv_embedded"},
+        {"name": "web_embedded", "use_cookies": True, "client": "web_embedded", "impersonate": "chrome"},
+        {"name": "ios_music", "use_cookies": True, "client": "ios_music"},
+        {"name": "android_music", "use_cookies": True, "client": "android_music"},
         {"name": "standard_web", "use_cookies": True, "client": "web", "impersonate": "chrome"},
-        {"name": "legacy_web", "use_cookies": True, "client": "web"},
         {"name": "tv_client", "use_cookies": True, "client": "tv"},
         {"name": "android_client", "use_cookies": True, "client": "android"},
         {"name": "ios_client", "use_cookies": True, "client": "ios"},
-        {"name": "android_music", "use_cookies": True, "client": "android_music"},
-        {"name": "ios_music", "use_cookies": True, "client": "ios_music"},
         {"name": "mweb", "use_cookies": True, "client": "mweb", "impersonate": "chrome"},
         {"name": "force_ipv4", "use_cookies": True, "client": "web", "source_address": "0.0.0.0"},
         {"name": "force_ipv6", "use_cookies": True, "client": "web", "source_address": "::"},
