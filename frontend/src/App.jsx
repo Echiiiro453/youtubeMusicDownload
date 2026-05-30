@@ -1458,10 +1458,10 @@ function App() {
                     <span className="font-mono">{Math.round(progress.percent)}%</span>
                   </div>
 
-                  {progress.percent < 99 && progress.speed && (
+                  {progress.percent < 99 && (
                     <div className="flex justify-between text-xs text-secondary/70 px-1 font-mono">
-                      <span>{progress.downloaded || '0B'} / {progress.total || 'Desc.'}</span>
-                      <span>{progress.speed}</span>
+                      <span>{progress.downloaded || '---'} / {progress.total || '---'}</span>
+                      <span>{progress.speed || 'Calculando...'}</span>
                     </div>
                   )}
 
