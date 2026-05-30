@@ -201,6 +201,13 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
         'external_downloader_args': {'aria2c': ['-c', '-j', '16', '-x', '16', '-s', '16', '-k', '1M']}
     }
     
+    # Re-ativa o "Jittering" (Anti-Ban Sleep) SOMENTE para YouTube
+    if "youtube.com" in request.url or "youtu.be" in request.url:
+        ydl_opts["sleep_requests"] = 1.5
+        ydl_opts["sleep_interval"] = 6
+        ydl_opts["max_sleep_interval"] = 25
+        ydl_opts["sleep_subtitles"] = 2
+    
     start_sec = parse_time(request.start_time)
     end_sec = parse_time(request.end_time)
     if start_sec is not None or end_sec is not None:
