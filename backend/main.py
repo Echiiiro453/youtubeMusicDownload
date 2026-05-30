@@ -147,6 +147,7 @@ async def get_info(request: DownloadRequest):
             'nocheckcertificate': True,
             'extract_flat': 'in_playlist',
             'cookiefile': get_cookies_path(),
+            'js_runtimes': {'node': {}},
             'remote_components': ['ejs:github']
         }
         
@@ -210,6 +211,8 @@ def get_playlist_details(request: InfoRequest):
             'ignoreerrors': True,
             'extract_flat': 'in_playlist',
             'cookiefile': get_cookies_path(),
+            'js_runtimes': {'node': {}},
+            'remote_components': ['ejs:github']
         }
         if request.limit > 0: ydl_opts['playlistend'] = request.limit
         
