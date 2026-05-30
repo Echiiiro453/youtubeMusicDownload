@@ -225,9 +225,10 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
 
 def build_ydl_opts_for_strategy(job_id: str, request, strategy: dict):
     ydl_opts = {
-        'format': strategy['format'],
         'concurrent_fragments': 4,
     }
+    if 'format' in strategy:
+        ydl_opts['format'] = strategy['format']
     
     if strategy.get("use_cookies") and getattr(request, 'cookies_path', None):
         ydl_opts["cookiefile"] = request.cookies_path
@@ -253,16 +254,16 @@ def build_ydl_opts_for_strategy(job_id: str, request, strategy: dict):
 def download_with_retries(job_id: str, request):
     print(f"\n\033[1;35m[🎧] INICIANDO SMART DOWNLOAD:\033[0m \033[36m{request.url}\033[0m")
     strategies = [
-        {"name": "standard_web", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web", "impersonate": "chrome"},
-        {"name": "legacy_web", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web"},
-        {"name": "tv_client", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "tv"},
-        {"name": "android_client", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "android"},
-        {"name": "ios_client", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "ios"},
-        {"name": "android_music", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "android_music"},
-        {"name": "ios_music", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "ios_music"},
-        {"name": "mweb", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "mweb", "impersonate": "chrome"},
-        {"name": "force_ipv4", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web", "source_address": "0.0.0.0"},
-        {"name": "force_ipv6", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web", "source_address": "::"},
+        {"name": "standard_web", "use_cookies": True, "client": "web", "impersonate": "chrome"},
+        {"name": "legacy_web", "use_cookies": True, "client": "web"},
+        {"name": "tv_client", "use_cookies": True, "client": "tv"},
+        {"name": "android_client", "use_cookies": True, "client": "android"},
+        {"name": "ios_client", "use_cookies": True, "client": "ios"},
+        {"name": "android_music", "use_cookies": True, "client": "android_music"},
+        {"name": "ios_music", "use_cookies": True, "client": "ios_music"},
+        {"name": "mweb", "use_cookies": True, "client": "mweb", "impersonate": "chrome"},
+        {"name": "force_ipv4", "use_cookies": True, "client": "web", "source_address": "0.0.0.0"},
+        {"name": "force_ipv6", "use_cookies": True, "client": "web", "source_address": "::"},
         {"name": "fallback_quality", "format": "bestvideo[height<=720]+bestaudio/best" if request.mode == 'video' else "bestaudio[protocol^=http]", "use_cookies": True, "client": "web", "impersonate": "chrome"},
         {"name": "proxy_survival", "format": "bestaudio[protocol^=http]", "use_cookies": False, "client": "web", "impersonate": "chrome", "use_proxy": True},
     ]
