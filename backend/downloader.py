@@ -176,10 +176,6 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
                 jobs[job_id].status = 'processing'
 
     ydl_opts = {
-        "sleep_requests": 1.5,
-        "sleep_interval": 6,
-        "max_sleep_interval": 25,
-        "sleep_subtitles": 2,
         "socket_timeout": 15,
         'format': format_str,
         'outtmpl': outtmpl,
