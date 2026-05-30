@@ -180,13 +180,14 @@ async def get_info(request: DownloadRequest):
 
         resolutions = []
         if not is_magic:
-            formats = info.get('formats', [])
-            if not formats and is_playlist and 'entries' in info and info['entries']:
-                 formats = info['entries'][0].get('formats', [])
-            res_set = set()
-            for f in formats:
-                if f.get('vcodec') != 'none' and f.get('height'): res_set.add(f['height'])
-            resolutions = sorted(list(res_set), reverse=True)
+            if is_playlist:
+                resolutions = [2160, 1440, 1080, 720, 480, 360, 240, 144]
+            else:
+                formats = info.get('formats', [])
+                res_set = set()
+                for f in formats:
+                    if f.get('vcodec') != 'none' and f.get('height'): res_set.add(f['height'])
+                resolutions = sorted(list(res_set), reverse=True)
 
         return {
             "status": "success",
