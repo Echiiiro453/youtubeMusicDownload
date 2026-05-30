@@ -130,8 +130,9 @@ async def get_info(request: DownloadRequest):
         is_magic = False
         magic_source = None
         if "spotify.com" in url or "music.apple.com" in url:
-            req = URLRequest(url, headers={'User-Agent': 'Mozilla/5.0'})
-            html = urlopen(req).read().decode('utf-8')
+            from curl_cffi import requests as cffi_requests
+            res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
+            html = res.text
             title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
             if title_match:
                 clean_title = re.sub(r' \| Spotify.*', '', title_match.group(1))

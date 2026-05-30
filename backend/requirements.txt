@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 yt-dlp
 requests
+curl_cffi
 pydantic
 mutagen
 python-multipart

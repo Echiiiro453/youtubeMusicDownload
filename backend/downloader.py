@@ -176,9 +176,11 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
                 jobs[job_id].status = 'processing'
 
     ydl_opts = {
-        "sleep_requests": 1,
-        "sleep_interval": 5,
-        "max_sleep_interval": 15,
+        "sleep_requests": 1.5,
+        "sleep_interval": 6,
+        "max_sleep_interval": 25,
+        "sleep_subtitles": 2,
+        "socket_timeout": 15,
         'format': format_str,
         'outtmpl': outtmpl,
         'quiet': False, 
@@ -236,6 +238,9 @@ def build_ydl_opts_for_strategy(job_id: str, request, strategy: dict):
         
     if strategy.get("impersonate"):
         ydl_opts["impersonate"] = ImpersonateTarget(client=strategy.get("impersonate"))
+        
+    if strategy.get("source_address"):
+        ydl_opts["source_address"] = strategy.get("source_address")
 
     base_opts = build_ydl_opts(job_id, request)
     base_opts.update(ydl_opts)
@@ -246,9 +251,15 @@ def download_with_retries(job_id: str, request):
     print(f"\n\033[1;35m[🎧] INICIANDO SMART DOWNLOAD:\033[0m \033[36m{request.url}\033[0m")
     strategies = [
         {"name": "standard_web", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web", "impersonate": "chrome"},
+        {"name": "legacy_web", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web"},
         {"name": "tv_client", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "tv"},
         {"name": "android_client", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "android"},
         {"name": "ios_client", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "ios"},
+        {"name": "android_music", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "android_music"},
+        {"name": "ios_music", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "ios_music"},
+        {"name": "mweb", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "mweb", "impersonate": "chrome"},
+        {"name": "force_ipv4", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web", "source_address": "0.0.0.0"},
+        {"name": "force_ipv6", "format": "bestaudio/best" if request.mode == 'audio' else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', "use_cookies": True, "client": "web", "source_address": "::"},
         {"name": "fallback_quality", "format": "bestvideo[height<=720]+bestaudio/best" if request.mode == 'video' else "bestaudio[protocol^=http]", "use_cookies": True, "client": "web", "impersonate": "chrome"},
         {"name": "proxy_survival", "format": "bestaudio[protocol^=http]", "use_cookies": False, "client": "web", "impersonate": "chrome", "use_proxy": True},
     ]
@@ -267,39 +278,57 @@ def download_with_retries(job_id: str, request):
         try:
             ydl_opts = build_ydl_opts_for_strategy(job_id, request, strat)
             
+            def execute_ydl(opts):
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    info = ydl.extract_info(request.url, download=True)
+                    filename = ydl.prepare_filename(info)
+                    
+                    base_path, _ = os.path.splitext(filename)
+                    
+                    if request.mode == 'video': full_final_path = base_path + '.mp4'
+                    elif request.quality == 'flac': full_final_path = base_path + '.flac'
+                    elif request.quality == 'best': full_final_path = base_path + '.m4a'
+                    else: full_final_path = base_path + '.mp3'
+                    
+                    final_filename_relative = os.path.relpath(full_final_path, get_downloads_dir())
+                    
+                    # Apply Premium Metadata
+                    if request.mode != 'video':
+                        st.status = "processing"
+                        print(f"  \033[94m➔ Buscando metadados premium no iTunes...\033[0m")
+                        success = apply_metadata(full_final_path, info.get('title', ''))
+                        if success:
+                            print(f"    \033[32m✔ Capa High-Res e Tags injetadas com sucesso!\033[0m")
+                    
+                    st.status = "done"
+                    st.progress = 100.0
+                    st.filename = final_filename_relative
+                    
+                    mark_downloaded_db(getattr(request, 'playlist_id', None), getattr(request, 'video_id', None), info.get('title', 'Unknown'), final_filename_relative, request.url)
+                    print(f"  \033[32m✔ SUCESSO! Download concluído usando o método: {strat_name}\033[0m\n")
+            
             if strat.get("use_proxy"):
-                proxy = get_random_proxy()
-                if proxy:
+                last_proxy_err = None
+                success = False
+                for proxy_attempt in range(1, 6):
+                    if st.status == "cancelled": return
+                    proxy = get_random_proxy()
+                    if not proxy: break
                     ydl_opts['proxy'] = proxy
-                    print(f"      \033[94m[proxy] Tentativa de sobrevivência com proxy: {proxy}\033[0m")
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(request.url, download=True)
-                filename = ydl.prepare_filename(info)
-                
-                base_path, _ = os.path.splitext(filename)
-                
-                if request.mode == 'video': full_final_path = base_path + '.mp4'
-                elif request.quality == 'flac': full_final_path = base_path + '.flac'
-                elif request.quality == 'best': full_final_path = base_path + '.m4a'
-                else: full_final_path = base_path + '.mp3'
-                
-                final_filename_relative = os.path.relpath(full_final_path, get_downloads_dir())
-                
-                # Apply Premium Metadata
-                if request.mode != 'video':
-                    st.status = "processing"
-                    print(f"  \033[94m➔ Buscando metadados premium no iTunes...\033[0m")
-                    success = apply_metadata(full_final_path, info.get('title', ''))
-                    if success:
-                        print(f"    \033[32m✔ Capa High-Res e Tags injetadas com sucesso!\033[0m")
-                
-                st.status = "done"
-                st.progress = 100.0
-                st.filename = final_filename_relative
-                
-                mark_downloaded_db(getattr(request, 'playlist_id', None), getattr(request, 'video_id', None), info.get('title', 'Unknown'), final_filename_relative, request.url)
-                print(f"  \033[32m✔ SUCESSO! Download concluído usando o método: {strat_name}\033[0m\n")
+                    print(f"      \033[94m[proxy] Tentativa de sobrevivência {proxy_attempt}/5 com proxy: {proxy}\033[0m")
+                    try:
+                        execute_ydl(ydl_opts)
+                        return # SUCESSO!
+                    except Exception as proxy_err:
+                        last_proxy_err = proxy_err
+                        print(f"      \033[31m[proxy:err] Proxy falhou: {str(proxy_err).splitlines()[0][:80]}...\033[0m")
+                        time.sleep(1)
+                        continue
+                if not success:
+                    if last_proxy_err: raise last_proxy_err
+                    else: raise Exception("Todos os proxies disponíveis falharam na conexão.")
+            else:
+                execute_ydl(ydl_opts)
                 return 
 
         except Exception as e:

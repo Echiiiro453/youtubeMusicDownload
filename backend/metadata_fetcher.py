@@ -1,4 +1,4 @@
-import requests
+from curl_cffi import requests
 import re
 import urllib.parse
 from mutagen.mp3 import MP3
@@ -37,7 +37,7 @@ def apply_metadata(filepath: str, raw_title: str) -> bool:
         
         # Request from iTunes API
         url = f"https://itunes.apple.com/search?term={urllib.parse.quote(search_query)}&entity=song&limit=1"
-        res = requests.get(url, timeout=5)
+        res = requests.get(url, timeout=15, impersonate="chrome120")
         if res.status_code != 200: return False
         
         data = res.json()
@@ -52,7 +52,7 @@ def apply_metadata(filepath: str, raw_title: str) -> bool:
         # Get 1000x1000 High Res cover
         if cover_url:
             cover_url = cover_url.replace('100x100bb', '1000x1000bb')
-            cover_res = requests.get(cover_url, timeout=5)
+            cover_res = requests.get(cover_url, timeout=15, impersonate="chrome120")
             cover_data = cover_res.content if cover_res.status_code == 200 else None
         else:
             cover_data = None
