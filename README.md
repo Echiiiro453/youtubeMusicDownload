@@ -21,6 +21,8 @@ AppMusica is a professional solution for downloading music and videos from YouTu
 - **Smart Retry & Proxy Survival**: Intelligent system with 4 fallback clients and free rotating proxies to bypass YouTube blocks (download 1000+ songs easily).
 - **Queue Memory**: Automatically saves your pending downloads so you can resume them anytime.
 
+> ⚠️ **Video Playback Warning**: The default Windows Media Player or "Movies & TV" app may struggle to play certain downloaded `.mp4` videos due to missing modern codecs. If you only hear audio or the video fails to load, please use [VLC Media Player](https://www.videolan.org/vlc/).
+
 ### 🏗️ Project Structure
 ```text
 youtubeMusicDownload/
@@ -51,6 +53,8 @@ O AppMusica é uma solução profissional para download de músicas e vídeos do
 - **Magic Search**: Busque músicas colando links do Spotify ou Apple Music.
 - **Smart Retry & Proxy Survival**: Sistema inteligente com 4 clientes de fallback e proxies rotativos gratuitos para ignorar bloqueios do YouTube (baixe 1000+ músicas seguidas).
 - **Memória de Fila**: Salva automaticamente seus downloads pendentes para você continuar de onde parou.
+
+> ⚠️ **Aviso de Reprodução de Vídeo**: O Windows Media Player ou o aplicativo "Filmes e TV" padrão do Windows podem apresentar falhas ao reproduzir alguns vídeos `.mp4` baixados devido à falta de codecs modernos. Se o vídeo não carregar ou você apenas ouvir o áudio, utilize o [VLC Media Player](https://www.videolan.org/vlc/).
 
 ### 🏗️ Estrutura do Projeto
 ```text
