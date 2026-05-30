@@ -38,6 +38,9 @@ class JobState:
     started_at: Optional[float] = None
     finished_at: Optional[float] = None
     last_update: float = 0.0
+    speed_str: Optional[str] = None
+    total_bytes_str: Optional[str] = None
+    downloaded_bytes_str: Optional[str] = None
 
 jobs: Dict[str, JobState] = {}
 download_queue: asyncio.Queue = asyncio.Queue()
@@ -159,12 +162,27 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
         if d['status'] == 'downloading':
             try:
                 p = d.get('_percent_str', '0%').replace('%','')
+                speed = d.get('_speed_str')
+                if speed and '~' in speed: speed = speed.replace('~', '')
+                if speed and '---b/s' in speed: speed = None
+                
+                total = d.get('_total_bytes_str') or d.get('_total_bytes_estimate_str')
+                if total and '~' in total: total = total.replace('~', '')
+                if total and 'Unknown' in total: total = None
+                
+                down = d.get('_downloaded_bytes_str')
+                if down and '~' in down: down = down.replace('~', '')
+                if down and 'Unknown' in down: down = None
+
                 if job_id in jobs:
                     if jobs[job_id].status != 'cancelled':
                         jobs[job_id].status = 'downloading'
                     try:
                         jobs[job_id].progress = float(p)
                     except: pass
+                    if speed: jobs[job_id].speed_str = speed.strip()
+                    if total: jobs[job_id].total_bytes_str = total.strip()
+                    if down: jobs[job_id].downloaded_bytes_str = down.strip()
                     jobs[job_id].title = d.get('info_dict', {}).get('title') or jobs[job_id].title
             except Exception as e:
                 pass

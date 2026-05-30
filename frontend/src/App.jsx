@@ -186,8 +186,14 @@ function App() {
     if (step === 'downloading' && currentJobId) {
       const job = globalJobs[currentJobId];
       if (job) {
-        if (job.progress) {
-          setProgress({ percent: job.progress, status: job.status });
+        if (job.progress !== undefined) {
+          setProgress({ 
+            percent: job.progress, 
+            status: job.status,
+            speed: job.speed_str,
+            downloaded: job.downloaded_bytes_str,
+            total: job.total_bytes_str
+          });
         }
         if (job.status === 'done') {
           setDownloadInfo({
@@ -1451,6 +1457,13 @@ function App() {
                     </span>
                     <span className="font-mono">{Math.round(progress.percent)}%</span>
                   </div>
+
+                  {progress.percent < 99 && progress.speed && (
+                    <div className="flex justify-between text-xs text-secondary/70 px-1 font-mono">
+                      <span>{progress.downloaded || '0B'} / {progress.total || 'Desc.'}</span>
+                      <span>{progress.speed}</span>
+                    </div>
+                  )}
 
                   <p className="text-xs text-secondary/50">
                     {progress.percent === 100 ? 'Quase lá, finalizando o arquivo...' : 'Aguarde um momento'}
