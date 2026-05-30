@@ -213,8 +213,7 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
         'no_overwrites': True,
         'extractor_args': {'youtube': {'player_client': ['tv']}},
         'remote_components': ['ejs:github'],
-        'external_downloader': {'default': 'aria2c', 'm3u8': 'native', 'm3u8_native': 'native'},
-        'external_downloader_args': {'aria2c': ['-c', '-j', '16', '-x', '16', '-s', '16', '-k', '1M']}
+        'concurrent_fragment_downloads': 16,
     }
     
     # Re-ativa o "Jittering" (Anti-Ban Sleep) SOMENTE para YouTube
