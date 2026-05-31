@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, CheckCircle, AlertCircle, Upload, Power, Terminal } from 'lucide-react';
+import { Settings, CheckCircle, AlertCircle, Upload, Power, Terminal, Database, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { LogViewerModal } from './LogViewerModal';
@@ -7,6 +7,22 @@ import { LogViewerModal } from './LogViewerModal';
 export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, setOrganizeByArtist, onUploadSuccess, apiUrl }) {
   const [downloadFolder, setDownloadFolder] = React.useState('');
   const [showLogs, setShowLogs] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+
+  const handleDbSync = async () => {
+    setIsSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await axios.get(`${apiUrl}/api/db/sync`);
+      setSyncResult(res.data);
+    } catch (e) {
+      setSyncResult({ error: 'Falha ao sincronizar.' });
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncResult(null), 5000);
+    }
+  };
 
   React.useEffect(() => {
     if (isOpen) {
@@ -197,7 +213,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               </button>
             </div>
 
-            <div className="pt-4 border-t border-white/10 mt-4">
+            <div className="pt-4 border-t border-white/10 mt-4 space-y-2">
               <button
                 onClick={() => setShowLogs(true)}
                 className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all flex items-center justify-center gap-2 group"
@@ -205,6 +221,31 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                 <Terminal className="w-5 h-5 group-hover:text-primary transition-colors" />
                 <span className="font-bold text-sm">Visualizar Logs do Sistema (Terminal)</span>
               </button>
+
+              <button
+                onClick={handleDbSync}
+                disabled={isSyncing}
+                className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+              >
+                {isSyncing
+                  ? <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+                  : <Database className="w-5 h-5 group-hover:text-primary transition-colors" />
+                }
+                <span className="font-bold text-sm">
+                  {isSyncing ? 'Sincronizando...' : 'Sincronizar Banco com Arquivos'}
+                </span>
+              </button>
+
+              {syncResult && !syncResult.error && (
+                <div className="text-xs text-center py-2 px-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
+                  Verificados: <b>{syncResult.checked}</b> &nbsp;|&nbsp; Arquivos ausentes marcados: <b>{syncResult.marked_missing}</b>
+                </div>
+              )}
+              {syncResult?.error && (
+                <div className="text-xs text-center py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+                  {syncResult.error}
+                </div>
+              )}
             </div>
           </div>
 

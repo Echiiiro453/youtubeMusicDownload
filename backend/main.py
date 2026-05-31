@@ -20,7 +20,7 @@ import yt_dlp
 from dataclasses import asdict
 
 from utils import get_base_dir, get_resource_path, get_data_dir, get_downloads_dir, get_cookies_path
-from database import init_db, get_conn, get_downloaded_ids, mark_missing_db, get_download_record
+from database import init_db, get_conn, get_downloaded_ids, mark_missing_db, get_download_record, sync_db_with_disk
 from downloader import jobs, download_queue, worker_loop, MAX_CONCURRENT_DOWNLOADS, JobState
 
 app = FastAPI()
@@ -84,6 +84,13 @@ sys.stderr = LogInterceptor(sys.stderr)
 @app.get("/api/logs")
 async def get_logs():
     return {"logs": list(log_buffer)}
+
+@app.get("/api/db/sync")
+async def sync_db():
+    """Syncs the DB with disk, marking deleted files as 'missing'."""
+    from utils import get_downloads_dir
+    result = sync_db_with_disk(get_downloads_dir())
+    return {"status": "ok", **result}
 
 @app.get("/version")
 async def get_version():
@@ -369,6 +376,11 @@ def get_playlist_details(request: InfoRequest):
             raise HTTPException(status_code=400, detail="URL não é uma playlist ou falhou")
             
         playlist_id = playlist_info.get('id', '')
+        
+        # Sync DB with disk before checking status to catch deleted files
+        if playlist_id:
+            sync_db_with_disk(get_downloads_dir())
+        
         downloaded_ids = set(get_downloaded_ids(playlist_id)) if playlist_id else set()
         
         videos = []
