@@ -80,7 +80,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
   };
 
   const handleShutdown = async () => {
-    if (!confirm("⚠️ Tem certeza que deseja encerrar o servidor?\nIsso fechará o aplicativo e interromperá todos os downloads.")) return;
+    if (!confirm(t('settingsShutdownConfirm'))) return;
 
     try {
       try { window.close(); } catch (e) { }
@@ -93,8 +93,8 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
             <line x1="12" y1="2" x2="12" y2="12"></line>
           </svg>
-          <h1 style="margin-top: 20px; font-size: 24px;">Servidor Encerrado</h1>
-          <p style="opacity: 0.5; margin-top: 10px;">Pode fechar esta guia.</p>
+          <h1 style="margin-top: 20px; font-size: 24px;">${t('settingsShutdownSuccess')}</h1>
+          <p style="opacity: 0.5; margin-top: 10px;">${t('settingsShutdownCloseTab')}</p>
         </div>
       `;
     } catch (e) {
@@ -171,19 +171,19 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             </div>
 
             <div className="mt-4 pt-4 border-t border-white/5">
-              <h4 className="text-sm font-bold text-white mb-3">Como obter o cookies.txt:</h4>
+              <h4 className="text-sm font-bold text-white mb-3">{t('settingsCookiesHowTo')}</h4>
               <div className="space-y-3 text-sm text-secondary">
                 <div className="flex gap-3 items-center bg-black/20 p-3 rounded-lg border border-white/5">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary font-bold text-xs shrink-0">1</span>
-                  <p>Instale a extensão <b>Get cookies.txt LOCALLY</b> no Chrome ou Edge.</p>
+                  <p dangerouslySetInnerHTML={{ __html: t('settingsCookiesStep1') }}></p>
                 </div>
                 <div className="flex gap-3 items-center bg-black/20 p-3 rounded-lg border border-white/5">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary font-bold text-xs shrink-0">2</span>
-                  <p>Acesse o site do <b>YouTube</b> no navegador e faça login na sua conta normalmente.</p>
+                  <p dangerouslySetInnerHTML={{ __html: t('settingsCookiesStep2') }}></p>
                 </div>
                 <div className="flex gap-3 items-center bg-black/20 p-3 rounded-lg border border-white/5">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary font-bold text-xs shrink-0">3</span>
-                  <p>Clique no ícone da extensão no topo do navegador para exportar. Depois, faça o upload desse arquivo aqui embaixo.</p>
+                  <p dangerouslySetInnerHTML={{ __html: t('settingsCookiesStep3') }}></p>
                 </div>
               </div>
             </div>
@@ -200,7 +200,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             <div className="border-2 border-dashed border-white/10 group-hover:border-primary/50 group-hover:bg-primary/5 rounded-xl p-6 flex flex-col items-center justify-center transition-all text-center gap-2">
               <Upload className="w-8 h-8 text-secondary group-hover:text-primary transition-colors" />
               <p className="text-sm font-medium text-white">{t('settingsUploadCookies')}</p>
-              <p className="text-xs text-secondary">Apenas arquivos .txt</p>
+              <p className="text-xs text-secondary">{t('settingsUploadCookiesDesc')}</p>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                   onClick={handleChooseFolder}
                   className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-bold rounded-lg transition-colors whitespace-nowrap shadow-lg shadow-primary/20"
                 >
-                  Mudar Pasta
+                  {t('settingsChangeFolder')}
                 </button>
               </div>
             </div>
@@ -292,7 +292,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-300 rounded-xl transition-all flex items-center justify-center gap-2 group"
             >
               <Power className="w-5 h-5 group-hover:text-red-200 transition-colors" />
-              <span className="font-bold text-sm">Encerrar Aplicativo</span>
+              <span className="font-bold text-sm">{t('settingsShutdownApp')}</span>
             </button>
           </div>
         </div>

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.5] - 2026-05-31
+### Added
+- **Global Localization (i18n)**: Fully translated UI with dynamic switching between English (US), Spanish (ES), and Portuguese (BR).
+- **Language Selector**: New flag-based language selector implemented inside the Settings Modal.
+- **Robust Database Syncing**: Downloads not associated with a playlist (singles) are now reliably saved to the local SQLite database to prevent redundant re-downloads.
+- **Video ID Reliability**: Refactored the data ingestion pipeline to fetch accurate `video_id` metadata directly from `yt-dlp` instead of request URLs.
+
 ## [1.6.0] - 2026-05-28
 ### Added
 - **100% Portable Architecture**: Migrated from Tauri to a single `.exe` executable powered by PyWebView, drastically simplifying distribution.

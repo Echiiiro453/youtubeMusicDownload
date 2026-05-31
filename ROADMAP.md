@@ -22,11 +22,11 @@
   - [ ] Frontend: Dropdown de presets prontos
   - [ ] Presets padrão: Nightcore, Slowed, Podcast
 
-- [ ] **Download em Lote (Batch)**
-  - [ ] Backend: Fila de downloads
-  - [ ] Backend: Sistema de priorização
-  - [ ] Frontend: UI de fila com drag & drop
-  - [ ] Frontend: Pausar/retomar/cancelar individual
+- [x] **Download em Lote (Batch)**
+  - [x] Backend: Fila de downloads
+  - [x] Backend: Sistema de priorização
+  - [x] Frontend: UI de fila com drag & drop (Implementado Menu Lateral de Fila)
+  - [x] Frontend: Pausar/retomar/cancelar individual
 
 ## 🎨 UI/UX Improvements
 
@@ -155,6 +155,8 @@
 - [x] Empacotamento Profissional Desktop (PyWebView 100% Portátil) ✅
 - [x] Proxy Survival Mode (Bypass de Bloqueios IP do YouTube) ✅
 - [x] Memória de Fila (Resume Downloads Interrompidos) ✅
+- [x] **Internacionalização (i18n)**: Suporte dinâmico para Inglês, Espanhol e Português. ✅
+- [x] **Desduplicação Robusta**: Correção de persistência no DB para evitar re-downloads de singles. ✅
 
 **Em Progresso:** 🔄
-- Melhorias na UI de Playlist e Gestão de Múltiplos Downloads
+- Sistema de Presets (Configuração Rápida de Pitch/Speed)

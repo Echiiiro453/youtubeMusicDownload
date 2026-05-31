@@ -814,24 +814,24 @@ function App() {
         <button
           onClick={() => checkForUpdates(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-          title="Verificar Atualizações"
+          title={t('btnUpdateTitle')}
         >
           <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Atualizar</span>
+          <span className="hidden sm:inline">{t('btnUpdate')}</span>
         </button>
         <button
           onClick={() => setShowDonate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
         >
           <Heart className="w-4 h-4" />
-          Apoiar
+          {t('btnDonate')}
         </button>
         <button
           onClick={() => setShowSettings(true)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all ${isAuthenticated ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-surface/50 text-secondary border border-white/10 hover:bg-surface'}`}
         >
           {isAuthenticated ? <CheckCircle className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
-          {isAuthenticated ? 'Conectado' : 'Configurar'}
+          {isAuthenticated ? t('btnConnected') : t('btnConfigure')}
         </button>
       </div>
 
@@ -853,9 +853,9 @@ function App() {
               <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                 <List className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold">Continuar Downloads?</h2>
+              <h2 className="text-2xl font-bold">{t('resumeTitle')}</h2>
               <p className="text-secondary text-sm">
-                Você tem {savedQueueData.filter(i => i.status !== 'completed' && i.status !== 'error').length} downloads pendentes da última vez que fechou o aplicativo. Deseja continuar de onde parou?
+                {t('resumeDesc', savedQueueData.filter(i => i.status !== 'completed' && i.status !== 'error').length)}
               </p>
               
               <div className="flex gap-4 w-full">
@@ -866,7 +866,7 @@ function App() {
                   }}
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-white/70 bg-white/5 hover:bg-white/10 transition-colors"
                 >
-                  Não, descartar
+                  {t('resumeNo')}
                 </button>
                 <button
                   onClick={() => {
@@ -882,7 +882,7 @@ function App() {
                   }}
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-primary hover:bg-primary/80 transition-colors shadow-lg shadow-primary/25"
                 >
-                  Sim, continuar
+                  {t('resumeYes')}
                 </button>
               </div>
             </motion.div>
@@ -943,11 +943,11 @@ function App() {
                 </div>
 
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-                  Apoie o Projeto
+                  {t('donateTitle')}
                 </h3>
 
                 <p className="text-gray-400 text-sm">
-                  Se este app te ajudou, considere fazer uma doação via PIX para manter o desenvolvimento ativo! 🚀
+                  {t('donateDesc')}
                 </p>
 
                 <div className="bg-white p-4 rounded-xl inline-block mx-auto">
@@ -959,13 +959,13 @@ function App() {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText("00020126580014br.gov.bcb.pix0136bd1b2d5e-e160-4f50-b3a8-1f75fe2c721c5204000053039865802BR5925ANDREY WARLLEY DUARTE DA 6015SANTA ISABEL DO62070503***6304D541");
-                      addToast("Código PIX copiado!", "success");
+                      addToast(t('donatePixCopied'), "success");
                     }}
                     className="w-full py-3 bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium border border-pink-500/30"
                     title="Copiar Código"
                   >
                     <Copy className="w-5 h-5" />
-                    <span>Copiar Código PIX (Copia e Cola)</span>
+                    <span>{t('donateCopyPix')}</span>
                   </button>
                 </div>
 
@@ -1003,10 +1003,10 @@ function App() {
             <Music className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-secondary bg-clip-text text-transparent">
-            Music Downloader
+            {t('mainTitle')}
           </h1>
           <p className="text-secondary text-lg">
-            {step === 'search' ? 'Cole seu link para começar.' : 'Configure seu download.'}
+            {step === 'search' ? t('mainSubtitleSearch') : t('mainSubtitleConfig')}
           </p>
         </motion.div>
 
@@ -1028,7 +1028,7 @@ function App() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Cole um link do YouTube ou digite para pesquisar..."
+                  placeholder={t('searchPlaceholderText')}
                   className="w-full h-14 pl-12 pr-4 bg-surface/50 backdrop-blur-md border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-lg placeholder:text-secondary/50 shadow-lg"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -1059,7 +1059,7 @@ function App() {
                     }`}
                 >
                   <Search size={18} />
-                  <span>Pesquisar</span>
+                  <span>{t('btnSearch')}</span>
                 </button>
 
                 <button
@@ -1072,7 +1072,7 @@ function App() {
                     }`}
                 >
                   <ArrowRight size={18} />
-                  <span>Abrir Link</span>
+                  <span>{t('btnOpenLink')}</span>
                 </button>
               </div>
             </motion.form>
@@ -1097,7 +1097,7 @@ function App() {
                 <>
                   <div className="flex items-center justify-between text-secondary px-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">Qtd:</span>
+                      <span className="text-sm font-medium">{t('labelQty')}</span>
                       <select
                         value={searchLimit}
                         onChange={(e) => setSearchLimit(Number(e.target.value))}
@@ -1113,7 +1113,7 @@ function App() {
                       onClick={() => setSearchResults([])}
                       className="text-xs hover:text-white transition-colors"
                     >
-                      Limpar
+                      {t('btnClear')}
                     </button>
                   </div>
 
@@ -1187,7 +1187,7 @@ function App() {
                 )}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-lg leading-tight line-clamp-2 text-white">{metadata.title}</h3>
-                  <p className="text-secondary text-sm mt-1">Pronto para baixar</p>
+                  <p className="text-secondary text-sm mt-1">{t('readyToDownload')}</p>
                 </div>
               </div>
 
@@ -1201,8 +1201,8 @@ function App() {
                           <FileText className="w-5 h-5 text-purple-400" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-white">Playlist Detectada</h4>
-                          <p className="text-xs text-secondary">Use o botão abaixo para baixar a playlist completa.</p>
+                          <h4 className="font-bold text-white">{t('playlistDetectedTitle')}</h4>
+                          <p className="text-xs text-secondary">{t('playlistDetectedDesc')}</p>
                         </div>
                       </div>
 
@@ -1212,11 +1212,11 @@ function App() {
                         className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg"
                       >
                         {playlistLoading ? (
-                          <>⏳ Carregando playlist...</>
+                          <>{t('btnLoadingPlaylist')}</>
                         ) : (
                           <>
                             <FileText size={20} />
-                            Ver e Selecionar Músicas
+                            {t('btnViewPlaylist')}
                           </>
                         )}
                       </button>
@@ -1230,14 +1230,14 @@ function App() {
                       className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mode === 'audio' ? 'bg-primary text-white shadow-lg' : 'text-secondary hover:text-white'
                         }`}
                     >
-                      🎵 Áudio
+                      {t('tabAudio')}
                     </button>
                     <button
                       onClick={() => setMode('video')}
                       className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mode === 'video' ? 'bg-primary text-white shadow-lg' : 'text-secondary hover:text-white'
                         }`}
                     >
-                      🎬 Vídeo
+                      {t('tabVideo')}
                     </button>
                   </div>
 
@@ -1248,9 +1248,9 @@ function App() {
                       {/* Presets Dropdown */}
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-semibold text-secondary uppercase tracking-wider">Presets</label>
+                          <label className="text-xs font-semibold text-secondary uppercase tracking-wider">{t('labelPresets')}</label>
                           <button onClick={handleSavePreset} className="text-xs text-primary hover:text-blue-300 flex items-center gap-1 transition-colors">
-                            <Save size={12} /> Salvar Atual
+                            <Save size={12} /> {t('btnSavePreset')}
                           </button>
                         </div>
                         <select
@@ -1258,15 +1258,15 @@ function App() {
                           onChange={(e) => applyPreset(e.target.value)}
                           className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-primary cursor-pointer"
                         >
-                          <option value="" className="bg-slate-900 text-gray-400">Selecione um efeito...</option>
-                          <optgroup label="Padrões" className="bg-slate-900 text-white">
+                          <option value="" className="bg-slate-900 text-gray-400">{t('selectPreset')}</option>
+                          <optgroup label={t('groupDefaultPresets')} className="bg-slate-900 text-white">
                             {presets.defaults.map(p => (
                               <option key={p.name} value={p.name}>{p.name}</option>
                             ))}
                           </optgroup>
                           {presets.custom.length > 0 && (
-                            <optgroup label="Meus Presets" className="bg-slate-900 text-white">
-                              {presets.custom.map(p => (
+                            <optgroup label={t('groupMyPresets')} className="bg-slate-900 text-white">
+                              {presets.custom.length > 0 && presets.custom.map(p => (
                                 <option key={p.name} value={p.name}>{p.name}</option>
                               ))}
                             </optgroup>
@@ -1279,7 +1279,7 @@ function App() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Sliders className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm font-medium text-white">Tom (Pitch)</span>
+                            <span className="text-sm font-medium text-white">{t('labelPitch')}</span>
                           </div>
                           <span className={`text-xs font-mono font-bold ${pitch === 0 ? 'text-secondary' : 'text-purple-400'}`}>
                             {pitch > 0 ? `+${pitch}` : pitch} semi
@@ -1306,7 +1306,7 @@ function App() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Sliders className="w-4 h-4 text-blue-400" />
-                            <span className="text-sm font-medium text-white">Velocidade</span>
+                            <span className="text-sm font-medium text-white">{t('speedControl')}</span>
                           </div>
                           <span className={`text-xs font-mono font-bold ${speed === 1.0 ? 'text-secondary' : 'text-blue-400'}`}>
                             {speed}x
@@ -1413,7 +1413,7 @@ function App() {
                       onClick={reset}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 text-secondary font-medium transition-colors"
                     >
-                      Cancelar
+                      {t('cancel')}
                     </button>
                     <button
                       onClick={handleDownload}
@@ -1421,8 +1421,8 @@ function App() {
                     >
                       <Download className="w-5 h-5" />
                       {metadata.is_playlist && (metadata.url?.includes('v=') || metadata.url?.includes('youtu.be/')) 
-                        ? 'Baixar Apenas este Vídeo' 
-                        : 'Baixar Agora'}
+                        ? t('confirmDownload') 
+                        : t('confirmDownload')}
                     </button>
                   </div>
                 </div>
@@ -1442,8 +1442,8 @@ function App() {
                   <div className="flex justify-between text-sm text-secondary px-1">
                     <span>
                       {progress.percent < 99
-                        ? 'Baixando...'
-                        : 'Processando (Mixagem/Capa)...'}
+                        ? t('statusDownloading')
+                        : t('statusProcessing')}
                     </span>
                     <span className="font-mono">{Math.round(progress.percent)}%</span>
                   </div>
@@ -1532,7 +1532,7 @@ function App() {
             </div>
           </div>
           <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 font-medium whitespace-nowrap">
-            Ver Fila
+            {t('queueTitle')}
           </span>
         </motion.button>
       )}
@@ -1559,7 +1559,7 @@ function App() {
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <List className="text-primary" />
-                    Fila de Downloads
+                    {t('queueTitle')}
                   </h3>
                   <button onClick={() => setShowQueue(false)} className="p-2 hover:bg-white/10 rounded-full">
                     <X className="text-gray-400" />
@@ -1572,7 +1572,7 @@ function App() {
                     disabled={isProcessingQueue}
                     className="text-red-400 hover:text-red-300 flex items-center gap-1 disabled:opacity-50"
                   >
-                    <Trash2 size={14} /> Limpar tudo
+                    <Trash2 size={14} /> {t('queueClear')}
                   </button>
                 </div>
               </div>
@@ -1581,7 +1581,7 @@ function App() {
                 {queue.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-secondary opacity-50">
                     <List size={48} className="mb-4" />
-                    <p>Sua fila está vazia</p>
+                    <p>{t('queueEmpty')}</p>
                   </div>
                 ) : (
                   queue.map((item) => (
@@ -1606,9 +1606,9 @@ function App() {
                   className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-500 hover:to-blue-600 disabled:from-gray-700 disabled:to-gray-800 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   {isProcessingQueue ? (
-                    <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processando...</>
+                    <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('loading')}</>
                   ) : (
-                    <><PlayCircle size={20} /> Iniciar Downloads</>
+                    <><PlayCircle size={20} /> {t('confirmDownload')}</>
                   )}
                 </button>
               </div>

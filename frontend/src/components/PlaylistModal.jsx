@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Download } from 'lucide-react';
 import { SkeletonPlaylistItem } from './UIComponents';
+import { t } from '../i18n';
 
 export function PlaylistModal({
   isOpen,
@@ -31,27 +32,27 @@ export function PlaylistModal({
         <div className="p-6 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-pink-600/20 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold text-white mb-1">📋 Selecionar Músicas</h3>
+              <h3 className="text-2xl font-bold text-white mb-1">{t('playlistSelectMusic')}</h3>
               <p className="text-gray-300 text-sm">{metadata?.title}</p>
               <div className="flex items-center gap-2 mt-2 bg-black/20 p-1.5 rounded-lg w-fit">
-                <span className="text-gray-400 text-xs font-medium">Carregar:</span>
+                <span className="text-gray-400 text-xs font-medium">{t('playlistLoadLimit')}</span>
                 <select
                   value={playlistLimit}
                   onChange={(e) => setPlaylistLimit(Number(e.target.value))}
                   className="bg-transparent text-white text-xs font-bold outline-none cursor-pointer"
                 >
-                  <option value={50} className="bg-slate-900 text-white">50 itens</option>
-                  <option value={100} className="bg-slate-900 text-white">100 itens</option>
-                  <option value={200} className="bg-slate-900 text-white">200 itens</option>
-                  <option value={500} className="bg-slate-900 text-white">500 itens</option>
-                  <option value={0} className="bg-slate-900 text-white">Todos (Pode demorar)</option>
+                  <option value={50} className="bg-slate-900 text-white">50 {t('playlistItems')}</option>
+                  <option value={100} className="bg-slate-900 text-white">100 {t('playlistItems')}</option>
+                  <option value={200} className="bg-slate-900 text-white">200 {t('playlistItems')}</option>
+                  <option value={500} className="bg-slate-900 text-white">500 {t('playlistItems')}</option>
+                  <option value={0} className="bg-slate-900 text-white">{t('playlistAllItems')}</option>
                 </select>
                 <button
                   onClick={fetchPlaylistDetails}
                   className="text-xs bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 px-2 py-1 rounded transition-colors flex items-center gap-1 ml-1 border border-purple-500/30"
-                  title="Recarregar playlist com novo limite"
+                  title={t('playlistRefreshTitle')}
                 >
-                  🔄 Atualizar
+                  {t('playlistRefresh')}
                 </button>
               </div>
             </div>
@@ -64,7 +65,7 @@ export function PlaylistModal({
           </div>
           <div className="flex items-center gap-4 mt-4">
             <span className="text-lg font-semibold text-purple-300">
-              {selectedVideos.size} de {playlistVideos.length} selecionadas
+              {t('playlistSelectedOf', selectedVideos.size, playlistVideos.length)}
             </span>
             <button
               onClick={() => {
@@ -77,13 +78,13 @@ export function PlaylistModal({
               }}
               className="px-4 py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 rounded-lg text-sm font-medium transition-colors"
             >
-              Selecionar Novos
+              {t('playlistSelectNew')}
             </button>
             <button
               onClick={deselectAllVideos}
               className="px-4 py-2 bg-gray-600/30 hover:bg-gray-600/50 text-gray-200 rounded-lg text-sm font-medium transition-colors"
             >
-              Limpar Seleção
+              {t('playlistClearSelection')}
             </button>
           </div>
         </div>
@@ -126,7 +127,7 @@ export function PlaylistModal({
                     {video.status === 'downloaded' && (
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-wider rounded border border-green-500/30">
-                          Já Baixado
+                          {t('playlistAlreadyDownloaded')}
                         </span>
                         <button
                           onClick={(e) => {
@@ -135,7 +136,7 @@ export function PlaylistModal({
                           }}
                           className="text-xs text-purple-400 hover:text-purple-300 underline"
                         >
-                          Rebaixar
+                          {t('playlistRedownload')}
                         </button>
                       </div>
                     )}
@@ -166,7 +167,7 @@ export function PlaylistModal({
           >
             <div className="flex items-center justify-center gap-2">
               <Download size={20} />
-              <span>Baixar {selectedVideos.size} Música{selectedVideos.size !== 1 ? 's' : ''}</span>
+              <span>{t('playlistDownloadCount', selectedVideos.size)}</span>
             </div>
           </button>
         </div>
