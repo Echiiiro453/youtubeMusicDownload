@@ -1,10 +1,12 @@
-import React from 'react';
-import { Settings, CheckCircle, AlertCircle, Upload, Power } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Settings, CheckCircle, AlertCircle, Upload, Power, Terminal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { LogViewerModal } from './LogViewerModal';
 
 export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, setOrganizeByArtist, onUploadSuccess, apiUrl }) {
   const [downloadFolder, setDownloadFolder] = React.useState('');
+  const [showLogs, setShowLogs] = useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -194,6 +196,16 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                 />
               </button>
             </div>
+
+            <div className="pt-4 border-t border-white/10 mt-4">
+              <button
+                onClick={() => setShowLogs(true)}
+                className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all flex items-center justify-center gap-2 group"
+              >
+                <Terminal className="w-5 h-5 group-hover:text-primary transition-colors" />
+                <span className="font-bold text-sm">Visualizar Logs do Sistema (Terminal)</span>
+              </button>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-white/10 mt-4">
@@ -207,6 +219,14 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
           </div>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        <LogViewerModal 
+          isOpen={showLogs} 
+          onClose={() => setShowLogs(false)} 
+          apiUrl={apiUrl} 
+        />
+      </AnimatePresence>
     </div>
   );
 }

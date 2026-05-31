@@ -12,6 +12,7 @@ import time
 import uuid
 import shutil
 import asyncio
+import collections
 from datetime import datetime
 from urllib.request import Request as URLRequest, urlopen
 import re
@@ -57,6 +58,29 @@ manager = ConnectionManager()
 
 APP_VERSION = "1.6.20"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
+
+log_buffer = collections.deque(maxlen=500)
+
+class LogInterceptor:
+    def __init__(self, original_stream):
+        self.original_stream = original_stream
+
+    def write(self, text):
+        self.original_stream.write(text)
+        if text.strip():
+            # Remove ANSI color codes for the web viewer
+            clean_text = re.sub(r'\x1b\[[0-9;]*m', '', text)
+            log_buffer.append(clean_text)
+
+    def flush(self):
+        self.original_stream.flush()
+
+sys.stdout = LogInterceptor(sys.stdout)
+sys.stderr = LogInterceptor(sys.stderr)
+
+@app.get("/api/logs")
+async def get_logs():
+    return {"logs": list(log_buffer)}
 
 @app.get("/version")
 async def get_version():
