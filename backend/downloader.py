@@ -349,8 +349,13 @@ def download_with_retries(job_id: str, request):
                     st.progress = 100.0
                     st.filename = final_filename_relative
                     
-                    mark_downloaded_db(getattr(request, 'playlist_id', None), getattr(request, 'video_id', None), info.get('title', 'Unknown'), final_filename_relative, request.url)
+                    # Extract the real YouTube video ID from yt-dlp info (authoritative source)
+                    real_video_id = info.get('id') or getattr(request, 'video_id', None)
+                    real_playlist_id = getattr(request, 'playlist_id', None) or info.get('playlist_id')
+                    
+                    mark_downloaded_db(real_playlist_id, real_video_id, info.get('title', 'Unknown'), final_filename_relative, request.url)
                     print(f"  \033[32mOK SUCESSO! Download concluído usando o método: {strat_name}\033[0m\n")
+
             
             if strat.get("use_proxy"):
                 last_proxy_err = None

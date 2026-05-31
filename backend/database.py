@@ -43,7 +43,9 @@ def init_db():
         print(f"Erro ao inicializar DB: {e}")
 
 def mark_downloaded_db(playlist_id: str, video_id: str, title: str, file_path: str, url: str = None):
-    if not playlist_id or not video_id: return
+    # Use 'single' as fallback playlist_id for avulso downloads (no playlist context)
+    effective_playlist_id = playlist_id or 'single'
+    if not video_id: return
     try:
         conn = get_conn()
         cur = conn.cursor()
@@ -51,14 +53,16 @@ def mark_downloaded_db(playlist_id: str, video_id: str, title: str, file_path: s
             INSERT OR REPLACE INTO downloads
             (playlist_id, video_id, title, file_path, status, created_at, url)
             VALUES (?, ?, ?, ?, 'downloaded', ?, ?);
-        """, (playlist_id, video_id, title, file_path, time.time(), url))
+        """, (effective_playlist_id, video_id, title, file_path, time.time(), url))
         conn.commit()
         conn.close()
+        print(f"  [DB] Salvo: playlist={effective_playlist_id} | video={video_id} | {title[:50]}")
     except Exception as e:
         print(f"Erro ao salvar no DB: {e}")
 
 def mark_error_db(playlist_id: str, video_id: str, title: str, error_msg: str):
-    if not playlist_id or not video_id: return
+    effective_playlist_id = playlist_id or 'single'
+    if not video_id: return
     try:
         conn = get_conn()
         cur = conn.cursor()
@@ -66,7 +70,7 @@ def mark_error_db(playlist_id: str, video_id: str, title: str, error_msg: str):
             INSERT OR REPLACE INTO downloads
             (playlist_id, video_id, title, file_path, status, created_at)
             VALUES (?, ?, ?, '', ?, ?);
-        """, (playlist_id, video_id, title, f"error:{error_msg[:180]}", time.time()))
+        """, (effective_playlist_id, video_id, title, f"error:{error_msg[:180]}", time.time()))
         conn.commit()
         conn.close()
     except Exception as e:
