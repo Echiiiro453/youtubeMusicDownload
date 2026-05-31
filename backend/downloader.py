@@ -274,8 +274,11 @@ def download_with_retries(job_id: str, request):
         {"name": "force_ipv4", "use_cookies": True, "client": "web", "source_address": "0.0.0.0"},
         {"name": "force_ipv6", "use_cookies": True, "client": "web", "source_address": "::"},
         {"name": "fallback_quality", "format": "bestvideo[height<=720]+bestaudio/best" if request.mode == 'video' else "bestaudio[protocol^=http]", "use_cookies": True, "client": "web", "impersonate": "chrome"},
+        {"name": "ytmusic_fallback", "use_ytmusic_search": True, "use_cookies": True, "client": "web_embedded", "impersonate": "chrome"} if request.mode != 'video' and getattr(request, 'title', None) else None,
+        {"name": "invidious_fallback", "use_invidious": True, "use_cookies": False, "client": "web", "impersonate": "chrome"},
         {"name": "proxy_survival", "format": "bestaudio[protocol^=http]", "use_cookies": False, "client": "web", "impersonate": "chrome", "use_proxy": True},
     ]
+    strategies = [s for s in strategies if s is not None]
 
     st = jobs.get(job_id)
     if not st or st.status == "cancelled": return
@@ -292,8 +295,25 @@ def download_with_retries(job_id: str, request):
             ydl_opts = build_ydl_opts_for_strategy(job_id, request, strat)
             
             def execute_ydl(opts):
+                target_url = request.url
+                
+                if strat.get("use_invidious"):
+                    import re
+                    match = re.search(r'(?:v=|/)([0-9A-Za-z_-]{11}).*', target_url)
+                    if match:
+                        target_url = f"https://yewtu.be/watch?v={match.group(1)}"
+                        print(f"      \033[94m-> Roteando via Invidious: {target_url}\033[0m")
+                
+                elif strat.get("use_ytmusic_search") and getattr(request, 'title', None):
+                    artist = getattr(request, 'artist', '') or ''
+                    clean_title = f"{artist} {request.title}".strip()
+                    target_url = f"ytmsearch1:{clean_title}"
+                    print(f"      \033[94m-> Buscando áudio puro no YT Music: {target_url}\033[0m")
+
                 with yt_dlp.YoutubeDL(opts) as ydl:
-                    info = ydl.extract_info(request.url, download=True)
+                    info = ydl.extract_info(target_url, download=True)
+                    if 'entries' in info:
+                        info = info['entries'][0]
                     filename = ydl.prepare_filename(info)
                     
                     base_path, _ = os.path.splitext(filename)
