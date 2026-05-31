@@ -260,7 +260,7 @@ def build_ydl_opts_for_strategy(job_id: str, request, strategy: dict):
     return base_opts
 
 def download_with_retries(job_id: str, request):
-    print(f"\n\033[1;35m[🎧] INICIANDO SMART DOWNLOAD:\033[0m \033[36m{request.url}\033[0m")
+    print(f"\n\033[1;35m[+] INICIANDO SMART DOWNLOAD:\033[0m \033[36m{request.url}\033[0m")
     strategies = [
         {"name": "tv_embedded", "use_cookies": True, "client": "tv_embedded"},
         {"name": "web_embedded", "use_cookies": True, "client": "web_embedded", "impersonate": "chrome"},
@@ -283,7 +283,7 @@ def download_with_retries(job_id: str, request):
     for idx, strat in enumerate(strategies, start=1):
         if st.status == "cancelled": return
         strat_name = strat['name'].upper()
-        print(f"  \033[33m➔ [{idx}/{len(strategies)}] Testando método: \033[1;33m{strat_name}\033[0m")
+        print(f"  \033[33m-> [{idx}/{len(strategies)}] Testando método: \033[1;33m{strat_name}\033[0m")
         st.error = None
         if idx > 1:
             st.status = f"retry_method_{idx}"
@@ -308,17 +308,17 @@ def download_with_retries(job_id: str, request):
                     # Apply Premium Metadata
                     if request.mode != 'video':
                         st.status = "processing"
-                        print(f"  \033[94m➔ Buscando metadados premium no iTunes...\033[0m")
+                        print(f"  \033[94m-> Buscando metadados premium no iTunes...\033[0m")
                         success = apply_metadata(full_final_path, info.get('title', ''))
                         if success:
-                            print(f"    \033[32m✔ Capa High-Res e Tags injetadas com sucesso!\033[0m")
+                            print(f"    \033[32mOK Capa High-Res e Tags injetadas com sucesso!\033[0m")
                     
                     st.status = "done"
                     st.progress = 100.0
                     st.filename = final_filename_relative
                     
                     mark_downloaded_db(getattr(request, 'playlist_id', None), getattr(request, 'video_id', None), info.get('title', 'Unknown'), final_filename_relative, request.url)
-                    print(f"  \033[32m✔ SUCESSO! Download concluído usando o método: {strat_name}\033[0m\n")
+                    print(f"  \033[32mOK SUCESSO! Download concluído usando o método: {strat_name}\033[0m\n")
             
             if strat.get("use_proxy"):
                 last_proxy_err = None
@@ -350,7 +350,7 @@ def download_with_retries(job_id: str, request):
             # Formatar erro resumido para o log
             short_msg = msg.split('\n')[0]
             if len(short_msg) > 100: short_msg = short_msg[:97] + "..."
-            print(f"  \033[31m✖ Falha no método {strat_name}: {short_msg}\033[0m")
+            print(f"  \033[31mERR Falha no método {strat_name}: {short_msg}\033[0m")
 
             if is_match(msg, TRANSIENT_ERRORS):
                 st.status = "rate_limited" 
@@ -360,7 +360,7 @@ def download_with_retries(job_id: str, request):
                 st.status = "error"
                 st.error = "Login necessário (YouTube bloqueou o vídeo). Atualize o cookies.txt."
                 mark_error_db(getattr(request, 'playlist_id', None), getattr(request, 'video_id', None), "Login Required", st.error)
-                print(f"  \033[1;31m✖ Download abortado: Proteção de Login ativada.\033[0m\n")
+                print(f"  \033[1;31mERR Download abortado: Proteção de Login ativada.\033[0m\n")
                 return 
             if is_match(msg, FORMAT_ERRORS):
                  continue
@@ -370,7 +370,7 @@ def download_with_retries(job_id: str, request):
     st.status = "error"
     st.error = "Falha em todos os métodos de download (possível link inválido ou bloqueio de IP)."
     mark_error_db(getattr(request, 'playlist_id', None), getattr(request, 'video_id', None), "All strategies failed", st.error)
-    print(f"  \033[1;31m✖ Download permanentemente falhou para: {request.url}\033[0m\n")
+    print(f"  \033[1;31mERR Download permanentemente falhou para: {request.url}\033[0m\n")
 
 async def run_download(job_id: str, request):
     await asyncio.to_thread(download_with_retries, job_id, request)
