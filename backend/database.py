@@ -73,16 +73,35 @@ def mark_error_db(playlist_id: str, video_id: str, title: str, error_msg: str):
         print(f"Erro ao salvar erro no DB: {e}")
 
 def get_downloaded_ids(playlist_id: str) -> list[str]:
+    """
+    Returns video_ids that are 'downloaded'.
+    Checks both:
+    1. Videos downloaded under this exact playlist_id
+    2. Videos downloaded under ANY source (avulso, other playlists)
+    This prevents re-downloading a video just because it came from a different origin.
+    """
     if not playlist_id: return []
     try:
         conn = get_conn()
         cur = conn.cursor()
-        cur.execute("SELECT video_id FROM downloads WHERE playlist_id = ? AND status = 'downloaded';", (playlist_id,))
-        rows = cur.fetchall()
+        # First: get video_ids for this playlist
+        cur.execute(
+            "SELECT video_id FROM downloads WHERE playlist_id = ? AND status = 'downloaded';",
+            (playlist_id,)
+        )
+        by_playlist = {r["video_id"] for r in cur.fetchall() if r["video_id"]}
+
+        # Second: get ALL downloaded video_ids globally
+        cur.execute(
+            "SELECT video_id FROM downloads WHERE status = 'downloaded' AND video_id IS NOT NULL AND video_id != '';"
+        )
+        global_ids = {r["video_id"] for r in cur.fetchall()}
+
         conn.close()
-        return [r["video_id"] for r in rows]
+        return list(by_playlist | global_ids)
     except:
         return []
+
 
 def mark_missing_db(playlist_id: str, video_id: str):
     try:
