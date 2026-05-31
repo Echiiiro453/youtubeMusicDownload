@@ -2,9 +2,60 @@
 lyrics_fetcher.py
 Busca e injeta letras de músicas nos arquivos de áudio após o download.
 Suporta: MP3, FLAC, M4A/AAC
-Providers: Musixmatch, Genius, AZLyrics (via syncedlyrics)
+Providers: Musixmatch, Lrclib (via syncedlyrics)
 """
 import os
+import re
+
+
+def _clean_title(title: str) -> str:
+    """Remove suffixes like (Official Audio), (Lyrics), [HD], etc."""
+    noise = [
+        r'\(Official\s*(Music\s*)?Video\)',
+        r'\(Official\s*Audio\)',
+        r'\(Official\s*Lyric\s*Video\)',
+        r'\(Lyrics?\)',
+        r'\(Letra\)',
+        r'\(Audio\)',
+        r'\[Official\s*(Music\s*)?Video\]',
+        r'\[Official\s*Audio\]',
+        r'\[Lyrics?\]',
+        r'\[HD\]',
+        r'\[4K\]',
+        r'\[4K UPGRADE\]',
+        r'\(HQ\)',
+        r'\[HQ\]',
+        r'\(Visualizer\)',
+        r'\(Extended\s*Mix\)',
+        r'\(Radio\s*Edit\)',
+        r'\(Live\)',
+        r'\[Live\]',
+    ]
+    for pattern in noise:
+        title = re.sub(pattern, '', title, flags=re.IGNORECASE)
+    return title.strip(' -–—|')
+
+
+def _build_search_query(title: str, artist: str) -> str:
+    """
+    Build a clean search query, avoiding duplicate artist names.
+    If the artist name is already present in the title, use title only.
+    """
+    clean = _clean_title(title)
+    
+    if artist:
+        # Normalize both for comparison
+        title_lower = clean.lower()
+        artist_lower = artist.lower().strip()
+        
+        # Check if artist name is already somewhere in the title
+        if artist_lower and artist_lower in title_lower:
+            return clean
+        else:
+            return f"{artist} {clean}".strip()
+    
+    return clean
+
 
 def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool:
     """
@@ -16,7 +67,6 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
 
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in ('.mp3', '.flac', '.m4a', '.aac', '.ogg'):
-        print(f"  [lyrics] Formato {ext} nao suportado para letras.")
         return False
 
     try:
@@ -25,105 +75,93 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
         print("  [lyrics] syncedlyrics nao instalado, pulando.")
         return False
 
-    search_query = f"{artist} {title}".strip() if artist else title
-    print(f"  [lyrics] Buscando letra: {search_query}")
+    search_query = _build_search_query(title, artist)
+    print(f"  [lyrics] Buscando letra: '{search_query}'")
 
-    # Try synced lyrics first (with timestamps), fall back to plain
+    # Use only fast/reliable providers to avoid 12s timeout cascade
+    fast_providers = ["Musixmatch", "Lrclib"]
+
     lyrics_text = None
-    is_synced = False
 
     try:
-        lyrics_text = syncedlyrics.search(search_query)
+        lyrics_text = syncedlyrics.search(
+            search_query,
+            providers=fast_providers
+        )
         if lyrics_text:
-            is_synced = True
-            print(f"  [lyrics] Letra SINCRONIZADA encontrada!")
-    except Exception as e:
-        print(f"  [lyrics] Erro ao buscar letra sincronizada: {e}")
+            print(f"  [lyrics] Letra sincronizada encontrada!")
+    except Exception:
+        pass  # Silently skip provider errors
 
     if not lyrics_text:
         try:
-            lyrics_text = syncedlyrics.search(search_query, plain_only=True)
+            lyrics_text = syncedlyrics.search(
+                search_query,
+                providers=fast_providers,
+                plain_only=True
+            )
             if lyrics_text:
-                print(f"  [lyrics] Letra SIMPLES encontrada.")
-        except Exception as e:
-            print(f"  [lyrics] Erro ao buscar letra simples: {e}")
+                print(f"  [lyrics] Letra simples encontrada.")
+        except Exception:
+            pass
 
     if not lyrics_text:
-        print(f"  [lyrics] Letra nao encontrada para: {search_query}")
+        print(f"  [lyrics] Letra nao encontrada para: '{search_query}'")
         return False
 
-    return _embed_lyrics(file_path, ext, lyrics_text, is_synced)
+    return _embed_lyrics(file_path, ext, lyrics_text)
 
 
-def _embed_lyrics(file_path: str, ext: str, lyrics_text: str, is_synced: bool) -> bool:
+def _embed_lyrics(file_path: str, ext: str, lyrics_text: str) -> bool:
     """Embeds lyrics into the audio file using mutagen."""
     try:
-        from mutagen.id3 import ID3, USLT, SYLT, Encoding
-        from mutagen.mp3 import MP3
-        from mutagen.flac import FLAC
-        from mutagen.mp4 import MP4
-    except ImportError:
-        print("  [lyrics] mutagen nao instalado.")
-        return False
-
-    try:
         if ext == '.mp3':
+            from mutagen.mp3 import MP3
+            from mutagen.id3 import ID3, USLT, Encoding
             audio = MP3(file_path, ID3=ID3)
             if audio.tags is None:
                 audio.add_tags()
-
-            # Remove old lyrics tags if exist
             audio.tags.delall('USLT')
-            audio.tags.delall('SYLT')
-
-            # Embed as plain/unsynced (USLT) - most player compatible
-            # Strip LRC timestamps for USLT if needed
             plain_lyrics = _strip_lrc_timestamps(lyrics_text)
             audio.tags.add(USLT(
                 encoding=Encoding.UTF8,
-                lang='por',
+                lang='und',
                 desc='Lyrics',
                 text=plain_lyrics
             ))
             audio.save()
-            print(f"  [lyrics] OK Letra injetada no MP3 (USLT tag)")
+            print(f"  [lyrics] OK Letra injetada no MP3")
             return True
 
         elif ext == '.flac':
+            from mutagen.flac import FLAC
             audio = FLAC(file_path)
-            plain_lyrics = _strip_lrc_timestamps(lyrics_text)
-            audio['LYRICS'] = plain_lyrics
+            audio['LYRICS'] = _strip_lrc_timestamps(lyrics_text)
             audio.save()
             print(f"  [lyrics] OK Letra injetada no FLAC")
             return True
 
         elif ext in ('.m4a', '.aac'):
+            from mutagen.mp4 import MP4
             audio = MP4(file_path)
-            plain_lyrics = _strip_lrc_timestamps(lyrics_text)
-            audio['\xa9lyr'] = [plain_lyrics]
+            audio['\xa9lyr'] = [_strip_lrc_timestamps(lyrics_text)]
             audio.save()
             print(f"  [lyrics] OK Letra injetada no M4A")
             return True
 
     except Exception as e:
         print(f"  [lyrics] Erro ao injetar letra: {e}")
-        return False
 
     return False
 
 
 def _strip_lrc_timestamps(lrc_text: str) -> str:
-    """
-    Removes LRC timestamp tags like [00:25.50] from lyrics text,
-    leaving only the plain lyric lines.
-    """
-    import re
+    """Removes LRC timestamp tags, leaving only plain lyric lines."""
     lines = lrc_text.splitlines()
     plain_lines = []
     for line in lines:
-        # Remove timestamp like [mm:ss.xx] or [mm:ss:xx]
         clean = re.sub(r'^\[\d{2}:\d{2}[.:]\d{2,3}\]\s*', '', line)
-        # Also skip metadata tags like [ar:Artist], [ti:Title]
+        # Skip metadata tags like [ar:Artist], [ti:Title]
         if re.match(r'^\[.*:.*\]$', clean.strip()):
             continue
         plain_lines.append(clean)
