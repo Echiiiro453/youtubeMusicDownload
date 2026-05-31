@@ -173,6 +173,10 @@ class InfoRequest(BaseModel):
     url: str
     limit: int = 50
 
+class SearchRequest(BaseModel):
+    query: str
+    limit: int = 30
+
 class RetryRequest(BaseModel):
     playlist_id: str
     video_id: str
@@ -193,6 +197,40 @@ def get_presets():
         ],
         "custom": [] 
     }
+
+@app.post("/search")
+async def search_youtube(request: SearchRequest):
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'cookiefile': get_cookies_path()
+    }
+    query_str = f"ytsearch{request.limit}:{request.query}"
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(query_str, download=False)
+            
+            if 'entries' in info:
+                results = []
+                for entry in info['entries']:
+                    if entry:
+                        dur = entry.get('duration')
+                        dur_str = f"{int(dur)//60}:{int(dur)%60:02d}" if dur else ""
+                        results.append({
+                            "id": entry.get('id'),
+                            "title": entry.get('title'),
+                            "uploader": entry.get('uploader'),
+                            "duration_string": dur_str,
+                            "url": entry.get('url') or f"https://www.youtube.com/watch?v={entry.get('id')}",
+                            "thumbnail": entry.get('thumbnail') or f"https://i.ytimg.com/vi/{entry.get('id')}/mqdefault.jpg",
+                            "view_count": entry.get('view_count', 0)
+                        })
+                return {"results": results}
+            return {"results": []}
+    except Exception as e:
+        print(f"Search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/info")
 async def get_info(request: DownloadRequest):
