@@ -18,14 +18,6 @@ All notable changes to this project will be documented in this file.
 - **UI Improvements**: Redesigned the cookies tutorial in the Settings modal to be more visual and intuitive.
 - **Smart Build System**: Improved Python build script to generate a single portable executable using PyInstaller's `--onefile`.
 
-## [1.5.0] - 2026-02-01
-### Added
-- **Android Support (Mobile)**: Native Android application using React Native and Chaquopy.
-- **Embedded Python on Mobile**: Python backend runs directly on Android devices.
-- **Automated Mobile FFmpeg**: Integration with `ffmpeg-kit-react-native` for seamless architecture-specific binary management.
-- **Scoped Storage handling**: Downloads saved directly to the Android public "Downloads" folder.
-- **Bilingual Documentation**: README and landing page available in English and Portuguese.
-
 ## [1.4.0] - 2026-02-01
 ### Added
 - **Desktop Support (Tauri)**: Native desktop application built with Tauri (Rust) and React.
