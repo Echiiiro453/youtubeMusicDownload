@@ -10,6 +10,7 @@ from utils import get_downloads_dir, get_cookies_path, parse_time
 from database import mark_downloaded_db, mark_error_db
 from metadata_fetcher import apply_metadata
 from proxy_manager import get_random_proxy
+from lyrics_fetcher import fetch_and_embed_lyrics
 from yt_dlp.networking.impersonate import ImpersonateTarget
 
 TRANSIENT_ERRORS = ("rate-limited", "try again later", "HTTP Error 429", "temporarily unavailable", "network is unreachable")
@@ -332,6 +333,17 @@ def download_with_retries(job_id: str, request):
                         success = apply_metadata(full_final_path, info.get('title', ''))
                         if success:
                             print(f"    \033[32mOK Capa High-Res e Tags injetadas com sucesso!\033[0m")
+                        
+                        # Inject Lyrics
+                        title = info.get('title', '') or getattr(request, 'title', '') or ''
+                        artist = info.get('uploader', '') or info.get('artist', '') or getattr(request, 'artist', '') or ''
+                        if title:
+                            print(f"  \033[94m-> Buscando letra da musica...\033[0m")
+                            lyrics_ok = fetch_and_embed_lyrics(full_final_path, title, artist)
+                            if lyrics_ok:
+                                print(f"    \033[32mOK Letra injetada com sucesso!\033[0m")
+                            else:
+                                print(f"    Letra nao encontrada, continuando sem ela.")
                     
                     st.status = "done"
                     st.progress = 100.0

@@ -26,7 +26,8 @@ def main():
     # Arquivos de dados (Estáticos do Frontend, Termos)
     datas = [
         ("static", "static"),
-        ("TERMOS_DE_USO.txt", ".")
+        ("TERMOS_DE_USO.txt", "."),
+        ("lyrics_fetcher.py", ".")
     ]
     
     # Imports ocultos (Essenciais para uvicorn e yt-dlp)
@@ -42,7 +43,15 @@ def main():
         "yt_dlp.extractor",
         "curl_cffi",
         "webview",
-        "webview.platforms.edgechromium"
+        "webview.platforms.edgechromium",
+        "syncedlyrics",
+        "mutagen",
+        "mutagen.id3",
+        "mutagen.mp3",
+        "mutagen.flac",
+        "mutagen.mp4",
+        "beautifulsoup4",
+        "bs4"
     ]
     
     # Montar comando
