@@ -1,52 +1,70 @@
-# Guia de Desenvolvimento - Music Downloader
+# Guia de Desenvolvimento - AppMusica
 
 Este documento serve como guia para desenvolvedores que desejam manter ou expandir o projeto.
 
 ## Estrutura do Projeto
 
-- **/backend**: Código Python (FastAPI + yt-dlp).
-  - `main.py`: Arquivo principal da API. Contém endpoints e lógica de download.
-  - `venv/`: Ambiente virtual Python (NÃO COMITAR).
+- **/backend**: Código Python (FastAPI + yt-dlp + PyWebView).
+  - `main.py`: Arquivo principal da aplicação. Inicia o servidor FastAPI e a janela do WebView nativa.
+  - `downloader.py`: Motor de download utilizando `yt-dlp` e manipulação de metadados.
+  - `database.py`: Gerenciamento do SQLite para controle de duplicatas e persistência (suporte a histórico e downloads em lote/singles).
+  - `AppMusica.spec`: Arquivo de configuração do PyInstaller para build.
 - **/frontend**: Código React (Vite + TailwindCSS).
-  - `src/App.jsx`: Componente principal. Contém toda a lógica de UI e interação.
-  - `src/index.css`: Estilos globais e Tailwind.
+  - `src/App.jsx`: Componente central. Gerencia o roteamento, fila global (WebSockets) e a interface principal.
+  - `src/components/`: Componentes modulares como `PlaylistModal`, `SettingsModal`, `PlayerBar` e `LogViewerModal`.
+  - `src/i18n.js`: Sistema nativo de internacionalização (i18n) em 3 idiomas (PT, EN, ES).
+  - `src/index.css`: Estilos globais Tailwind e CSS personalizado (efeitos Glassmorphism).
 
 ## Como Rodar o Projeto
 
-1. **Backend**:
-   ```bash
-   cd backend
-   .\venv\Scripts\activate
-   uvicorn main:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-2. **Frontend**:
+1. **Terminal 1 - Frontend (Desenvolvimento)**:
    ```bash
    cd frontend
    npm run dev
    ```
 
+2. **Terminal 2 - Backend (Servidor Local)**:
+   ```bash
+   cd backend
+   .\venv\Scripts\activate
+   # Para ambiente de desenvolvimento sem abrir a janela PyWebView:
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+## Compilação e Distribuição
+
+A arquitetura mudou de Tauri para **PyWebView** com empacotamento standalone.
+Para gerar o arquivo `.exe` portátil (Windows):
+
+1. Gere o build de produção do frontend:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. Crie o executável via PyInstaller (requer `backend/AppMusica.spec`):
+   ```bash
+   cd backend
+   pyinstaller --noconfirm AppMusica.spec
+   ```
+O executável final estará na pasta `backend/dist/AppMusica.exe`.
+
 ## Funcionalidades Principais
 
-### 1. Playlist Manager
-Localização: `frontend/src/App.jsx` (busca por "Playlist Manager")
-- O estado `showPlaylistModal` controla a visibilidade.
-- A função `fetchPlaylistDetails` chama o backend `/playlist/details`.
-- O backend limita a busca a 50 itens para performance (`backend/main.py`).
+### 1. Sistema de Fila (Queue) e Banco de Dados
+- **Fila e Retomada**: Interface salva a fila no `localStorage` e pergunta ao usuário se ele quer retomar downloads não concluídos.
+- **Prevenção de Duplicatas**: `database.py` registra o verdadeiro `video_id` vindo do `yt-dlp` para singles e playlists, garantindo robustez e impedindo re-downloads desnecessários.
 
-### 2. Downloads
-Localização: `backend/main.py` -> `download_music`
-- Usa `yt-dlp` para baixar.
-- Rotação de clientes ("tv", "android", "web") implementada para evitar erros 403.
-- Cookies são carregados de `cookies.txt` na raiz do backend se existirem.
+### 2. Downloads e Proxy Survival Mode
+- O `downloader.py` usa o `yt-dlp` implementando uma rotação pesada de clientes (`tv_embedded`, `web`, `android`, `ios`) e pode utilizar proxies do `proxyscrape` se necessário para fugir de banimentos de IP e erros 403 do YouTube.
+- **Autenticação**: O app lê o arquivo `cookies.txt` (carregado via modal de configurações) para destravar downloads com limite de idade e qualidades máximas de vídeos.
 
-## Próximos Passos Sugeridos
+### 3. Internacionalização (i18n)
+- A função `t(key)` no frontend gerencia traduções. Qualquer nova string adicionada na interface deve ser registrada em `frontend/src/i18n.js` para manter a paridade com Inglês, Espanhol e Português.
 
-1. **Paginação na Playlist**: Atualmente limitamos a 50 vídeos. O ideal seria implementar "Carregar Mais" no modal.
-2. **Build Automático**: Criar scripts para gear o `.exe` automaticamente (usando PyInstaller).
-3. **Refatoração do App.jsx**: O arquivo está grande (+800 linhas). Seria bom dividir em componentes menores (`PlaylistModal.jsx`, `SettingsModal.jsx`).
+## Manutenção Constante
 
-## Manutenção
-
-- Sempre atualize `yt-dlp` periodicamente: `pip install --upgrade yt-dlp`
-- Se o YouTube mudar algo e os downloads falharem, verifique se o `yt-dlp` está atualizado.
+- **MUITO IMPORTANTE:** Sempre mantenha o `yt-dlp` atualizado. O YouTube muda constantemente suas APIs e o `yt-dlp` lança atualizações para lidar com isso.
+  ```bash
+  pip install --upgrade yt-dlp
+  ```
+- Logs no backend foram reduzidos intencionalmente para mostrar apenas eventos de sucesso/falha do banco de dados, mantendo o terminal e o visualizador de logs limpos.
