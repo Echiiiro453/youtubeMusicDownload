@@ -56,7 +56,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "1.7.2"
+APP_VERSION = "1.7.3"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
