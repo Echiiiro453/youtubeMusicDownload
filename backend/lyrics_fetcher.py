@@ -14,26 +14,38 @@ def _clean_title(title: str) -> str:
         r'\(Official\s*(Music\s*)?Video\)',
         r'\(Official\s*Audio\)',
         r'\(Official\s*Lyric\s*Video\)',
+        r'\(Official\s*Lyrics?\s*Video\)',
         r'\(Lyrics?\)',
         r'\(Letra\)',
         r'\(Audio\)',
         r'\[Official\s*(Music\s*)?Video\]',
         r'\[Official\s*Audio\]',
+        r'\[Official\s*Lyric\s*Video\]',
+        r'\[Official\s*Visualizer\]',
+        r'\(Official\s*Visualizer\)',
+        r'\[Visualizer\]',
+        r'\(Visualizer\)',
         r'\[Lyrics?\]',
         r'\[HD\]',
-        r'\[4K\]',
-        r'\[4K UPGRADE\]',
+        r'\[4K.*?\]',
+        r'\(4K.*?\)',
         r'\(HQ\)',
         r'\[HQ\]',
-        r'\(Visualizer\)',
+        r'\(Explicit\)',
+        r'\[Explicit\]',
         r'\(Extended\s*Mix\)',
         r'\(Radio\s*Edit\)',
         r'\(Live\)',
         r'\[Live\]',
+        r'\(Slowed.*?\)',
+        r'\[Slowed.*?\]',
+        r'\(Sped\s*[Uu]p.*?\)',
+        r'\[Sped\s*[Uu]p.*?\]',
     ]
     for pattern in noise:
         title = re.sub(pattern, '', title, flags=re.IGNORECASE)
     return title.strip(' -–—|')
+
 
 
 def _build_search_query(title: str, artist: str) -> str:
@@ -78,28 +90,35 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
     search_query = _build_search_query(title, artist)
     print(f"  [lyrics] Buscando letra: '{search_query}'")
 
-    # Use only fast/reliable providers to avoid 12s timeout cascade
-    fast_providers = ["Musixmatch", "Lrclib"]
+    # Lrclib first: open-source, no auth, no rate-limit.
+    # Musixmatch second: has 401 rate-limit after many requests.
+    providers = ["Lrclib", "Musixmatch"]
 
     lyrics_text = None
 
+    # Suppress noisy provider error output (401s, timeouts etc.)
+    import io
+    import sys
+
+    def _search_silent(query, **kwargs):
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            result = syncedlyrics.search(query, providers=providers, **kwargs)
+        finally:
+            sys.stdout = old_stdout
+        return result
+
     try:
-        lyrics_text = syncedlyrics.search(
-            search_query,
-            providers=fast_providers
-        )
+        lyrics_text = _search_silent(search_query)
         if lyrics_text:
             print(f"  [lyrics] Letra sincronizada encontrada!")
     except Exception:
-        pass  # Silently skip provider errors
+        pass
 
     if not lyrics_text:
         try:
-            lyrics_text = syncedlyrics.search(
-                search_query,
-                providers=fast_providers,
-                plain_only=True
-            )
+            lyrics_text = _search_silent(search_query, plain_only=True)
             if lyrics_text:
                 print(f"  [lyrics] Letra simples encontrada.")
         except Exception:
@@ -110,6 +129,7 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
         return False
 
     return _embed_lyrics(file_path, ext, lyrics_text)
+
 
 
 def _embed_lyrics(file_path: str, ext: str, lyrics_text: str) -> bool:
