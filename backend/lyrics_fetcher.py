@@ -90,27 +90,14 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
     search_query = _build_search_query(title, artist)
     print(f"  [lyrics] Buscando letra: '{search_query}'")
 
-    # Lrclib first: open-source, no auth, no rate-limit.
-    # Musixmatch second: has 401 rate-limit after many requests.
-    providers = ["Lrclib", "Musixmatch"]
+    # Lrclib only: open-source, no auth, no rate-limit, thread-safe.
+    # Musixmatch removed: causes 401 spam after ~10 requests, not thread-safe.
+    providers = ["Lrclib"]
 
     lyrics_text = None
 
-    # Suppress noisy provider error output (401s, timeouts etc.)
-    import io
-    import sys
-
-    def _search_silent(query, **kwargs):
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
-        try:
-            result = syncedlyrics.search(query, providers=providers, **kwargs)
-        finally:
-            sys.stdout = old_stdout
-        return result
-
     try:
-        lyrics_text = _search_silent(search_query)
+        lyrics_text = syncedlyrics.search(search_query, providers=providers)
         if lyrics_text:
             print(f"  [lyrics] Letra sincronizada encontrada!")
     except Exception:
@@ -118,7 +105,7 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
 
     if not lyrics_text:
         try:
-            lyrics_text = _search_silent(search_query, plain_only=True)
+            lyrics_text = syncedlyrics.search(search_query, providers=providers, plain_only=True)
             if lyrics_text:
                 print(f"  [lyrics] Letra simples encontrada.")
         except Exception:
