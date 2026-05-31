@@ -55,6 +55,50 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+APP_VERSION = "1.6.20"
+GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
+
+@app.get("/version")
+async def get_version():
+    return {"version": APP_VERSION}
+
+@app.get("/check_update")
+async def check_update():
+    import urllib.request
+    import json
+    try:
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest",
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            latest_version = data.get("tag_name", "").replace("v", "")
+            
+            # Simple version comparison (assumes format x.y.z)
+            current_parts = [int(p) for p in APP_VERSION.split(".")]
+            latest_parts = [int(p) for p in latest_version.split(".")]
+            
+            update_available = False
+            for i in range(max(len(current_parts), len(latest_parts))):
+                c = current_parts[i] if i < len(current_parts) else 0
+                l = latest_parts[i] if i < len(latest_parts) else 0
+                if l > c:
+                    update_available = True
+                    break
+                elif c > l:
+                    break
+
+            return {
+                "update_available": update_available,
+                "current_version": APP_VERSION,
+                "latest_version": latest_version,
+                "release_notes": data.get("body", "Sem notas de lançamento disponíveis."),
+                "download_url": data.get("html_url", f"https://github.com/{GITHUB_REPO}/releases/latest")
+            }
+    except Exception as e:
+        print(f"Update check failed: {e}")
+        return {"update_available": False, "error": str(e)}
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)

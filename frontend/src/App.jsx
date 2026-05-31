@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw } from 'lucide-react';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { WindowControls } from './components/WindowControls';
 import qrcodeImg from './assets/qrcode_custom.jpg';
-// import { useGlobalDownloads } from './hooks/useGlobalDownloads'; // REMOVED (Polling)
 
 import { SettingsModal } from './components/SettingsModal';
+import { UpdateModal } from './components/UpdateModal';
 import { PlayerBar } from './components/PlayerBar';
 import { PlaylistModal } from './components/PlaylistModal';
 import { TermsModal } from './components/TermsModal';
@@ -150,6 +150,33 @@ function App() {
   // Single Port 8000 (Backend handles concurrency via Task Queue)
   const API_URL = "http://localhost:8000";
   const getApiUrl = (endpoint = '') => `${API_URL}${endpoint}`;
+
+  // Update Checker
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateData, setUpdateData] = useState(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
+  const checkForUpdates = async (manual = false) => {
+    if (isCheckingUpdate) return;
+    setIsCheckingUpdate(true);
+    try {
+      const res = await axios.get(getApiUrl('/check_update'));
+      if (res.data && res.data.update_available) {
+        setUpdateData(res.data);
+        setShowUpdateModal(true);
+      } else if (manual) {
+        alert("Você já está usando a versão mais recente!");
+      }
+    } catch (e) {
+      if (manual) alert("Erro ao checar atualizações.");
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  useEffect(() => {
+    checkForUpdates(false);
+  }, []);
 
   // GLOBAL DOWNLOADS STATE (WebSocket Strategy)
   const [globalJobs, setGlobalJobs] = useState({});
@@ -776,6 +803,14 @@ function App() {
 
       <div className="absolute top-12 right-4 z-50 flex gap-2">
         <button
+          onClick={() => checkForUpdates(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30"
+          title="Verificar Atualizações"
+        >
+          <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">Atualizar</span>
+        </button>
+        <button
           onClick={() => setShowDonate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-pink-500/20 text-pink-300 border border-pink-500/30 hover:bg-pink-500/30"
         >
@@ -859,6 +894,14 @@ function App() {
           setShowSettings(false);
         }}
       />
+
+      <AnimatePresence>
+        <UpdateModal 
+          isOpen={showUpdateModal} 
+          onClose={() => setShowUpdateModal(false)} 
+          updateData={updateData} 
+        />
+      </AnimatePresence>
 
       {/* Donation Modal */}
       <AnimatePresence>
