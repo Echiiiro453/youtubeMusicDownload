@@ -804,7 +804,7 @@ function App() {
       <div className="absolute top-12 right-4 z-50 flex gap-2">
         <button
           onClick={() => checkForUpdates(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30"
+          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
           title="Verificar Atualizações"
         >
           <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
@@ -812,7 +812,7 @@ function App() {
         </button>
         <button
           onClick={() => setShowDonate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-pink-500/20 text-pink-300 border border-pink-500/30 hover:bg-pink-500/30"
+          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
         >
           <Heart className="w-4 h-4" />
           Apoiar
@@ -1624,9 +1624,7 @@ function App() {
         executeRetry={executeRetry}
       />
 
-      <div className="fixed bottom-4 text-xs text-secondary/30">
-        Premium Local App &copy; 2026
-      </div>
+      {/* Removed footer */}
 
       {/* Player Bar */}
       <AnimatePresence>

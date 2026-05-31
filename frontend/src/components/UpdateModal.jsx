@@ -20,7 +20,7 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
         className="bg-surface border border-primary/30 rounded-2xl p-0 w-full max-w-lg shadow-2xl relative overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-500"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
         
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
@@ -65,7 +65,7 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
+              className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-primary hover:bg-primary/80 transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" />
               Baixar Atualização
