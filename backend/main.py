@@ -74,6 +74,9 @@ class LogInterceptor:
 
     def flush(self):
         self.original_stream.flush()
+        
+    def __getattr__(self, attr):
+        return getattr(self.original_stream, attr)
 
 sys.stdout = LogInterceptor(sys.stdout)
 sys.stderr = LogInterceptor(sys.stderr)
