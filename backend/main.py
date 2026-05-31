@@ -376,11 +376,6 @@ def get_playlist_details(request: InfoRequest):
             raise HTTPException(status_code=400, detail="URL não é uma playlist ou falhou")
             
         playlist_id = playlist_info.get('id', '')
-        
-        # Sync DB with disk before checking status to catch deleted files
-        if playlist_id:
-            sync_db_with_disk(get_downloads_dir())
-        
         downloaded_ids = set(get_downloaded_ids(playlist_id)) if playlist_id else set()
         
         videos = []

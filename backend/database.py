@@ -134,12 +134,16 @@ def sync_db_with_disk(downloads_dir: str) -> dict:
                     (row["playlist_id"], row["video_id"])
                 )
                 marked_missing += 1
-                print(f"[DB SYNC] File missing, marked: {file_path}")
         
         conn.commit()
         conn.close()
-        print(f"[DB SYNC] Done. Checked: {checked}, Marked missing: {marked_missing}")
+        
+        if marked_missing > 0:
+            print(f"[DB SYNC] Concluido: {checked} verificados, {marked_missing} arquivos ausentes marcados.")
+        else:
+            print(f"[DB SYNC] Concluido: {checked} verificados, tudo OK.")
     except Exception as e:
         print(f"Erro no sync_db_with_disk: {e}")
     
     return {"checked": checked, "marked_missing": marked_missing}
+
