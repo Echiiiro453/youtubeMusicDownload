@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { t, getLanguage, setLanguage } from './i18n';
 import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw } from 'lucide-react';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,6 +67,14 @@ function App() {
 
   // Audio Features
   const [pitch, setPitch] = useState(0); // -12 to +12
+
+  // Language state – changing this triggers full re-render so translations update
+  const [lang, setLang] = useState(getLanguage());
+
+  const handleLanguageChange = (code) => {
+    setLanguage(code);
+    setLang(code);
+  };
 
   // Auth & Settings
   const [showSettings, setShowSettings] = useState(false);
@@ -888,6 +897,7 @@ function App() {
         organizeByArtist={organizeByArtist}
         setOrganizeByArtist={setOrganizeByArtist}
         apiUrl={API_URL}
+        onLanguageChange={handleLanguageChange}
         onUploadSuccess={() => {
           checkAuth();
           alert("Cookies atualizados com sucesso!");

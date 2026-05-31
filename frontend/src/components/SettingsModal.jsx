@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Settings, CheckCircle, AlertCircle, Upload, Power, Terminal, Database, RefreshCw } from 'lucide-react';
+import { Settings, CheckCircle, AlertCircle, Upload, Power, Terminal, Database, RefreshCw, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { LogViewerModal } from './LogViewerModal';
+import { t, setLanguage, getLanguage, LANGUAGES } from '../i18n';
 
-export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, setOrganizeByArtist, onUploadSuccess, apiUrl }) {
+export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArtist, setOrganizeByArtist, onUploadSuccess, apiUrl, onLanguageChange }) {
   const [downloadFolder, setDownloadFolder] = React.useState('');
   const [showLogs, setShowLogs] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
+  const [activeLang, setActiveLang] = useState(getLanguage());
 
   const handleDbSync = async () => {
     setIsSyncing(true);
@@ -17,11 +19,18 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
       const res = await axios.get(`${apiUrl}/api/db/sync`);
       setSyncResult(res.data);
     } catch (e) {
-      setSyncResult({ error: 'Falha ao sincronizar.' });
+      setSyncResult({ error: t('toastError') });
     } finally {
       setIsSyncing(false);
       setTimeout(() => setSyncResult(null), 5000);
     }
+  };
+
+  const handleLangChange = (code) => {
+    setLanguage(code);
+    setActiveLang(code);
+    // Force a re-render of the whole app
+    if (typeof onLanguageChange === 'function') onLanguageChange(code);
   };
 
   React.useEffect(() => {
@@ -106,16 +115,41 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
           <div className="p-3 bg-surface rounded-xl">
             <Settings className="w-6 h-6 text-primary" />
           </div>
-          <h2 className="text-xl font-bold text-white">Configuração</h2>
+          <h2 className="text-xl font-bold text-white">{t('settingsTitle')}</h2>
         </div>
 
         <div className="space-y-4">
+
+          {/* ── Language Selector ── */}
+          <div className="p-4 bg-surface/30 rounded-xl border border-white/5 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Globe className="w-4 h-4 text-primary" />
+              <h4 className="font-bold text-white text-sm">{t('settingsLanguage')}</h4>
+            </div>
+            <div className="flex gap-2">
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => handleLangChange(lang.code)}
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-xl border text-sm font-medium transition-all
+                    ${activeLang === lang.code
+                      ? 'bg-primary/20 border-primary/50 text-white shadow-lg shadow-primary/10'
+                      : 'bg-white/5 border-white/10 text-secondary hover:bg-white/10 hover:text-white'}`}
+                >
+                  <span className="text-lg">{lang.flag}</span>
+                  <span className="text-xs">{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Auth Status ── */}
           <div className={`p-4 rounded-xl border ${isAuthenticated ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
             <div className="flex items-center gap-3">
               {isAuthenticated ? <CheckCircle className="text-green-400" /> : <AlertCircle className="text-red-400" />}
               <div>
                 <h3 className={`font-bold ${isAuthenticated ? 'text-green-400' : 'text-red-400'}`}>
-                  {isAuthenticated ? 'Sistema Autenticado' : 'Não Autenticado'}
+                  {isAuthenticated ? t('settingsConnected') : t('settingsNotConnected')}
                 </h3>
                 <p className="text-sm text-secondary/80">
                   {isAuthenticated ? 'Você pode baixar vídeos em alta qualidade.' : 'Downloads podem falhar (Erro 403).'}
@@ -124,17 +158,15 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             </div>
           </div>
 
+          {/* ── Cookies Info ── */}
           <div className="space-y-3 pt-2 bg-surface/50 p-4 rounded-xl border border-white/5">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-primary/20 rounded-lg shrink-0">
                 <AlertCircle className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white mb-1">Por que preciso de cookies?</h4>
-                <p className="text-xs text-secondary leading-relaxed">
-                  O YouTube bloqueia downloads de algumas músicas, playlists gigantes e vídeos sensíveis. 
-                  O arquivo de cookies funciona como o seu "login invisível" para o aplicativo conseguir baixar tudo sem interrupções.
-                </p>
+                <h4 className="text-sm font-bold text-white mb-1">{t('settingsCookies')}</h4>
+                <p className="text-xs text-secondary leading-relaxed">{t('settingsCookiesDesc')}</p>
               </div>
             </div>
 
@@ -157,6 +189,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             </div>
           </div>
 
+          {/* ── Cookie Upload ── */}
           <div className="relative group">
             <input
               type="file"
@@ -166,24 +199,25 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             />
             <div className="border-2 border-dashed border-white/10 group-hover:border-primary/50 group-hover:bg-primary/5 rounded-xl p-6 flex flex-col items-center justify-center transition-all text-center gap-2">
               <Upload className="w-8 h-8 text-secondary group-hover:text-primary transition-colors" />
-              <p className="text-sm font-medium text-white">Clique para enviar cookies.txt</p>
+              <p className="text-sm font-medium text-white">{t('settingsUploadCookies')}</p>
               <p className="text-xs text-secondary">Apenas arquivos .txt</p>
             </div>
           </div>
 
           <div className="pt-4 border-t border-white/10 mt-4 space-y-4">
-            
+
+            {/* ── Download Folder ── */}
             <div className="p-4 bg-surface/30 rounded-xl border border-white/5 space-y-3">
-              <h4 className="font-bold text-white">Local de Download</h4>
+              <h4 className="font-bold text-white">{t('settingsDownloadFolder')}</h4>
               <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={downloadFolder} 
-                  readOnly 
+                <input
+                  type="text"
+                  value={downloadFolder}
+                  readOnly
                   className="flex-1 bg-[#1a1a1c] border border-white/10 rounded-lg px-3 py-2 text-sm text-secondary outline-none overflow-hidden text-ellipsis whitespace-nowrap"
-                  placeholder="Carregando..."
+                  placeholder={t('loading')}
                 />
-                <button 
+                <button
                   onClick={handleChooseFolder}
                   className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-bold rounded-lg transition-colors whitespace-nowrap shadow-lg shadow-primary/20"
                 >
@@ -192,10 +226,11 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               </div>
             </div>
 
+            {/* ── Organize by Artist ── */}
             <div className="flex items-center justify-between p-4 bg-surface/30 rounded-xl border border-white/5">
               <div>
-                <h4 className="font-bold text-white">Organizar por Artista</h4>
-                <p className="text-xs text-secondary mt-0.5">Criar pastas automáticas com nome do artista</p>
+                <h4 className="font-bold text-white">{t('settingsOrganizeArtist')}</h4>
+                <p className="text-xs text-secondary mt-0.5">{t('settingsOrganizeArtistDesc')}</p>
               </div>
               <button
                 onClick={() => {
@@ -213,13 +248,14 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               </button>
             </div>
 
+            {/* ── System Buttons ── */}
             <div className="pt-4 border-t border-white/10 mt-4 space-y-2">
               <button
                 onClick={() => setShowLogs(true)}
                 className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all flex items-center justify-center gap-2 group"
               >
                 <Terminal className="w-5 h-5 group-hover:text-primary transition-colors" />
-                <span className="font-bold text-sm">Visualizar Logs do Sistema (Terminal)</span>
+                <span className="font-bold text-sm">{t('logs')}</span>
               </button>
 
               <button
@@ -232,13 +268,13 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                   : <Database className="w-5 h-5 group-hover:text-primary transition-colors" />
                 }
                 <span className="font-bold text-sm">
-                  {isSyncing ? 'Sincronizando...' : 'Sincronizar Banco com Arquivos'}
+                  {isSyncing ? t('settingsDbSyncing') : t('settingsDbSync')}
                 </span>
               </button>
 
               {syncResult && !syncResult.error && (
                 <div className="text-xs text-center py-2 px-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
-                  Verificados: <b>{syncResult.checked}</b> &nbsp;|&nbsp; Arquivos ausentes marcados: <b>{syncResult.marked_missing}</b>
+                  {t('toastSyncDone', syncResult.checked, syncResult.marked_missing)}
                 </div>
               )}
               {syncResult?.error && (
@@ -249,6 +285,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
             </div>
           </div>
 
+          {/* ── Shutdown ── */}
           <div className="pt-4 border-t border-white/10 mt-4">
             <button
               onClick={handleShutdown}
@@ -262,10 +299,10 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
       </motion.div>
 
       <AnimatePresence>
-        <LogViewerModal 
-          isOpen={showLogs} 
-          onClose={() => setShowLogs(false)} 
-          apiUrl={apiUrl} 
+        <LogViewerModal
+          isOpen={showLogs}
+          onClose={() => setShowLogs(false)}
+          apiUrl={apiUrl}
         />
       </AnimatePresence>
     </div>
