@@ -130,17 +130,47 @@ async def get_info(request: DownloadRequest):
         is_magic = False
         magic_source = None
         if "spotify.com" in url or "music.apple.com" in url:
-            from curl_cffi import requests as cffi_requests
-            res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
-            html = res.text
-            title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
-            if title_match:
-                clean_title = re.sub(r' \| Spotify.*', '', title_match.group(1))
-                clean_title = re.sub(r' on Apple Music.*', '', clean_title)
-                clean_title = clean_title.replace("Song ·", "").replace("Album ·", "")
-                url = f"ytsearch1:{clean_title} audio"
-                is_magic = True
-                magic_source = "Spotify" if "spotify.com" in request.url else "Apple Music"
+            if "spotify.com" in url:
+                import re
+                import json
+                from curl_cffi import requests as cffi_requests
+                # Extract Spotify ID
+                spotify_id_match = re.search(r'/(track|album|playlist|episode)/([a-zA-Z0-9]+)', url)
+                if spotify_id_match:
+                    type_str = spotify_id_match.group(1)
+                    item_id = spotify_id_match.group(2)
+                    embed_url = f"https://open.spotify.com/embed/{type_str}/{item_id}"
+                    
+                    res = cffi_requests.get(embed_url, impersonate="chrome120")
+                    match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', res.text)
+                    if match:
+                        try:
+                            data = json.loads(match.group(1))
+                            entity = data['props']['pageProps']['state']['data']['entity']
+                            title = entity.get('title') or entity.get('name') or ''
+                            artist = ""
+                            if 'artists' in entity and len(entity['artists']) > 0:
+                                artist = entity['artists'][0].get('name', '')
+                            
+                            clean_title = f"{artist} {title}".strip()
+                            url = f"ytsearch1:{clean_title} audio"
+                            is_magic = True
+                            magic_source = "Spotify"
+                        except Exception as e:
+                            print(f"Failed to parse Spotify embed: {e}")
+            else:
+                from curl_cffi import requests as cffi_requests
+                res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
+                html = res.text
+                import re
+                title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
+                if title_match:
+                    clean_title = re.sub(r' \| Spotify.*', '', title_match.group(1))
+                    clean_title = re.sub(r' on Apple Music.*', '', clean_title)
+                    clean_title = clean_title.replace("Song ·", "").replace("Album ·", "")
+                    url = f"ytsearch1:{clean_title} audio"
+                    is_magic = True
+                    magic_source = "Apple Music"
 
         ydl_opts = {
             'quiet': True,
