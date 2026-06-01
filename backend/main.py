@@ -239,10 +239,6 @@ async def search_youtube(request: SearchRequest):
         print(f"Search error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/info")
-async def get_info(request: DownloadRequest):
-    try:
-        url = request.url
 def parse_magic_url(url: str):
     pseudo_playlist = None
     is_magic = False
