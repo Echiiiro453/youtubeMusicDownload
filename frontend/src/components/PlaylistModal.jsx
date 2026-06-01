@@ -34,6 +34,14 @@ export function PlaylistModal({
             <div>
               <h3 className="text-2xl font-bold text-white mb-1">{t('playlistSelectMusic')}</h3>
               <p className="text-gray-300 text-sm">{metadata?.title}</p>
+              {metadata?.magic_source && (
+                <div className="mt-2 text-xs bg-amber-500/20 text-amber-200 p-2 rounded-lg border border-amber-500/30 flex items-start gap-2 max-w-lg">
+                  <span className="text-amber-400">⚠️</span>
+                  <span>
+                    Como você está usando um link do <b>{metadata.magic_source}</b>, apenas as primeiras ~50 músicas serão carregadas devido às restrições para visitantes anônimos da plataforma. (Mudar o Limite de Carga abaixo não fará efeito). Para contornar, use um link equivalente do YouTube.
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-2 bg-black/20 p-1.5 rounded-lg w-fit">
                 <span className="text-gray-400 text-xs font-medium">{t('playlistLoadLimit')}</span>
                 <select

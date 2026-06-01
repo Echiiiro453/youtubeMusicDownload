@@ -56,7 +56,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "1.7.5"
+APP_VERSION = "1.7.6"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -243,80 +243,145 @@ async def search_youtube(request: SearchRequest):
 async def get_info(request: DownloadRequest):
     try:
         url = request.url
-        is_magic = False
-        magic_source = None
-        if "spotify.com" in url or "music.apple.com" in url:
-            if "spotify.com" in url:
-                import re
-                import json
-                from curl_cffi import requests as cffi_requests
-                # Extract Spotify ID
-                spotify_id_match = re.search(r'/(track|album|playlist|episode)/([a-zA-Z0-9]+)', url)
-                if spotify_id_match:
-                    type_str = spotify_id_match.group(1)
-                    item_id = spotify_id_match.group(2)
-                    embed_url = f"https://open.spotify.com/embed/{type_str}/{item_id}"
-                    
-                    res = cffi_requests.get(embed_url, impersonate="chrome120")
-                    match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', res.text)
-                    if match:
-                        try:
-                            data = json.loads(match.group(1))
-                            entity = data['props']['pageProps']['state']['data']['entity']
-                            title = entity.get('title') or entity.get('name') or ''
-                            artist = ""
-                            if 'artists' in entity and len(entity['artists']) > 0:
-                                artist = entity['artists'][0].get('name', '')
-                            
-                            clean_title = f"{artist} {title}".strip()
+def parse_magic_url(url: str):
+    pseudo_playlist = None
+    is_magic = False
+    magic_source = None
+    if "spotify.com" in url or "music.apple.com" in url:
+        if "spotify.com" in url:
+            import re
+            import json
+            from curl_cffi import requests as cffi_requests
+            # Extract Spotify ID
+            spotify_id_match = re.search(r'/(track|album|playlist|episode)/([a-zA-Z0-9]+)', url)
+            if spotify_id_match:
+                type_str = spotify_id_match.group(1)
+                item_id = spotify_id_match.group(2)
+                embed_url = f"https://open.spotify.com/embed/{type_str}/{item_id}"
+                
+                res = cffi_requests.get(embed_url, impersonate="chrome120")
+                match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', res.text)
+                if match:
+                    try:
+                        data = json.loads(match.group(1))
+                        entity = data['props']['pageProps']['state']['data']['entity']
+                        title = entity.get('title') or entity.get('name') or ''
+                        artist = ""
+                        if 'artists' in entity and len(entity['artists']) > 0:
+                            artist = entity['artists'][0].get('name', '')
+                        
+                        clean_title = f"{artist} {title}".strip()
+                        track_list = entity.get('trackList', [])
+                        
+                        if track_list and len(track_list) > 1:
+                            entries = []
+                            for idx, t in enumerate(track_list):
+                                t_title = t.get('title', '')
+                                t_artist = t.get('subtitle', '')
+                                sq = f"{t_artist} {t_title}".strip()
+                                entries.append({
+                                    'id': f"spotify_magic_{idx}",
+                                    'url': f"ytsearch1:{sq} audio",
+                                    'title': sq,
+                                    'duration': 0
+                                })
+                            pseudo_playlist = {
+                                'title': clean_title if clean_title else "Spotify Playlist",
+                                'uploader': 'Spotify',
+                                'entries': entries
+                            }
+                            is_magic = True
+                            magic_source = "Spotify"
+                        else:
                             url = f"ytsearch1:{clean_title} audio"
                             is_magic = True
                             magic_source = "Spotify"
-                        except Exception as e:
-                            print(f"Failed to parse Spotify embed: {e}")
-            else:
-                from curl_cffi import requests as cffi_requests
-                res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
-                html = res.text
-                import re
-                title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
-                if title_match:
-                    clean_title = re.sub(r' \| Spotify.*', '', title_match.group(1))
-                    clean_title = re.sub(r' on Apple Music.*', '', clean_title)
-                    clean_title = clean_title.replace("Song ·", "").replace("Album ·", "")
-                    url = f"ytsearch1:{clean_title} audio"
-                    is_magic = True
-                    magic_source = "Apple Music"
+                    except Exception as e:
+                        print(f"Failed to parse Spotify embed: {e}")
+        else:
+            from curl_cffi import requests as cffi_requests
+            res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
+            html = res.text
+            import re
+            title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
+            clean_title = ""
+            if title_match:
+                clean_title = re.sub(r' \| Spotify.*', '', title_match.group(1))
+                clean_title = re.sub(r' on Apple Music.*', '', clean_title)
+                clean_title = clean_title.replace("Song ·", "").replace("Album ·", "").strip()
+            
+            matches = re.findall(r'"artistName":"([^"]+)".*?"name":"([^"]+)"', html)
+            unique_m = []
+            seen = set()
+            for m in matches:
+                if m not in seen:
+                    seen.add(m)
+                    unique_m.append(m)
+                    
+            if len(unique_m) > 1:
+                entries = []
+                for idx, m in enumerate(unique_m):
+                    sq = f"{m[0]} {m[1]}".strip()
+                    entries.append({
+                        'id': f"apple_magic_{idx}",
+                        'url': f"ytsearch1:{sq} audio",
+                        'title': sq,
+                        'duration': 0
+                    })
+                pseudo_playlist = {
+                    'title': clean_title if clean_title else "Apple Music Playlist",
+                    'uploader': 'Apple Music',
+                    'entries': entries
+                }
+                is_magic = True
+                magic_source = "Apple Music"
+            elif clean_title:
+                url = f"ytsearch1:{clean_title} audio"
+                is_magic = True
+                magic_source = "Apple Music"
+    
+    return url, pseudo_playlist, is_magic, magic_source
 
-        ydl_opts = {
-            'quiet': True,
-            'nocheckcertificate': True,
-            'extract_flat': 'in_playlist',
-            'cookiefile': get_cookies_path(),
-            'js_runtimes': {'node': {}},
-            'remote_components': ['ejs:github']
-        }
-        
-        info = None
-        last_err = None
-        for client in ['tv_embedded', 'web_embedded', 'ios_music', 'android_music', 'tv', 'web']:
-            try:
-                if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                break
-            except Exception as e: 
-                last_err = str(e)
+@app.post("/info")
+async def get_info(request: DownloadRequest):
+    try:
+        url = request.url
+        url, pseudo_playlist, is_magic, magic_source = parse_magic_url(url)
+
+        if pseudo_playlist:
+            info = pseudo_playlist
+            is_playlist = True
+            is_magic = True
+        else:
+            ydl_opts = {
+                'quiet': True,
+                'nocheckcertificate': True,
+                'extract_flat': 'in_playlist',
+                'cookiefile': get_cookies_path(),
+                'js_runtimes': {'node': {}},
+                'remote_components': ['ejs:github']
+            }
             
-        if not info: 
-            err_msg = "Falha ao extrair info."
-            if last_err: err_msg += f" Detalhes: {last_err}"
-            raise HTTPException(status_code=500, detail=err_msg)
-            
-        if is_magic and 'entries' in info:
-            info = info['entries'][0]
-            
-        is_playlist = ('entries' in info or info.get('playlist_id')) and not is_magic 
+            info = None
+            last_err = None
+            for client in ['tv_embedded', 'web_embedded', 'ios_music', 'android_music', 'tv', 'web']:
+                try:
+                    if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(url, download=False)
+                    break
+                except Exception as e: 
+                    last_err = str(e)
+                
+            if not info: 
+                err_msg = "Falha ao extrair info."
+                if last_err: err_msg += f" Detalhes: {last_err}"
+                raise HTTPException(status_code=500, detail=err_msg)
+                
+            if is_magic and 'entries' in info:
+                info = info['entries'][0]
+                
+            is_playlist = ('entries' in info or info.get('playlist_id')) and not is_magic 
         
         duration_str = info.get('duration_string')
         if not duration_str and info.get('duration'):
@@ -352,25 +417,30 @@ async def get_info(request: DownloadRequest):
 @app.post("/playlist/details")
 def get_playlist_details(request: InfoRequest):
     try:
-        ydl_opts = {
-            'quiet': True,
-            'nocheckcertificate': True,
-            'ignoreerrors': True,
-            'extract_flat': 'in_playlist',
-            'cookiefile': get_cookies_path(),
-            'js_runtimes': {'node': {}},
-            'remote_components': ['ejs:github']
-        }
-        if request.limit > 0: ydl_opts['playlistend'] = request.limit
+        url, pseudo_playlist, is_magic, magic_source = parse_magic_url(request.url)
         
-        playlist_info = None
-        for client in ['web_embedded', 'tv_embedded', 'web', 'android']:
-            try:
-                if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    playlist_info = ydl.extract_info(request.url, download=False)
-                break
-            except Exception: pass
+        if pseudo_playlist:
+            playlist_info = pseudo_playlist
+        else:
+            ydl_opts = {
+                'quiet': True,
+                'nocheckcertificate': True,
+                'ignoreerrors': True,
+                'extract_flat': 'in_playlist',
+                'cookiefile': get_cookies_path(),
+                'js_runtimes': {'node': {}},
+                'remote_components': ['ejs:github']
+            }
+            if request.limit > 0: ydl_opts['playlistend'] = request.limit
+            
+            playlist_info = None
+            for client in ['web_embedded', 'tv_embedded', 'web', 'android']:
+                try:
+                    if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        playlist_info = ydl.extract_info(url, download=False)
+                    break
+                except Exception: pass
             
         if not playlist_info or 'entries' not in playlist_info:
             raise HTTPException(status_code=400, detail="URL não é uma playlist ou falhou")
@@ -399,7 +469,8 @@ def get_playlist_details(request: InfoRequest):
             "playlist_id": playlist_id,
             "title": playlist_info.get('title', 'Playlist'),
             "total_videos": len(videos),
-            "videos": videos
+            "videos": videos,
+            "magic_source": magic_source
         }
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))

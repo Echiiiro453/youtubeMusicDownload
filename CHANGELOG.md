@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.6] - 2026-05-31
+### Added
+- **Magic Search Playlists**: Full support for scanning and fetching tracks from Spotify and Apple Music playlists using pseudo-playlist generation.
+- **UI Warning**: Added an alert when downloading from Spotify/Apple Music explaining the 50-track limit for anonymous visitors.
+- **Cover Image Cropping**: Automatically crop 16:9 thumbnails to 1:1 square ratio to remove white/black padding from album covers.
+
 ## [1.7.5] - 2026-05-31
 ### Added
 - **Global Localization (i18n)**: Fully translated UI with dynamic switching between English (US), Spanish (ES), and Portuguese (BR).
