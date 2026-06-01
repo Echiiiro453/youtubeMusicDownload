@@ -27,24 +27,45 @@ def run_server():
     from main import app
     uvicorn.run(app, host="127.0.0.1", port=8000, reload=False, log_level="warning")
 
+import time
+import socket
+
+def wait_and_load(window):
+    # Polling the local port until uvicorn is ready
+    for _ in range(60):
+        try:
+            with socket.create_connection(("127.0.0.1", 8000), timeout=1):
+                window.load_url('http://127.0.0.1:8000')
+                return
+        except OSError:
+            time.sleep(0.5)
+    print("Falha: O servidor demorou muito para iniciar.")
+
 def start_desktop():
     print("Iniciando servidor local...")
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
     
     print("Iniciando interface nativa (Webview)...")
-    # Cria uma janela nativa do Windows sem precisar do Chrome
-    webview.create_window(
+    
+    loading_html = '''
+    <body style="background-color:#09090b;color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;margin:0;">
+        <h2>Iniciando AppMusica...</h2>
+        <p style="color:#a855f7;">Carregando componentes do servidor</p>
+    </body>
+    '''
+    
+    window = webview.create_window(
         'Music Downloader', 
-        'http://127.0.0.1:8000', 
+        html=loading_html, 
         width=1100, 
         height=800,
         min_size=(800, 600),
         background_color='#09090b'
     )
     
-    # Inicia a janela. Quando o usuário fechar a janela, o app encerra automaticamente.
-    webview.start()
+    # Inicia a janela e roda a função wait_and_load em segundo plano para checar a porta
+    webview.start(wait_and_load, window)
     os._exit(0)
 
 if __name__ == "__main__":
