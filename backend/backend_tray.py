@@ -12,6 +12,9 @@ if sys.stdout is None or getattr(sys, 'frozen', False):
     sys.stdout = io.TextIOWrapper(log_file, encoding='utf-8')
     sys.stderr = io.TextIOWrapper(log_file, encoding='utf-8')
 
+# Import at top-level so PyInstaller statically detects it, but after stdout fix
+import main
+
 def run_server():
     # Se estiver rodando como EXE compilado, injeta a pasta oculta (_MEIPASS) no PATH do Windows
     # Isso garante que node.exe, ffmpeg.exe e aria2c.exe sejam encontrados magicamente pelo yt-dlp.
@@ -24,8 +27,7 @@ def run_server():
             
     os.environ["PATH"] = resource_dir + os.pathsep + os.environ.get("PATH", "")
 
-    from main import app
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=False, log_level="warning")
+    uvicorn.run(main.app, host="127.0.0.1", port=8000, reload=False, log_level="warning")
 
 import time
 import socket

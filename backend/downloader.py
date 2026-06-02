@@ -145,11 +145,11 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
          af_filters.append("loudnorm=I=-16:TP=-1.5:LRA=11")
 
     if af_filters:
-         postprocessor_args['ExtractAudio'] = ['-af', ",".join(af_filters)]
+         postprocessor_args['FFmpegExtractAudio'] = ['-af', ",".join(af_filters)]
 
     # Crop thumbnail to square (1:1) to remove white/black side bars on 16:9 covers
     if request.mode != 'video':
-         postprocessor_args['ThumbnailsConvertor'] = ['-vf', "crop='min(iw,ih)':'min(iw,ih)'"]
+         postprocessor_args['FFmpegThumbnailsConvertor'] = ['-vf', "crop='min(iw,ih)':'min(iw,ih)'"]
 
     class StdoutLogger:
         def debug(self, msg): pass

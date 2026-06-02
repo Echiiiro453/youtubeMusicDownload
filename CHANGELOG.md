@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.7] - 2026-06-01
+### Fixed
+- **Cookie Validation**: Added a fallback to ignore corrupt or invalid `cookies.txt` files to prevent the app from crashing during link parsing and searching.
+- **Cookie Warnings**: Added explicit UI warnings when attempting to download tracks or playlists without authentication cookies.
+
 ## [1.7.6] - 2026-05-31
 ### Added
 - **Magic Search Playlists**: Full support for scanning and fetching tracks from Spotify and Apple Music playlists using pseudo-playlist generation.

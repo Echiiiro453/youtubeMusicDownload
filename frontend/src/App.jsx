@@ -408,19 +408,17 @@ function App() {
     }
 
     // --- COOKIE ENFORCEMENT ---
-    // Se for baixar mais de 20 vídeos e não estiver autenticado
-    if (selectedVideos.size > 20 && !isAuthenticated) {
-      // Mostrar alerta e bloquear
+    if (!isAuthenticated) {
       const confirmUpload = window.confirm(
-        `⚠️ ATENÇÃO: Baixar ${selectedVideos.size} músicas de uma vez sem login pode bloquear seu IP no YouTube.\n\n` +
-        `Para continuar, você precisa enviar o arquivo 'cookies.txt'.\n\n` +
-        `Clique em OK para abrir as Configurações e enviar o arquivo, ou CANCELAR para reduzir a seleção.`
+        `⚠️ ATENÇÃO: Você está tentando baixar da playlist sem login (sem cookies.txt).\n\n` +
+        `Isso tem uma alta chance de resultar em erros no download ou banimento/bloqueio temporário do seu IP pelo YouTube.\n\n` +
+        `Clique em OK para enviar seus cookies agora (Recomendado), ou CANCELAR para prosseguir por sua conta e risco.`
       );
 
       if (confirmUpload) {
         setShowSettings(true);
+        return;
       }
-      return;
     }
     // ---------------------------
 
@@ -745,6 +743,21 @@ function App() {
   };
 
   const handleDownload = async () => {
+    // --- COOKIE ENFORCEMENT ---
+    if (!isAuthenticated) {
+      const confirmUpload = window.confirm(
+        `⚠️ ATENÇÃO: Você está tentando baixar sem login (sem cookies.txt).\n\n` +
+        `Isso tem uma alta chance de resultar em erros no download ou banimento/bloqueio temporário do seu IP pelo YouTube.\n\n` +
+        `Clique em OK para enviar seus cookies agora (Recomendado), ou CANCELAR para prosseguir por sua conta e risco.`
+      );
+
+      if (confirmUpload) {
+        setShowSettings(true);
+        return;
+      }
+    }
+    // ---------------------------
+
     setStep('downloading');
     setStatus(null);
     setMessage('');

@@ -56,7 +56,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "1.7.6"
+APP_VERSION = "1.7.8"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -214,10 +214,9 @@ async def search_youtube(request: SearchRequest):
     }
     query_str = f"ytsearch{request.limit}:{request.query}"
     
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    def perform_search(opts):
+        with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(query_str, download=False)
-            
             if 'entries' in info:
                 results = []
                 for entry in info['entries']:
@@ -235,9 +234,22 @@ async def search_youtube(request: SearchRequest):
                         })
                 return {"results": results}
             return {"results": []}
+
+    try:
+        return perform_search(ydl_opts)
     except Exception as e:
-        print(f"Search error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        if "does not look like a Netscape format cookies file" in error_msg or "cookie" in error_msg.lower():
+            print(f"Cookie error in search, falling back without cookies: {error_msg}")
+            ydl_opts.pop('cookiefile', None)
+            try:
+                return perform_search(ydl_opts)
+            except Exception as e2:
+                print(f"Fallback search error: {e2}")
+                raise HTTPException(status_code=500, detail=str(e2))
+        else:
+            print(f"Search error: {error_msg}")
+            raise HTTPException(status_code=500, detail=error_msg)
 
 def parse_magic_url(url: str):
     pseudo_playlist = None
@@ -368,6 +380,16 @@ async def get_info(request: DownloadRequest):
                     break
                 except Exception as e: 
                     last_err = str(e)
+                    if "does not look like a Netscape format cookies file" in last_err or "cookie" in last_err.lower():
+                        if 'cookiefile' in ydl_opts:
+                            print(f"Cookie error in get_info, retrying without cookies: {last_err}")
+                            ydl_opts.pop('cookiefile', None)
+                            try:
+                                with yt_dlp.YoutubeDL(ydl_opts) as ydl2:
+                                    info = ydl2.extract_info(url, download=False)
+                                break
+                            except Exception as e2:
+                                last_err = str(e2)
                 
             if not info: 
                 err_msg = "Falha ao extrair info."
@@ -436,7 +458,18 @@ def get_playlist_details(request: InfoRequest):
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         playlist_info = ydl.extract_info(url, download=False)
                     break
-                except Exception: pass
+                except Exception as e:
+                    err_str = str(e)
+                    if "does not look like a Netscape format cookies file" in err_str or "cookie" in err_str.lower():
+                        if 'cookiefile' in ydl_opts:
+                            print(f"Cookie error in playlist details, retrying without cookies: {err_str}")
+                            ydl_opts.pop('cookiefile', None)
+                            try:
+                                with yt_dlp.YoutubeDL(ydl_opts) as ydl2:
+                                    playlist_info = ydl2.extract_info(url, download=False)
+                                break
+                            except Exception: pass
+                    pass
             
         if not playlist_info or 'entries' not in playlist_info:
             raise HTTPException(status_code=400, detail="URL não é uma playlist ou falhou")
@@ -515,7 +548,19 @@ def open_folder():
 @app.get("/auth_status")
 def get_auth_status():
     cookie_path = get_cookies_path()
-    return {"authenticated": bool(cookie_path and os.path.getsize(cookie_path) > 0)}
+    if not cookie_path or not os.path.exists(cookie_path) or os.path.getsize(cookie_path) == 0:
+        return {"authenticated": False}
+    
+    # Valida o formato Netscape básico
+    try:
+        with open(cookie_path, 'r', encoding='utf-8') as f:
+            content = f.read(1024)
+            if "# Netscape HTTP Cookie File" in content or "# HTTP Cookie File" in content:
+                return {"authenticated": True}
+    except Exception:
+        pass
+        
+    return {"authenticated": False}
 
 @app.post("/upload_cookies")
 async def upload_cookies(file: UploadFile = File(...)):
