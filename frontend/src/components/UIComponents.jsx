@@ -36,18 +36,18 @@ export function QualityOption({ id, label, sub, selected, set }) {
   return (
     <button
       onClick={() => set(id)}
-      className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between group ${isSelected
-        ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(59,130,246,0.2)]'
-        : 'bg-surface/50 border-white/5 hover:border-white/10 hover:bg-surface'
+      className={`w-full text-left px-4 py-3 rounded-2xl transition-all duration-300 flex items-center justify-between group border ${isSelected
+        ? 'bg-white text-black border-white shadow-lg scale-[1.02]'
+        : 'bg-transparent border-white/5 hover:border-white/20 hover:bg-white/5'
         }`}
     >
       <div>
-        <p className={`font-semibold ${isSelected ? 'text-primary' : 'text-white'}`}>{label}</p>
-        <p className="text-xs text-secondary">{sub}</p>
+        <p className={`font-medium tracking-tight ${isSelected ? 'text-black' : 'text-white'}`}>{label}</p>
+        <p className={`text-xs mt-0.5 ${isSelected ? 'text-black/60' : 'text-white/50'}`}>{sub}</p>
       </div>
       {isSelected && (
         <motion.div layoutId="check">
-          <CheckCircle className="w-5 h-5 text-primary" />
+          <CheckCircle className="w-5 h-5 text-black" />
         </motion.div>
       )}
     </button>

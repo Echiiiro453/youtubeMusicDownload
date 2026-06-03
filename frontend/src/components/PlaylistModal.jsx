@@ -23,13 +23,13 @@ export function PlaylistModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden border border-purple-500/20 flex flex-col"
+        className="bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden border border-white/10 flex flex-col"
       >
-        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-pink-600/20 flex-shrink-0">
+        <div className="p-6 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold text-white mb-1">{t('playlistSelectMusic')}</h3>
@@ -57,7 +57,7 @@ export function PlaylistModal({
                 </select>
                 <button
                   onClick={fetchPlaylistDetails}
-                  className="text-xs bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 px-2 py-1 rounded transition-colors flex items-center gap-1 ml-1 border border-purple-500/30"
+                  className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-full transition-colors flex items-center gap-1 ml-1"
                   title={t('playlistRefreshTitle')}
                 >
                   {t('playlistRefresh')}
@@ -72,7 +72,7 @@ export function PlaylistModal({
             </button>
           </div>
           <div className="flex items-center gap-4 mt-4">
-            <span className="text-lg font-semibold text-purple-300">
+            <span className="text-sm font-medium text-white">
               {t('playlistSelectedOf', selectedVideos.size, playlistVideos.length)}
             </span>
             <button
@@ -84,13 +84,13 @@ export function PlaylistModal({
                 );
                 setSelectedVideos(pendingIndices);
               }}
-              className="px-4 py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm font-medium transition-colors"
             >
               {t('playlistSelectNew')}
             </button>
             <button
               onClick={deselectAllVideos}
-              className="px-4 py-2 bg-gray-600/30 hover:bg-gray-600/50 text-gray-200 rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-transparent hover:bg-white/5 text-white/50 hover:text-white rounded-full text-sm font-medium transition-colors"
             >
               {t('playlistClearSelection')}
             </button>
@@ -110,25 +110,27 @@ export function PlaylistModal({
                   if (video.status === 'downloaded') return;
                   toggleVideoSelection(video.index);
                 }}
-                className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all ${video.status === 'downloaded' ? 'opacity-50 cursor-default' : ''
+                className={`flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all ${video.status === 'downloaded' ? 'opacity-50 cursor-default' : ''
                   } ${selectedVideos.has(video.index)
-                    ? 'bg-purple-600/30 border-2 border-purple-500'
+                    ? 'bg-white/10 shadow-lg scale-[1.01]'
                     : video.status === 'downloaded'
-                      ? 'bg-white/5 border-2 border-transparent'
-                      : 'bg-white/5 border-2 border-transparent hover:bg-white/10'
+                      ? 'bg-transparent'
+                      : 'bg-transparent hover:bg-white/5'
                   }`}
               >
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${selectedVideos.has(video.index)
-                  ? 'bg-purple-600 border-purple-600'
-                  : 'border-gray-400'
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${selectedVideos.has(video.index)
+                  ? 'bg-white border-white'
+                  : 'border-white/30'
                   }`}>
-                  {selectedVideos.has(video.index) && <Check size={14} className="text-white" />}
+                  {selectedVideos.has(video.index) && <Check size={14} className="text-black" />}
                 </div>
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-24 h-16 object-cover rounded-lg flex-shrink-0"
-                />
+                <div className="relative w-24 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-black/50">
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h4 className="text-white font-medium truncate">{video.title}</h4>
@@ -142,7 +144,7 @@ export function PlaylistModal({
                             e.stopPropagation();
                             executeRetry(video, video.playlistIdRef);
                           }}
-                          className="text-xs text-purple-400 hover:text-purple-300 underline"
+                          className="text-xs text-white hover:text-white/70 underline transition-colors"
                         >
                           {t('playlistRedownload')}
                         </button>
@@ -167,16 +169,14 @@ export function PlaylistModal({
           )}
         </div>
         
-        <div className="p-6 border-t border-white/10 bg-gradient-to-r from-purple-600/10 to-pink-600/10 flex-shrink-0">
+        <div className="p-6 border-t border-white/10 bg-slate-900/50 backdrop-blur-md flex-shrink-0">
           <button
             onClick={downloadSelectedVideos}
             disabled={selectedVideos.size === 0}
-            className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+            className="w-full py-4 bg-white text-black hover:bg-gray-200 disabled:bg-white/10 disabled:text-white/30 font-bold rounded-full transition-all transform shadow-xl flex items-center justify-center gap-2"
           >
-            <div className="flex items-center justify-center gap-2">
-              <Download size={20} />
-              <span>{t('playlistDownloadCount', selectedVideos.size)}</span>
-            </div>
+            <Download size={20} />
+            <span>{t('playlistDownloadCount', selectedVideos.size)}</span>
           </button>
         </div>
       </motion.div>

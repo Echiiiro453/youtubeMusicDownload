@@ -1382,35 +1382,35 @@ function App() {
                         <>
                           <QualityOption
                             id="320"
-                            label="🔥 Ultra MP3"
+                            label="Ultra MP3"
                             sub="320kbps • Estúdio"
                             selected={quality}
                             set={setQuality}
                           />
                           <QualityOption
                             id="high"
-                            label="🎵 Alta Qualidade"
+                            label="Alta Qualidade"
                             sub="192kbps • Padrão Spotify"
                             selected={quality}
                             set={setQuality}
                           />
                           <QualityOption
                             id="medium"
-                            label="📉 Economia de Dados"
+                            label="Economia de Dados"
                             sub="128kbps • Leve"
                             selected={quality}
                             set={setQuality}
                           />
                           <QualityOption
                             id="flac"
-                            label="🎧 Lossless FLAC"
+                            label="Lossless FLAC"
                             sub="Sem compressão"
                             selected={quality}
                             set={setQuality}
                           />
                           <QualityOption
                             id="best"
-                            label="💎 Original"
+                            label="Original"
                             sub="M4A/Opus sem conversão"
                             selected={quality}
                             set={setQuality}
@@ -1420,14 +1420,14 @@ function App() {
                         <>
                           {metadata.resolutions && metadata.resolutions.length > 0 ? (
                             metadata.resolutions.map((res) => {
-                              let label = `🎥 ${res}p`;
+                              let label = `${res}p`;
                               let sub = "Qualidade Padrão";
-                              if (res >= 2160) { label = "💎 4K Ultra HD"; sub = "Definição Máxima (WebM/MKV)"; }
-                              else if (res >= 1440) { label = "✨ 2K Quad HD"; sub = "Alta Definição Superior"; }
-                              else if (res >= 1080) { label = "🎬 Full HD 1080p"; sub = "Padrão MP4"; }
-                              else if (res >= 720) { label = "📱 HD 720p"; sub = "Leve e Rápido (MP4)"; }
-                              else if (res >= 480) { label = "📺 480p"; sub = "Qualidade DVD"; }
-                              else { label = `📺 ${res}p`; sub = "Economia de Dados"; }
+                              if (res >= 2160) { label = "4K Ultra HD"; sub = "Definição Máxima (WebM/MKV)"; }
+                              else if (res >= 1440) { label = "2K Quad HD"; sub = "Alta Definição Superior"; }
+                              else if (res >= 1080) { label = "Full HD 1080p"; sub = "Padrão MP4"; }
+                              else if (res >= 720) { label = "HD 720p"; sub = "Leve e Rápido (MP4)"; }
+                              else if (res >= 480) { label = "480p"; sub = "Qualidade DVD"; }
+                              else { label = `${res}p`; sub = "Economia de Dados"; }
 
                               return (
                                 <QualityOption

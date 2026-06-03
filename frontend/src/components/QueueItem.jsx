@@ -40,21 +40,23 @@ export const QueueItem = ({ item, removeFromQueue, setCurrentSong, job }) => {
     const isError = displayStatus === 'error';
 
     return (
-        <div className="bg-surface/50 border border-white/5 rounded-xl p-3 flex gap-3 relative overflow-hidden group">
+        <div className="bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 rounded-2xl p-3 flex gap-4 relative overflow-hidden group transition-all duration-300">
             {displayProgress > 0 && isDownloading && (
                 <div
-                    className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-300"
+                    className="absolute bottom-0 left-0 h-1 bg-white transition-all duration-300"
                     style={{ width: `${displayProgress}%` }}
                 />
             )}
 
-            <img src={item.thumbnail} className="w-16 h-16 rounded-lg object-cover bg-black/50" alt={displayTitle} />
+            <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-black/50 shadow-inner">
+                <img src={item.thumbnail} className="w-full h-full object-cover" alt={displayTitle} />
+            </div>
 
             <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <h4 className="text-white font-medium truncate text-sm">{displayTitle}</h4>
+                <h4 className="text-white font-medium truncate text-sm tracking-tight">{displayTitle}</h4>
                 <div className="flex items-center justify-between mt-1">
-                    <span className={`text-xs font-bold ${isDownloading ? 'text-primary' :
-                        isCompleted ? 'text-green-400' :
+                    <span className={`text-xs font-medium ${isDownloading ? 'text-white' :
+                        isCompleted ? 'text-white/50' :
                             isError ? 'text-red-400' : 'text-gray-500'
                         }`}>
                         {getStatusText()}
@@ -65,7 +67,7 @@ export const QueueItem = ({ item, removeFromQueue, setCurrentSong, job }) => {
                         {isCompleted && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); setCurrentSong({ ...item, file: item.filename || item.file }); }}
-                                className="p-1.5 bg-green-500/20 hover:bg-green-500/40 text-green-400 rounded-lg transition-colors"
+                                className="p-2 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-all"
                                 title="Tocar Agora"
                             >
                                 <Play size={14} fill="currentColor" />
