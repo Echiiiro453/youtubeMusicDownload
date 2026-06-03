@@ -112,8 +112,16 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
                     }, library)}
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                        <Play className="text-gray-400 group-hover:text-primary transition-colors ml-1" size={20} />
+                      <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors relative overflow-hidden">
+                        {song.video_id && (
+                          <img 
+                            src={`https://i.ytimg.com/vi/${song.video_id}/mqdefault.jpg`} 
+                            alt="" 
+                            className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity absolute inset-0" 
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        )}
+                        <Play className="text-gray-400 group-hover:text-primary transition-colors ml-1 relative z-10" size={20} />
                       </div>
                       <div className="min-w-0 flex-1 pr-4">
                         <h4 className="text-white font-medium truncate text-sm">
