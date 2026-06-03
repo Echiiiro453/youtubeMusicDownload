@@ -50,8 +50,20 @@ To run natively from the source code, you must install the `pywebview` dependenc
 ```bash
 sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 ```
-Then follow the standard Desktop Setup instructions above.
+Then follow the Desktop Setup instructions, but **make sure to use a virtual environment** to avoid the `externally-managed-environment` error (PEP 668):
+```bash
+# 1. Setup Frontend
+cd frontend && npm install && npm run build && cd ..
 
+# 2. Setup Backend inside a Virtual Environment
+cd backend
+python3 -m venv venv
+source venv/bin/activate  # Or activate.fish if using Fish shell
+pip install -r requirements.txt
+
+# 3. Build Portable Linux Executable
+python build_exe.py
+```
 
 ---
 
@@ -99,7 +111,20 @@ Para rodar nativamente pelo código fonte, você precisa instalar as dependênci
 ```bash
 sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 ```
-Depois, basta seguir as instruções de Configuração Desktop acima normalmente.
+Depois, siga os passos de Configuração Desktop utilizando um **Ambiente Virtual** para evitar o erro de `externally-managed-environment` (PEP 668) comum nas distribuições modernas:
+```bash
+# 1. Compilar Frontend
+cd frontend && npm install && npm run build && cd ..
+
+# 2. Configurar Backend num Ambiente Virtual (venv)
+cd backend
+python3 -m venv venv
+source venv/bin/activate  # Ou activate.fish se usar o Fish shell
+pip install -r requirements.txt
+
+# 3. Compilar Executável Nativo para Linux
+python build_exe.py
+```
 
 
 ---
