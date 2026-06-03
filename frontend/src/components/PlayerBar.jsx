@@ -171,29 +171,40 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
             <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-12 overflow-hidden">
               {!hasVideoTrack && (
                 <>
-                  {/* Cover Art */}
-                  <div className="w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group">
+                  {/* Cover Art (Vinyl Style) */}
+                  <div className={`w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group rounded-full p-2 bg-gradient-to-tr from-white/5 to-white/20 shadow-[0_0_50px_rgba(255,255,255,0.05)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
                     <img 
                       src={coverSrc} 
-                      className="w-full h-full object-cover rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
+                      className="w-full h-full object-cover rounded-full border border-white/10 shadow-2xl"
                       alt="Cover"
                     />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-black/40 to-transparent pointer-events-none" />
+                    {/* Vinyl Center Hole */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 bg-slate-900 rounded-full border border-white/20 shadow-inner z-10" />
                   </div>
 
                   {/* Lyrics Area */}
-                  <div className="flex-1 w-full max-w-lg h-64 md:h-96 flex flex-col bg-black/20 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
-                    <h3 className="text-white/50 font-bold mb-4 uppercase tracking-wider text-xs">Letras</h3>
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-4 custom-scrollbar text-center md:text-left">
+                  <div className="flex-1 w-full max-w-lg h-64 md:h-96 flex flex-col bg-white/5 rounded-3xl p-8 border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-900 to-transparent z-10 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900 to-transparent z-10 pointer-events-none" />
+                    
+                    <h3 className="text-white/40 font-bold mb-6 uppercase tracking-[0.2em] text-xs flex items-center gap-2 relative z-20">
+                      <Music size={14} /> Letras da Música
+                    </h3>
+                    
+                    <div className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-12 pt-4">
                       {lyricsText.length > 0 ? (
                         lyricsText.map((line, i) => (
-                          <p key={i} className="text-white/80 hover:text-white transition-colors text-lg md:text-xl font-medium leading-relaxed">
+                          <p key={i} className="transition-all duration-500 text-lg md:text-2xl font-medium leading-relaxed text-white/50 hover:text-white hover:scale-[1.02] origin-left">
                             {line}
                           </p>
                         ))
                       ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-white/30 space-y-4">
-                          <Music size={48} className="opacity-20" />
-                          <p>Nenhuma letra embutida neste arquivo.</p>
+                        <div className="h-full flex flex-col items-center justify-center text-white/20 space-y-4">
+                          <motion.div animate={isPlaying ? { scale: [1, 1.1, 1] } : {}} transition={{ repeat: Infinity, duration: 2 }}>
+                            <Music size={64} className="opacity-30 drop-shadow-2xl" />
+                          </motion.div>
+                          <p className="text-sm uppercase tracking-widest font-medium">Faixa Instrumental</p>
                         </div>
                       )}
                     </div>
@@ -225,14 +236,24 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
               {/* Progress Bar */}
               <div className="w-full flex items-center gap-4 text-sm text-gray-400 font-mono">
                 <span>{formatTime(progress)}</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 100}
-                  value={progress}
-                  onChange={handleSeek}
-                  className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:scale-125 transition-all"
-                />
+                <div className="relative flex-1 h-2 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                  <div 
+                    className="absolute left-0 h-full bg-primary rounded-full group-hover:bg-green-400 transition-colors"
+                    style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
+                  />
+                  <div 
+                    className="absolute w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity -ml-2"
+                    style={{ left: `${duration ? (progress / duration) * 100 : 0}%` }}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 100}
+                    value={progress}
+                    onChange={handleSeek}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
                 <span>{formatTime(duration)}</span>
               </div>
 
@@ -257,15 +278,21 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                 <button onClick={toggleMute} className="text-gray-400 hover:text-white">
                   {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={volume}
-                  onChange={handleVolume}
-                  className="w-24 h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:bg-primary"
-                />
+                <div className="relative w-24 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                  <div 
+                    className="absolute left-0 h-full bg-white rounded-full group-hover:bg-primary transition-colors"
+                    style={{ width: `${volume * 100}%` }}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={volume}
+                    onChange={handleVolume}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
           </motion.div>
@@ -314,14 +341,20 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
 
                 <div className="w-full flex items-center gap-3 text-xs text-gray-400 font-mono">
                   <span>{formatTime(progress)}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 100}
-                    value={progress}
-                    onChange={handleSeek}
-                    className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary hover:[&::-webkit-slider-thumb]:scale-125 transition-all"
-                  />
+                  <div className="relative flex-1 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                    <div 
+                      className="absolute left-0 h-full bg-primary rounded-full"
+                      style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 100}
+                      value={progress}
+                      onChange={handleSeek}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
                   <span>{formatTime(duration)}</span>
                 </div>
               </div>
@@ -334,15 +367,21 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                   <button onClick={toggleMute} className="text-gray-400 group-hover:text-white">
                     {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
                   </button>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={volume}
-                    onChange={handleVolume}
-                    className="w-20 h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:bg-primary"
-                  />
+                  <div className="relative w-20 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                    <div 
+                      className="absolute left-0 h-full bg-white group-hover:bg-primary transition-colors rounded-full"
+                      style={{ width: `${volume * 100}%` }}
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={volume}
+                      onChange={handleVolume}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div className="h-8 w-px bg-white/10 mx-2"></div>
                 <button onClick={onClose} className="text-gray-400 hover:text-red-400 transition-colors">
