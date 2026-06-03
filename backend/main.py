@@ -22,6 +22,7 @@ from dataclasses import asdict
 from utils import get_base_dir, get_resource_path, get_data_dir, get_downloads_dir, get_cookies_path
 from database import init_db, get_conn, get_downloaded_ids, mark_missing_db, get_download_record, sync_db_with_disk
 from downloader import jobs, download_queue, worker_loop, MAX_CONCURRENT_DOWNLOADS, JobState
+from urllib.parse import urlparse
 
 app = FastAPI()
 
@@ -56,7 +57,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
