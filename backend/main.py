@@ -194,6 +194,19 @@ async def get_all_jobs():
 
 @app.get("/presets")
 def get_presets():
+    custom_presets = []
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM app_settings WHERE key = 'custom_presets'")
+        row = cur.fetchone()
+        conn.close()
+        if row and row[0]:
+            import json
+            custom_presets = json.loads(row[0])
+    except:
+        pass
+        
     return {
         "defaults": [
             {'name': 'Nightcore', 'pitch': 3, 'speed': 1.15},
@@ -202,8 +215,47 @@ def get_presets():
             {'name': 'Double Time', 'pitch': 0, 'speed': 1.5},
             {'name': 'Half Time', 'pitch': 0, 'speed': 0.75}
         ],
-        "custom": [] 
+        "custom": custom_presets
     }
+
+class PresetData(BaseModel):
+    name: str
+    pitch: float
+    speed: float
+    eq: str = 'normal'
+
+@app.post("/presets")
+def save_preset(preset: PresetData):
+    custom_presets = []
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM app_settings WHERE key = 'custom_presets'")
+        row = cur.fetchone()
+        if row and row[0]:
+            import json
+            custom_presets = json.loads(row[0])
+            
+        # Add new preset or update existing
+        new_preset = {
+            "name": preset.name,
+            "pitch": preset.pitch,
+            "speed": preset.speed,
+            "eq": preset.eq
+        }
+        
+        custom_presets = [p for p in custom_presets if p["name"] != preset.name]
+        custom_presets.append(new_preset)
+        
+        import json
+        cur.execute("""
+            INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)
+        """, ('custom_presets', json.dumps(custom_presets)))
+        conn.commit()
+        conn.close()
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/search")
 async def search_youtube(request: SearchRequest):
