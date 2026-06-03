@@ -49,13 +49,13 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+          className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-slate-800/50">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <Music className="text-primary" size={24} />
+          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-transparent">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/5 rounded-full backdrop-blur-md">
+                <Music className="text-white" size={24} />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">Sua Biblioteca</h2>
@@ -67,21 +67,21 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
             <div className="flex items-center gap-4">
               <button
                 onClick={openFolder}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors text-sm font-medium border border-white/5"
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-sm font-medium border border-transparent"
               >
                 <FolderOpen size={16} />
                 Abrir Pasta
               </button>
               <button
                 onClick={fetchLibrary}
-                className="p-2 text-gray-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg"
+                className="p-2 text-gray-400 hover:text-white transition-colors hover:bg-white/10 rounded-full"
                 title="Atualizar Biblioteca"
               >
                 <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
               </button>
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg"
+                className="p-2 text-gray-400 hover:text-white transition-colors hover:bg-white/10 rounded-full"
               >
                 <X size={24} />
               </button>
@@ -104,7 +104,7 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
                 {library.map((song, idx) => (
                   <div
                     key={`${song.video_id}-${idx}`}
-                    className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl group transition-colors cursor-pointer"
+                    className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl group transition-all duration-300 cursor-pointer"
                     onClick={() => onPlaySong({
                         title: song.title,
                         file: song.file_path,
@@ -112,19 +112,19 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
                     }, library)}
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors relative overflow-hidden">
+                      <div className="w-16 h-16 bg-black/50 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner group-hover:scale-105 transition-transform">
                         {song.video_id && (
                           <img 
                             src={`https://i.ytimg.com/vi/${song.video_id}/mqdefault.jpg`} 
                             alt="" 
-                            className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity absolute inset-0" 
+                            className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity absolute inset-0" 
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
                         )}
-                        <Play className="text-gray-400 group-hover:text-primary transition-colors ml-1 relative z-10" size={20} />
+                        <Play className="text-white opacity-0 group-hover:opacity-100 transition-opacity absolute z-10 drop-shadow-md" size={24} fill="currentColor" />
                       </div>
                       <div className="min-w-0 flex-1 pr-4">
-                        <h4 className="text-white font-medium truncate text-sm">
+                        <h4 className="text-white font-medium truncate text-base tracking-tight">
                           {song.title || "Música Desconhecida"}
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
