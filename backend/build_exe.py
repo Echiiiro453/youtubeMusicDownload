@@ -65,7 +65,8 @@ def main():
         "--onefile", 
         "--windowed", # Esconder o console CMD
         "--name", "AppMusica",
-        "--icon", "icon.ico"
+        "--icon", "icon.ico",
+        "--version-file", "version_info.txt"
     ]
     
     for src, dst in binaries:

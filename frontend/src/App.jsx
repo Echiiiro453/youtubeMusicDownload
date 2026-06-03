@@ -12,13 +12,18 @@ import { UpdateModal } from './components/UpdateModal';
 import { PlayerBar } from './components/PlayerBar';
 import { PlaylistModal } from './components/PlaylistModal';
 import { TermsModal } from './components/TermsModal';
+import { LibraryModal } from './components/LibraryModal';
 import { SkeletonCard, SkeletonPlaylistItem, QualityOption, ToastContainer } from './components/UIComponents';
 // Helper para detectar modo automaticamente (Music vs Video)
 const detectMode = (url) => {
   if (!url) return 'video';
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.includes('music.youtube.com') ||
-    lowerUrl.includes('shorts')) {
+    lowerUrl.includes('shorts') ||
+    lowerUrl.includes('soundcloud.com') ||
+    lowerUrl.includes('bandcamp.com') ||
+    lowerUrl.includes('spotify.com') ||
+    lowerUrl.includes('music.apple.com')) {
     return 'audio';
   }
   return 'video';
@@ -85,6 +90,8 @@ function App() {
     return saved === 'true';
   });
 
+  const [showLibrary, setShowLibrary] = useState(false);
+
   // Playlist Manager
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlistVideos, setPlaylistVideos] = useState([]);
@@ -149,6 +156,25 @@ function App() {
 
   // Player
   const [currentSong, setCurrentSong] = useState(null);
+  const [currentPlaylist, setCurrentPlaylist] = useState([]);
+
+  const handleNextTrack = () => {
+    if (!currentPlaylist || currentPlaylist.length === 0 || !currentSong) return;
+    const currentIndex = currentPlaylist.findIndex(s => s.file_path === currentSong.file);
+    if (currentIndex !== -1 && currentIndex + 1 < currentPlaylist.length) {
+      const nextSong = currentPlaylist[currentIndex + 1];
+      setCurrentSong({ title: nextSong.title, file: nextSong.file_path, quality: "Local" });
+    }
+  };
+
+  const handlePrevTrack = () => {
+    if (!currentPlaylist || currentPlaylist.length === 0 || !currentSong) return;
+    const currentIndex = currentPlaylist.findIndex(s => s.file_path === currentSong.file);
+    if (currentIndex > 0) {
+      const prevSong = currentPlaylist[currentIndex - 1];
+      setCurrentSong({ title: prevSong.title, file: prevSong.file_path, quality: "Local" });
+    }
+  };
 
   // Terms of Use
   const [showTerms, setShowTerms] = useState(false);
@@ -824,6 +850,14 @@ function App() {
       </div>
 
       <div className="absolute top-12 right-4 z-50 flex gap-2">
+        <button
+          onClick={() => setShowLibrary(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
+          title="Abrir Biblioteca"
+        >
+          <List className="w-4 h-4" />
+          <span className="hidden sm:inline">Biblioteca</span>
+        </button>
         <button
           onClick={() => checkForUpdates(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
@@ -1655,9 +1689,22 @@ function App() {
           <PlayerBar
             currentSong={currentSong}
             onClose={() => setCurrentSong(null)}
+            onNext={handleNextTrack}
+            onPrev={handlePrevTrack}
+            onFinish={handleNextTrack}
           />
         )}
       </AnimatePresence>
+
+      <LibraryModal
+        isOpen={showLibrary}
+        onClose={() => setShowLibrary(false)}
+        getApiUrl={getApiUrl}
+        onPlaySong={(song, playlist) => {
+          setCurrentSong(song);
+          if (playlist) setCurrentPlaylist(playlist);
+        }}
+      />
     </div>
   );
 }

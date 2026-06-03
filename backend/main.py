@@ -56,7 +56,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "1.7.8"
+APP_VERSION = "2.0.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -255,6 +255,7 @@ def parse_magic_url(url: str):
     pseudo_playlist = None
     is_magic = False
     magic_source = None
+    cover_url = None
     if "spotify.com" in url or "music.apple.com" in url:
         if "spotify.com" in url:
             import re
@@ -278,6 +279,14 @@ def parse_magic_url(url: str):
                         if 'artists' in entity and len(entity['artists']) > 0:
                             artist = entity['artists'][0].get('name', '')
                         
+                        cover_art = ""
+                        if 'coverArt' in entity and 'sources' in entity['coverArt'] and len(entity['coverArt']['sources']) > 0:
+                            cover_art = entity['coverArt']['sources'][0].get('url', '')
+                            cover_url = cover_art
+                        elif 'visuals' in entity and 'avatarImage' in entity['visuals'] and 'sources' in entity['visuals']['avatarImage']:
+                            cover_art = entity['visuals']['avatarImage']['sources'][0].get('url', '')
+                            cover_url = cover_art
+
                         clean_title = f"{artist} {title}".strip()
                         track_list = entity.get('trackList', [])
                         
@@ -291,12 +300,14 @@ def parse_magic_url(url: str):
                                     'id': f"spotify_magic_{idx}",
                                     'url': f"ytsearch1:{sq} audio",
                                     'title': sq,
-                                    'duration': 0
+                                    'duration': 0,
+                                    'thumbnail': cover_art
                                 })
                             pseudo_playlist = {
                                 'title': clean_title if clean_title else "Spotify Playlist",
                                 'uploader': 'Spotify',
-                                'entries': entries
+                                'entries': entries,
+                                'thumbnail': cover_art
                             }
                             is_magic = True
                             magic_source = "Spotify"
@@ -348,13 +359,13 @@ def parse_magic_url(url: str):
                 is_magic = True
                 magic_source = "Apple Music"
     
-    return url, pseudo_playlist, is_magic, magic_source
+    return url, pseudo_playlist, is_magic, magic_source, cover_url
 
 @app.post("/info")
 async def get_info(request: DownloadRequest):
     try:
         url = request.url
-        url, pseudo_playlist, is_magic, magic_source = parse_magic_url(url)
+        url, pseudo_playlist, is_magic, magic_source, magic_cover = parse_magic_url(url)
 
         if pseudo_playlist:
             info = pseudo_playlist
@@ -421,7 +432,7 @@ async def get_info(request: DownloadRequest):
         return {
             "status": "success",
             "title": info['entries'][0].get('title') if ('entries' in info and 'v=' in request.url) else info.get('title'),
-            "thumbnail": info.get('thumbnail'),
+            "thumbnail": magic_cover or info.get('thumbnail'),
             "url": info.get('webpage_url', request.url),
             "resolutions": resolutions,
             "is_playlist": is_playlist,
@@ -435,7 +446,7 @@ async def get_info(request: DownloadRequest):
 @app.post("/playlist/details")
 def get_playlist_details(request: InfoRequest):
     try:
-        url, pseudo_playlist, is_magic, magic_source = parse_magic_url(request.url)
+        url, pseudo_playlist, is_magic, magic_source, magic_cover = parse_magic_url(request.url)
         
         if pseudo_playlist:
             playlist_info = pseudo_playlist
@@ -628,6 +639,102 @@ def choose_folder():
         return {"status": "error", "message": "Nenhuma janela ativa ou ação cancelada."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+class OpenExternalRequest(BaseModel):
+    file_path: str
+
+@app.post("/api/open_external")
+def open_external(request: OpenExternalRequest):
+    try:
+        from utils import get_downloads_dir
+        abs_path = os.path.join(get_downloads_dir(), request.file_path)
+        if not os.path.exists(abs_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        if os.name == 'nt':
+            os.startfile(abs_path)
+        elif sys.platform == 'darwin':
+            subprocess.call(('open', abs_path))
+        else:
+            subprocess.call(('xdg-open', abs_path))
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/library")
+def get_library():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT playlist_id, video_id, title, file_path, created_at, url FROM downloads WHERE status = 'downloaded' ORDER BY created_at DESC;")
+        rows = cur.fetchall()
+        conn.close()
+        library = []
+        for r in rows:
+            library.append({
+                "playlist_id": r["playlist_id"],
+                "video_id": r["video_id"],
+                "title": r["title"],
+                "file_path": r["file_path"],
+                "created_at": r["created_at"],
+                "url": r["url"]
+            })
+        return {"status": "success", "library": library}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/track_metadata")
+def get_track_metadata(file_path: str):
+    import base64
+    from utils import get_downloads_dir
+    abs_path = os.path.join(get_downloads_dir(), file_path)
+    
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    ext = os.path.splitext(abs_path)[1].lower()
+    lyrics = ""
+    cover_b64 = ""
+    mime_type = "image/jpeg"
+    
+    try:
+        if ext == '.mp3':
+            from mutagen.mp3 import MP3
+            audio = MP3(abs_path)
+            if audio.tags:
+                for key in audio.tags.keys():
+                    if key.startswith('USLT'):
+                        lyrics = audio.tags[key].text
+                    if key.startswith('APIC'):
+                        cover_b64 = base64.b64encode(audio.tags[key].data).decode('utf-8')
+                        mime_type = audio.tags[key].mime
+        elif ext == '.flac':
+            from mutagen.flac import FLAC
+            audio = FLAC(abs_path)
+            if 'LYRICS' in audio:
+                lyrics = audio['LYRICS'][0]
+            if audio.pictures:
+                cover_b64 = base64.b64encode(audio.pictures[0].data).decode('utf-8')
+                mime_type = audio.pictures[0].mime
+        elif ext in ('.m4a', '.aac', '.mp4'):
+            from mutagen.mp4 import MP4
+            audio = MP4(abs_path)
+            if '\xa9lyr' in audio:
+                lyrics = audio['\xa9lyr'][0]
+            if 'covr' in audio and len(audio['covr']) > 0:
+                pic = audio['covr'][0]
+                cover_b64 = base64.b64encode(pic).decode('utf-8')
+                mime_type = "image/png" if getattr(pic, 'imageformat', None) == 2 else "image/jpeg"
+    except Exception as e:
+        print(f"Error reading metadata from {file_path}: {e}")
+        
+    return {"lyrics": lyrics, "cover_b64": cover_b64, "mime_type": mime_type}
+
+from utils import get_downloads_dir
+try:
+    os.makedirs(get_downloads_dir(), exist_ok=True)
+    app.mount("/downloads", StaticFiles(directory=get_downloads_dir()), name="downloads")
+except Exception as e:
+    print(f"Could not mount downloads dir: {e}")
 
 static_dir = get_resource_path("static")
 if os.path.exists(static_dir):
