@@ -129,12 +129,11 @@ def _embed_lyrics(file_path: str, ext: str, lyrics_text: str) -> bool:
             if audio.tags is None:
                 audio.add_tags()
             audio.tags.delall('USLT')
-            plain_lyrics = _strip_lrc_timestamps(lyrics_text)
             audio.tags.add(USLT(
                 encoding=Encoding.UTF8,
                 lang='und',
                 desc='Lyrics',
-                text=plain_lyrics
+                text=lyrics_text
             ))
             audio.save()
             print(f"  [lyrics] OK Letra injetada no MP3")
@@ -143,7 +142,7 @@ def _embed_lyrics(file_path: str, ext: str, lyrics_text: str) -> bool:
         elif ext == '.flac':
             from mutagen.flac import FLAC
             audio = FLAC(file_path)
-            audio['LYRICS'] = _strip_lrc_timestamps(lyrics_text)
+            audio['LYRICS'] = lyrics_text
             audio.save()
             print(f"  [lyrics] OK Letra injetada no FLAC")
             return True
@@ -151,7 +150,7 @@ def _embed_lyrics(file_path: str, ext: str, lyrics_text: str) -> bool:
         elif ext in ('.m4a', '.aac'):
             from mutagen.mp4 import MP4
             audio = MP4(file_path)
-            audio['\xa9lyr'] = [_strip_lrc_timestamps(lyrics_text)]
+            audio['\xa9lyr'] = [lyrics_text]
             audio.save()
             print(f"  [lyrics] OK Letra injetada no M4A")
             return True

@@ -109,7 +109,52 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
   if (!currentSong) return null;
 
   const coverSrc = metadata?.coverUrl || currentSong.thumbnail || "https://github.com/shadcn.png";
-  const lyricsText = metadata?.lyrics ? metadata.lyrics.split('\n') : [];
+  const parsedLyrics = React.useMemo(() => {
+    if (!metadata?.lyrics) return [];
+    const lines = metadata.lyrics.split('\n');
+    const parsed = [];
+    const timeRegex = /^\[(\d{2}):(\d{2}(?:\.\d{2,3})?)\](.*)/;
+    
+    for (const line of lines) {
+      const match = line.match(timeRegex);
+      if (match) {
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseFloat(match[2]);
+        const text = match[3].trim();
+        if (text) {
+          parsed.push({ time: minutes * 60 + seconds, text });
+        }
+      } else if (line.trim() && !line.startsWith('[')) {
+        parsed.push({ time: -1, text: line.trim() });
+      }
+    }
+    return parsed;
+  }, [metadata?.lyrics]);
+
+  const activeLineIndex = React.useMemo(() => {
+    if (parsedLyrics.length === 0 || parsedLyrics[0].time === -1) return -1;
+    let idx = -1;
+    for (let i = 0; i < parsedLyrics.length; i++) {
+      if (progress >= parsedLyrics[i].time) {
+        idx = i;
+      } else {
+        break;
+      }
+    }
+    return idx;
+  }, [progress, parsedLyrics]);
+
+  const lyricsContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (activeLineIndex !== -1 && lyricsContainerRef.current && isExpanded) {
+      const container = lyricsContainerRef.current;
+      const activeElement = container.children[activeLineIndex];
+      if (activeElement) {
+        activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [activeLineIndex, isExpanded]);
 
   const openExternal = async () => {
     if (!currentSong?.file) return;
@@ -192,13 +237,25 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                       <Music size={14} /> Letras da Música
                     </h3>
                     
-                    <div className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-12 pt-4">
-                      {lyricsText.length > 0 ? (
-                        lyricsText.map((line, i) => (
-                          <p key={i} className="transition-all duration-500 text-lg md:text-2xl font-medium leading-relaxed text-white/50 hover:text-white hover:scale-[1.02] origin-left">
-                            {line}
-                          </p>
-                        ))
+                    <div ref={lyricsContainerRef} className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-[30vh] pt-[10vh]">
+                      {parsedLyrics.length > 0 ? (
+                        parsedLyrics.map((line, i) => {
+                          const isActive = i === activeLineIndex;
+                          const isPlain = line.time === -1;
+                          
+                          let className = "transition-all duration-500 text-lg md:text-2xl font-medium leading-relaxed text-white/50 hover:text-white hover:scale-[1.02] origin-left";
+                          if (!isPlain && isActive) {
+                            className = "transition-all duration-500 text-2xl md:text-3xl font-bold leading-relaxed text-white scale-[1.05] origin-left drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]";
+                          } else if (!isPlain && activeLineIndex !== -1 && i < activeLineIndex) {
+                            className = "transition-all duration-500 text-lg md:text-xl font-medium leading-relaxed text-white/30";
+                          }
+
+                          return (
+                            <p key={i} className={className}>
+                              {line.text}
+                            </p>
+                          );
+                        })
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-white/20 space-y-4">
                           <motion.div animate={isPlaying ? { scale: [1, 1.1, 1] } : {}} transition={{ repeat: Infinity, duration: 2 }}>
