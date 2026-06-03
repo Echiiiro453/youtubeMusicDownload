@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Download } from 'lucide-react';
+import { X, Check, Download, Users, ChevronDown } from 'lucide-react';
 import { SkeletonPlaylistItem } from './UIComponents';
 import { t } from '../i18n';
 
@@ -20,13 +20,18 @@ export function PlaylistModal({
   playlistLoading,
   executeRetry
 }) {
+  const [showArtistDropdown, setShowArtistDropdown] = useState(false);
+
   if (!isOpen) return null;
 
+  const uniqueArtists = Array.from(new Set(playlistVideos.map(v => v.uploader))).filter(Boolean).sort();
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowArtistDropdown(false)}>
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
+        onClick={(e) => e.stopPropagation()}
         className="bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden border border-white/10 flex flex-col"
       >
         <div className="p-6 border-b border-white/10 flex-shrink-0">
@@ -71,8 +76,8 @@ export function PlaylistModal({
               <X className="text-gray-300" size={24} />
             </button>
           </div>
-          <div className="flex items-center gap-4 mt-4">
-            <span className="text-sm font-medium text-white">
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <span className="text-sm font-medium text-white mr-2">
               {t('playlistSelectedOf', selectedVideos.size, playlistVideos.length)}
             </span>
             <button
@@ -88,16 +93,57 @@ export function PlaylistModal({
             >
               {t('playlistSelectNew')}
             </button>
+            
+            <div className="relative">
+              <button 
+                onClick={(e) => { e.stopPropagation(); setShowArtistDropdown(!showArtistDropdown); }}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <Users size={16} />
+                Por Artista
+                <ChevronDown size={14} className={`transition-transform ${showArtistDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              <AnimatePresence>
+                {showArtistDropdown && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full left-0 mt-2 w-64 max-h-64 overflow-y-auto bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[300] custom-scrollbar p-2"
+                  >
+                    {uniqueArtists.map(artist => {
+                      const count = playlistVideos.filter(v => v.uploader === artist).length;
+                      return (
+                        <button 
+                          key={artist}
+                          className="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-xl text-sm text-white flex items-center justify-between transition-colors"
+                          onClick={() => {
+                            const indices = playlistVideos.filter(v => v.uploader === artist && v.status !== 'downloaded').map(v => v.index);
+                            setSelectedVideos(new Set([...selectedVideos, ...indices])); // Accumulate selections
+                            setShowArtistDropdown(false);
+                          }}
+                        >
+                          <span className="truncate font-medium">{artist}</span>
+                          <span className="text-gray-400 text-xs ml-2 bg-black/30 px-2 py-0.5 rounded-full">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button
               onClick={deselectAllVideos}
-              className="px-4 py-2 bg-transparent hover:bg-white/5 text-white/50 hover:text-white rounded-full text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-transparent hover:bg-white/5 text-white/50 hover:text-white rounded-full text-sm font-medium transition-colors ml-auto"
             >
               {t('playlistClearSelection')}
             </button>
           </div>
         </div>
         
-        <div className="p-4 overflow-y-auto flex-1 space-y-2">
+        <div className="p-4 overflow-y-auto flex-1 space-y-2 custom-scrollbar">
           {playlistLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <SkeletonPlaylistItem key={i} />
