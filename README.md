@@ -46,10 +46,23 @@ wine AppMusica.exe
 ```
 
 **Option 2: Native Execution (Source Code)**
-To run natively from the source code, you must install the `pywebview` dependencies for Linux (GTK and WebKit2):
+To run natively from the source code, you must install the `pywebview` dependencies for Linux (GTK and WebKit2) based on your distribution:
+
+**Ubuntu/Debian:**
 ```bash
 sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 ```
+
+**Arch Linux / Manjaro:**
+```bash
+sudo pacman -S python base-devel gobject-introspection cairo gtk3 webkit2gtk
+```
+
+**Fedora:**
+```bash
+sudo dnf install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
+```
+
 Then follow the Desktop Setup instructions, but **make sure to use a virtual environment** to avoid the `externally-managed-environment` error (PEP 668):
 ```bash
 # 1. Setup Frontend
@@ -107,10 +120,23 @@ wine AppMusica.exe
 ```
 
 **Opção 2: Execução Nativa (Código Fonte)**
-Para rodar nativamente pelo código fonte, você precisa instalar as dependências do `pywebview` para Linux (GTK e WebKit2) no seu terminal (Ubuntu/Debian):
+Para rodar nativamente pelo código fonte, você precisa instalar as dependências do `pywebview` para Linux (GTK e WebKit2) no seu terminal, dependendo da sua distribuição:
+
+**Ubuntu/Debian:**
 ```bash
 sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 ```
+
+**Arch Linux / Manjaro:**
+```bash
+sudo pacman -S python base-devel gobject-introspection cairo gtk3 webkit2gtk
+```
+
+**Fedora:**
+```bash
+sudo dnf install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
+```
+
 Depois, siga os passos de Configuração Desktop utilizando um **Ambiente Virtual** para evitar o erro de `externally-managed-environment` (PEP 668) comum nas distribuições modernas:
 ```bash
 # 1. Compilar Frontend
