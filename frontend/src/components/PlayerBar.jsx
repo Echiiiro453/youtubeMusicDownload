@@ -253,10 +253,10 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
           >
             {/* Blurred Background */}
             <div 
-              className="absolute inset-0 bg-cover bg-center opacity-30 blur-3xl scale-110"
+              className="absolute inset-0 bg-cover bg-center opacity-70 blur-[80px] scale-125 saturate-150 transition-all duration-1000"
               style={{ backgroundImage: `url(${coverSrc})` }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-slate-900/80 to-slate-900" />
+            <div className="absolute inset-0 bg-black/60" />
             
             {/* Header */}
             <div className="relative z-10 flex items-center justify-between p-6">
@@ -273,28 +273,28 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
             <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-12 overflow-hidden">
               {!hasVideoTrack && (
                 <>
-                  {/* Cover Art (Vinyl Style) */}
-                  <div className={`w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group rounded-full p-2 bg-gradient-to-tr from-white/5 to-white/20 shadow-[0_0_50px_rgba(255,255,255,0.05)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
+                  {/* Cover Art (Minimalist Vinyl) */}
+                  <div className={`w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
                     <img 
                       src={coverSrc} 
-                      className="w-full h-full object-cover rounded-full border border-white/10 shadow-2xl"
+                      className="w-full h-full object-cover rounded-full"
                       alt="Cover"
                     />
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-black/40 to-transparent pointer-events-none" />
-                    {/* Vinyl Center Hole */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 bg-slate-900 rounded-full border border-white/20 shadow-inner z-10" />
+                    {/* Minimalist Vinyl Lines */}
+                    <div className="absolute inset-0 rounded-full border-[15px] border-black/10 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-full border border-white/10 pointer-events-none" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 md:w-6 md:h-6 bg-black rounded-full shadow-inner z-10" />
                   </div>
 
-                  {/* Lyrics Area */}
-                  <div className="flex-1 w-full max-w-lg h-64 md:h-96 flex flex-col bg-white/5 rounded-3xl p-8 border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-900 to-transparent z-10 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900 to-transparent z-10 pointer-events-none" />
-                    
-                    <h3 className="text-white/40 font-bold mb-6 uppercase tracking-[0.2em] text-xs flex items-center gap-2 relative z-20">
-                      <Music size={14} /> Letras da Música
-                    </h3>
-                    
-                    <div ref={lyricsContainerRef} className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-[30vh] pt-[10vh]">
+                  {/* Lyrics Area - Minimalist */}
+                  <div 
+                    className="flex-1 w-full max-w-lg h-64 md:h-96 flex flex-col relative"
+                    style={{ 
+                      maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)', 
+                      WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)' 
+                    }}
+                  >
+                    <div ref={lyricsContainerRef} className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-[30vh] pt-[15vh]">
                       {parsedLyrics.length > 0 ? (
                         parsedLyrics.map((line, i) => {
                           const isActive = i === activeLineIndex;
@@ -331,8 +331,8 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
             <div className="relative z-10 p-6 md:p-10 flex flex-col items-center w-full max-w-4xl mx-auto space-y-8">
               <div className="text-center relative w-full flex justify-center items-center">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">{currentSong.title}</h1>
-                  <p className="text-primary font-medium">{currentSong.quality || "Local Audio"}</p>
+                  <h1 className="text-3xl md:text-4xl font-medium text-white mb-2 tracking-tight">{currentSong.title}</h1>
+                  <p className="text-white/50 font-light text-sm tracking-widest uppercase">{currentSong.quality || "Local Audio"}</p>
                 </div>
                 
                 {hasVideoTrack && (
@@ -348,11 +348,11 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full flex items-center gap-4 text-sm text-gray-400 font-mono">
+              <div className="w-full flex items-center gap-4 text-xs md:text-sm text-gray-400 font-mono">
                 <span>{formatTime(progress)}</span>
-                <div className="relative flex-1 h-3 bg-white/10 rounded-full group cursor-pointer flex items-center overflow-hidden">
+                <div className="relative flex-1 h-1.5 hover:h-3 transition-all duration-300 bg-white/20 rounded-full group cursor-pointer flex items-center overflow-hidden">
                   <div 
-                    className={`absolute left-0 h-full bg-primary rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
+                    className={`absolute left-0 h-full bg-white rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
                     style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
                   />
                   <input
@@ -381,9 +381,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                 </button>
                 <button
                   onClick={togglePlay}
-                  className="w-20 h-20 bg-primary text-slate-900 rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_30px_rgba(29,185,84,0.3)]"
+                  className="w-16 h-16 md:w-20 md:h-20 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-all hover:scale-105 shadow-xl"
                 >
-                  {isPlaying ? <Pause size={36} fill="currentColor" /> : <Play size={36} fill="currentColor" className="ml-2" />}
+                  {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-2" />}
                 </button>
                 <button onClick={onNext} className="text-white/50 hover:text-white transition-colors" title="Próxima">
                   <SkipForward size={32} />
