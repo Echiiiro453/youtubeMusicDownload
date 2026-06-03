@@ -426,7 +426,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             exit={{ y: 100 }}
-            className="fixed bottom-0 left-0 w-full bg-slate-900/90 backdrop-blur-xl border-t border-white/10 p-3 z-[150] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-slate-800/90 transition-colors"
+            className="fixed bottom-0 left-0 w-full bg-black/40 backdrop-blur-3xl border-t border-white/5 p-3 z-[150] shadow-[0_-10px_40px_rgba(0,0,0,0.3)] cursor-pointer hover:bg-white/5 transition-colors"
             onClick={() => setIsExpanded(true)}
           >
             <div className="max-w-7xl mx-auto flex items-center gap-4 md:gap-8 relative" onClick={e => e.stopPropagation()}>
@@ -438,9 +438,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                   </div>
                 </div>
                 <div className="overflow-hidden">
-                  <h4 className="text-white font-bold text-sm truncate">{currentSong.title}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                  <h4 className="text-white font-medium text-sm truncate tracking-tight">{currentSong.title}</h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-white/50 border border-white/10 px-1.5 py-0.5 rounded-md uppercase font-medium tracking-widest">
                       {currentSong.quality || "Local Audio"}
                     </span>
                   </div>
@@ -454,7 +454,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-                    className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-white/20"
+                    className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-md"
                   >
                     {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                   </button>
@@ -465,9 +465,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
 
                 <div className="w-full flex items-center gap-3 text-xs text-gray-400 font-mono">
                   <span>{formatTime(progress)}</span>
-                  <div className="relative flex-1 h-2 bg-white/10 rounded-full group cursor-pointer flex items-center overflow-hidden">
+                  <div className="relative flex-1 h-1.5 hover:h-2 transition-all duration-300 bg-white/10 rounded-full group cursor-pointer flex items-center overflow-hidden">
                     <div 
-                      className={`absolute left-0 h-full bg-primary rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
+                      className={`absolute left-0 h-full bg-white rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
                       style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
                     />
                     <input
@@ -493,7 +493,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                   </button>
                   <div className="relative w-20 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
                     <div 
-                      className="absolute left-0 h-full bg-white group-hover:bg-primary transition-colors rounded-full"
+                      className="absolute left-0 h-full bg-white transition-colors rounded-full"
                       style={{ width: `${volume * 100}%` }}
                     />
                     <input
