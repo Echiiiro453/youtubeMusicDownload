@@ -827,7 +827,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white flex flex-col items-center justify-center p-4 font-sans selection:bg-primary selection:text-white relative">
+    <div className={`min-h-screen bg-background text-white flex flex-col items-center justify-center p-4 font-sans selection:bg-primary selection:text-white relative ${currentSong ? 'pb-28' : ''}`}>
       <TermsModal
         showTerms={showTerms}
         termsLoading={termsLoading}
@@ -1570,7 +1570,7 @@ function App() {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           onClick={() => setShowQueue(true)}
-          className="fixed bottom-6 right-6 z-[90] bg-primary text-white p-4 rounded-full shadow-2xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 group"
+          className={`fixed right-6 z-[90] bg-primary text-white p-4 rounded-full shadow-2xl hover:bg-blue-600 transition-all duration-300 flex items-center justify-center gap-2 group ${currentSong ? 'bottom-28' : 'bottom-6'}`}
         >
           <div className="relative">
             <List size={24} />
