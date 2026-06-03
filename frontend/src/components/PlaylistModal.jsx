@@ -120,7 +120,7 @@ export function PlaylistModal({
                           className="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-xl text-sm text-white flex items-center justify-between transition-colors"
                           onClick={() => {
                             const indices = playlistVideos.filter(v => v.uploader === artist && v.status !== 'downloaded').map(v => v.index);
-                            setSelectedVideos(new Set([...selectedVideos, ...indices])); // Accumulate selections
+                            setSelectedVideos(new Set(indices)); // Replace selections
                             setShowArtistDropdown(false);
                           }}
                         >
