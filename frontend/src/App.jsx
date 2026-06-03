@@ -1035,8 +1035,21 @@ function App() {
 
       {/* Background Decor */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/20 rounded-full blur-[128px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-[128px]" />
+        <motion.div 
+          animate={{ x: [0, 100, -50, 0], y: [0, -100, 50, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[128px]" 
+        />
+        <motion.div 
+          animate={{ x: [0, -100, 50, 0], y: [0, 100, -50, 0] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[128px]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[40%] left-[40%] w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[100px]" 
+        />
       </div>
 
       <div className="z-10 w-full max-w-xl space-y-8">
@@ -1169,9 +1182,9 @@ function App() {
                       <div
                         key={video.id}
                         onClick={() => handleSelectVideo(video.url)}
-                        className="bg-surface/30 hover:bg-surface/80 border border-white/5 hover:border-white/20 p-3 rounded-xl flex gap-4 cursor-pointer transition-all group"
+                        className="bg-surface/30 hover:bg-white/10 backdrop-blur-md border border-white/5 hover:border-white/20 p-3 rounded-xl flex gap-4 cursor-pointer transition-all duration-300 group hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:-translate-y-1"
                       >
-                        <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-black/50">
+                        <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-black/50 shadow-inner">
                           <img
                             src={video.thumbnail || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -1204,6 +1217,8 @@ function App() {
                             <ArrowRight size={18} />
                           </div>
                         </div>
+                        {/* Hover glow line */}
+                        <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     ))}
                   </div>
@@ -1600,7 +1615,7 @@ function App() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900 border-l border-white/10 z-[101] shadow-2xl flex flex-col"
+              className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900/80 backdrop-blur-2xl border-l border-white/10 z-[101] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
             >
               <div className="p-6 border-b border-white/10 bg-gradient-to-l from-blue-900/20">
                 <div className="flex items-center justify-between mb-2">
@@ -1645,7 +1660,7 @@ function App() {
                 )}
               </div>
 
-              <div className="p-6 border-t border-white/10 bg-slate-900">
+              <div className="p-6 border-t border-white/10 bg-slate-900/50 backdrop-blur-lg">
                 <button
                   id="start-downloads-btn"
                   onClick={processQueue}
