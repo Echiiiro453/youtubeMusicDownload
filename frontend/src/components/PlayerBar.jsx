@@ -196,35 +196,70 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
       {/* Info Modal */}
       <AnimatePresence>
         {showInfo && metadata && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 m-auto z-[250] w-full max-w-md h-fit max-h-[80vh] bg-slate-900/90 backdrop-blur-3xl rounded-3xl border border-white/10 shadow-2xl p-6 overflow-hidden flex flex-col"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Info size={20} className="text-primary"/> Detalhes da Faixa</h3>
-              <button onClick={() => setShowInfo(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
-            </div>
-            <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar text-sm text-gray-300">
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Título / Arquivo</span>
-                <span className="text-white break-all">{currentSong.title}</span>
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-2xl p-6 flex flex-col"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-medium text-white tracking-tight">Detalhes da Faixa</h3>
+                <button onClick={() => setShowInfo(false)} className="p-2 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
               </div>
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Qualidade</span>
-                <span className="text-primary font-mono">{currentSong.quality || "Local Audio"}</span>
+              
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar text-sm text-gray-300 pr-2 max-h-[60vh]">
+                <div className="p-4 bg-white/5 rounded-2xl">
+                  <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Título</span>
+                  <span className="text-white font-medium">{metadata.title || currentSong.title}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Artista</span>
+                    <span className="text-white font-medium truncate block" title={metadata.artist || "Desconhecido"}>{metadata.artist || "Desconhecido"}</span>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Álbum</span>
+                    <span className="text-white font-medium truncate block" title={metadata.album || "Desconhecido"}>{metadata.album || "Desconhecido"}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Duração</span>
+                    <span className="text-white font-mono">{formatTime(duration)}</span>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Ano</span>
+                    <span className="text-white">{metadata.year || "N/A"}</span>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Gênero</span>
+                    <span className="text-white truncate block">{metadata.genre || "N/A"}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Qualidade</span>
+                    <span className="text-white tracking-widest font-mono text-xs">{currentSong.quality || "Local"}</span>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl">
+                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Tamanho</span>
+                    <span className="text-white font-mono text-xs">
+                      {metadata.file_size ? `${(metadata.file_size / 1024 / 1024).toFixed(2)} MB` : "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white/5 rounded-2xl mt-2">
+                  <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Caminho do Arquivo</span>
+                  <span className="text-xs break-all text-white/60 font-mono">{currentSong.file}</span>
+                </div>
               </div>
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Duração</span>
-                <span className="font-mono text-white">{formatTime(duration)}</span>
-              </div>
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Caminho Local</span>
-                <span className="text-xs break-all text-gray-400">{currentSong.file}</span>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
