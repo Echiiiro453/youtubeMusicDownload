@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
+import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
@@ -10,6 +10,8 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
   const [isMuted, setIsMuted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [metadata, setMetadata] = useState(null);
+  const [isLooping, setIsLooping] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   
   const audioRef = useRef(null);
 
@@ -64,8 +66,13 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
       setDuration(dur || 0);
 
       if (curr >= dur && dur > 0) {
-        setIsPlaying(false);
-        if (onFinish) onFinish();
+        if (isLooping) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+        } else {
+          setIsPlaying(false);
+          if (onFinish) onFinish();
+        }
       }
     }
   };
@@ -171,6 +178,56 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
 
   return (
     <>
+      <style>
+        {`
+        @keyframes wave-move {
+          0% { background-position: 0 center; }
+          100% { background-position: -20px center; }
+        }
+        .wave-bg {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0,5 Q5,0 10,5 T20,5' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2'/%3E%3C/svg%3E");
+          background-repeat: repeat-x;
+          background-position: 0 center;
+          animation: wave-move 1s linear infinite;
+        }
+        `}
+      </style>
+
+      {/* Info Modal */}
+      <AnimatePresence>
+        {showInfo && metadata && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 m-auto z-[250] w-full max-w-md h-fit max-h-[80vh] bg-slate-900/90 backdrop-blur-3xl rounded-3xl border border-white/10 shadow-2xl p-6 overflow-hidden flex flex-col"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Info size={20} className="text-primary"/> Detalhes da Faixa</h3>
+              <button onClick={() => setShowInfo(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar text-sm text-gray-300">
+              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Título / Arquivo</span>
+                <span className="text-white break-all">{currentSong.title}</span>
+              </div>
+              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Qualidade</span>
+                <span className="text-primary font-mono">{currentSong.quality || "Local Audio"}</span>
+              </div>
+              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Duração</span>
+                <span className="font-mono text-white">{formatTime(duration)}</span>
+              </div>
+              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Caminho Local</span>
+                <span className="text-xs break-all text-gray-400">{currentSong.file}</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Persistent Media Element */}
       <video 
         ref={audioRef}
@@ -293,14 +350,10 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
               {/* Progress Bar */}
               <div className="w-full flex items-center gap-4 text-sm text-gray-400 font-mono">
                 <span>{formatTime(progress)}</span>
-                <div className="relative flex-1 h-2 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                <div className="relative flex-1 h-3 bg-white/10 rounded-full group cursor-pointer flex items-center overflow-hidden">
                   <div 
-                    className="absolute left-0 h-full bg-primary rounded-full group-hover:bg-green-400 transition-colors"
+                    className={`absolute left-0 h-full bg-primary rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
                     style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
-                  />
-                  <div 
-                    className="absolute w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity -ml-2"
-                    style={{ left: `${duration ? (progress / duration) * 100 : 0}%` }}
                   />
                   <input
                     type="range"
@@ -315,7 +368,14 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
               </div>
 
               {/* Buttons */}
-              <div className="flex items-center gap-8 md:gap-12">
+              <div className="flex items-center gap-6 md:gap-10">
+                <button 
+                  onClick={() => setIsLooping(!isLooping)} 
+                  className={`transition-colors ${isLooping ? 'text-primary' : 'text-white/30 hover:text-white/60'}`} 
+                  title="Repetir Faixa"
+                >
+                  <Repeat size={24} />
+                </button>
                 <button onClick={onPrev} className="text-white/50 hover:text-white transition-colors" title="Anterior">
                   <SkipBack size={32} />
                 </button>
@@ -327,6 +387,13 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
                 </button>
                 <button onClick={onNext} className="text-white/50 hover:text-white transition-colors" title="Próxima">
                   <SkipForward size={32} />
+                </button>
+                <button 
+                  onClick={() => setShowInfo(true)} 
+                  className="text-white/30 hover:text-white/60 transition-colors" 
+                  title="Informações da Faixa"
+                >
+                  <Info size={24} />
                 </button>
               </div>
               
@@ -398,9 +465,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
 
                 <div className="w-full flex items-center gap-3 text-xs text-gray-400 font-mono">
                   <span>{formatTime(progress)}</span>
-                  <div className="relative flex-1 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                  <div className="relative flex-1 h-2 bg-white/10 rounded-full group cursor-pointer flex items-center overflow-hidden">
                     <div 
-                      className="absolute left-0 h-full bg-primary rounded-full"
+                      className={`absolute left-0 h-full bg-primary rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
                       style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
                     />
                     <input
