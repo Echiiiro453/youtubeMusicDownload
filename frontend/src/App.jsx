@@ -1033,36 +1033,18 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Background Decor */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <motion.div 
-          animate={{ x: [0, 100, -50, 0], y: [0, -100, 50, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[128px]" 
-        />
-        <motion.div 
-          animate={{ x: [0, -100, 50, 0], y: [0, 100, -50, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[128px]" 
-        />
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[40%] left-[40%] w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[100px]" 
-        />
-      </div>
-
-      <div className="z-10 w-full max-w-xl space-y-8">
+      {/* Main App Container */}
+      <div className="z-10 w-full max-w-xl space-y-8 mt-10">
 
         {/* Header */}
         <motion.div
           layout
           className="text-center space-y-2"
         >
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-surface border border-white/10 mb-4 shadow-xl">
-            <Music className="w-8 h-8 text-primary" />
+          <div className="inline-flex items-center justify-center p-3 rounded-full bg-white/5 mb-4 backdrop-blur-md">
+            <Music className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-secondary bg-clip-text text-transparent">
+          <h1 className="text-3xl font-medium tracking-tight text-white">
             {t('mainTitle')}
           </h1>
           <p className="text-secondary text-lg">
@@ -1089,7 +1071,7 @@ function App() {
                 <input
                   type="text"
                   placeholder={t('searchPlaceholderText')}
-                  className="w-full h-14 pl-12 pr-4 bg-surface/50 backdrop-blur-md border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-lg placeholder:text-secondary/50 shadow-lg"
+                  className="w-full h-14 pl-12 pr-4 bg-white/5 backdrop-blur-2xl rounded-full focus:outline-none focus:ring-1 focus:ring-white/30 transition-all text-lg placeholder:text-white/30 text-white"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   autoFocus
@@ -1097,12 +1079,12 @@ function App() {
 
                 {/* Progresso visual imediato */}
                 {(loading || isSearching) && (
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-white/5 overflow-hidden rounded-b-2xl">
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-white/10 overflow-hidden rounded-full">
                     <motion.div
                       initial={{ x: '-100%' }}
                       animate={{ x: '100%' }}
-                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                      className="w-1/2 h-full bg-gradient-to-r from-transparent via-primary to-transparent"
+                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                      className="w-1/3 h-full bg-white"
                     />
                   </div>
                 )}
@@ -1113,9 +1095,9 @@ function App() {
                   type="button"
                   onClick={() => handleSearch(url)}
                   disabled={loading || !url}
-                  className={`flex-1 h-12 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${!/^(http|https):\/\/[^ "]+$/i.test(url)
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700'
-                    : 'bg-surface hover:bg-white/10 text-secondary border border-white/5'
+                  className={`flex-1 h-12 rounded-full font-medium transition-all flex items-center justify-center gap-2 ${!/^(http|https):\/\/[^ "]+$/i.test(url)
+                    ? 'bg-white text-black hover:scale-[1.02]'
+                    : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
                     }`}
                 >
                   <Search size={18} />
@@ -1126,9 +1108,9 @@ function App() {
                   type="button"
                   onClick={() => loadVideoDetails(url)}
                   disabled={loading || !url}
-                  className={`flex-1 h-12 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${/^(http|https):\/\/[^ "]+$/i.test(url)
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-700'
-                    : 'bg-surface hover:bg-white/10 text-secondary border border-white/5'
+                  className={`flex-1 h-12 rounded-full font-medium transition-all flex items-center justify-center gap-2 ${/^(http|https):\/\/[^ "]+$/i.test(url)
+                    ? 'bg-white text-black hover:scale-[1.02]'
+                    : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
                     }`}
                 >
                   <ArrowRight size={18} />
@@ -1182,9 +1164,9 @@ function App() {
                       <div
                         key={video.id}
                         onClick={() => handleSelectVideo(video.url)}
-                        className="bg-surface/30 hover:bg-white/10 backdrop-blur-md border border-white/5 hover:border-white/20 p-3 rounded-xl flex gap-4 cursor-pointer transition-all duration-300 group hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:-translate-y-1"
+                        className="bg-transparent hover:bg-white/5 p-3 rounded-2xl flex gap-4 cursor-pointer transition-all duration-300 group hover:shadow-2xl"
                       >
-                        <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-black/50 shadow-inner">
+                        <div className="relative w-32 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-black/50">
                           <img
                             src={video.thumbnail || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -1208,17 +1190,15 @@ function App() {
                         <div className="flex items-center gap-2 pr-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
                           <button
                             onClick={(e) => { e.stopPropagation(); addToQueue(video); }}
-                            className="w-10 h-10 rounded-full bg-surface border border-white/20 hover:bg-primary hover:border-primary text-white flex items-center justify-center transition-all shadow-lg"
+                            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all"
                             title="Adicionar à fila"
                           >
                             <Plus size={18} />
                           </button>
-                          <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center">
                             <ArrowRight size={18} />
                           </div>
                         </div>
-                        {/* Hover glow line */}
-                        <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     ))}
                   </div>
@@ -1236,7 +1216,7 @@ function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface/50 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
+              className="bg-transparent border border-white/5 rounded-3xl p-6 space-y-6"
             >
               {/* Media Info */}
               <div className="flex gap-4 items-center">
@@ -1286,17 +1266,17 @@ function App() {
                   )}
 
                   {/* Mode Toggle */}
-                  <div className="flex bg-surface/50 p-1 rounded-xl">
+                  <div className="flex bg-white/5 p-1 rounded-full backdrop-blur-md">
                     <button
                       onClick={() => setMode('audio')}
-                      className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mode === 'audio' ? 'bg-primary text-white shadow-lg' : 'text-secondary hover:text-white'
+                      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${mode === 'audio' ? 'bg-white text-black shadow-md' : 'text-white/50 hover:text-white'
                         }`}
                     >
                       {t('tabAudio')}
                     </button>
                     <button
                       onClick={() => setMode('video')}
-                      className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mode === 'video' ? 'bg-primary text-white shadow-lg' : 'text-secondary hover:text-white'
+                      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${mode === 'video' ? 'bg-white text-black shadow-md' : 'text-white/50 hover:text-white'
                         }`}
                     >
                       {t('tabVideo')}
@@ -1473,13 +1453,13 @@ function App() {
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={reset}
-                      className="px-4 py-3 rounded-xl hover:bg-white/5 text-secondary font-medium transition-colors"
+                      className="px-4 py-3 rounded-full hover:bg-white/5 text-white/50 font-medium transition-colors"
                     >
                       {t('cancel')}
                     </button>
                     <button
                       onClick={handleDownload}
-                      className="flex-1 bg-primary hover:bg-blue-600 rounded-xl font-boldshadow-lg flex items-center justify-center gap-2 transition-all"
+                      className="flex-1 bg-white hover:bg-gray-200 text-black rounded-full font-bold shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
                     >
                       <Download className="w-5 h-5" />
                       {metadata.is_playlist && (metadata.url?.includes('v=') || metadata.url?.includes('youtu.be/')) 
@@ -1585,11 +1565,11 @@ function App() {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           onClick={() => setShowQueue(true)}
-          className={`fixed right-6 z-[90] bg-primary text-white p-4 rounded-full shadow-2xl hover:bg-blue-600 transition-all duration-300 flex items-center justify-center gap-2 group ${currentSong ? 'bottom-28' : 'bottom-6'}`}
+          className={`fixed right-6 z-[90] bg-white/10 backdrop-blur-2xl border border-white/20 text-white p-4 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:bg-white/20 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 group ${currentSong ? 'bottom-28' : 'bottom-6'}`}
         >
           <div className="relative">
             <List size={24} />
-            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900">
+            <div className="absolute -top-2 -right-2 bg-white text-black text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
               {queue.filter(i => i.status !== 'completed').length}
             </div>
           </div>
@@ -1665,7 +1645,7 @@ function App() {
                   id="start-downloads-btn"
                   onClick={processQueue}
                   disabled={isProcessingQueue || queue.filter(i => i.status === 'pending').length === 0}
-                  className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-500 hover:to-blue-600 disabled:from-gray-700 disabled:to-gray-800 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-white text-black hover:bg-gray-200 disabled:bg-white/10 disabled:text-white/30 font-bold rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
                 >
                   {isProcessingQueue ? (
                     <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('loading')}</>
