@@ -63,6 +63,12 @@ sudo pacman -S python base-devel gobject-introspection cairo gtk3 webkit2gtk
 sudo dnf install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
 ```
 
+**Bazzite / Fedora Silverblue (Immutable):**
+```bash
+rpm-ostree install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
+# OBS: É necessário reiniciar o sistema após instalar pacotes com o rpm-ostree.
+```
+
 Then follow the Desktop Setup instructions, but **make sure to use a virtual environment** to avoid the `externally-managed-environment` error (PEP 668):
 ```bash
 # 1. Setup Frontend
@@ -135,6 +141,12 @@ sudo pacman -S python base-devel gobject-introspection cairo gtk3 webkit2gtk
 **Fedora:**
 ```bash
 sudo dnf install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
+```
+
+**Bazzite / Fedora Silverblue (Sistemas Imutáveis):**
+```bash
+rpm-ostree install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
+# OBS: O rpm-ostree não aplica as mudanças na hora. É necessário reiniciar o PC (reboot) após o comando.
 ```
 
 Depois, siga os passos de Configuração Desktop utilizando um **Ambiente Virtual** para evitar o erro de `externally-managed-environment` (PEP 668) comum nas distribuições modernas:
