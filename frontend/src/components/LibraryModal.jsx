@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, FolderOpen, RefreshCw, Music } from 'lucide-react';
+import { X, Play, FolderOpen, RefreshCw, Music, Users, ChevronLeft, Disc } from 'lucide-react';
 import axios from 'axios';
 
 export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
   const [library, setLibrary] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'artists'
+  const [selectedArtist, setSelectedArtist] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchLibrary();
+      setSelectedArtist(null);
     }
   }, [isOpen]);
 
@@ -33,6 +36,130 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
     }
   };
 
+  const getArtistName = (song) => {
+    if (song.file_path && song.file_path.includes('/')) {
+      return song.file_path.split('/')[0];
+    }
+    if (song.file_path && song.file_path.includes('\\')) {
+      return song.file_path.split('\\')[0];
+    }
+    if (song.title && song.title.includes(' - ')) {
+      return song.title.split(' - ')[0].trim();
+    }
+    return "Desconhecido";
+  };
+
+  const groupedByArtist = useMemo(() => {
+    const groups = {};
+    library.forEach(song => {
+      const artist = getArtistName(song);
+      if (!groups[artist]) groups[artist] = [];
+      groups[artist].push(song);
+    });
+    return groups;
+  }, [library]);
+
+  const renderSongList = (songs) => (
+    <div className="space-y-1">
+      {songs.map((song, idx) => (
+        <div
+          key={`${song.video_id}-${idx}`}
+          className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl group transition-all duration-300 cursor-pointer"
+          onClick={() => onPlaySong({
+              title: song.title,
+              file: song.file_path,
+              quality: "Local"
+          }, songs)}
+        >
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="w-16 h-16 bg-black/50 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner group-hover:scale-105 transition-transform">
+              {song.video_id && (
+                <img 
+                  src={`https://i.ytimg.com/vi/${song.video_id}/mqdefault.jpg`} 
+                  alt="" 
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity absolute inset-0" 
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              )}
+              <Play className="text-white opacity-0 group-hover:opacity-100 transition-opacity absolute z-10 drop-shadow-md" size={24} fill="currentColor" />
+            </div>
+            <div className="min-w-0 flex-1 pr-4">
+              <h4 className="text-white font-medium truncate text-base tracking-tight">
+                {song.title || "Música Desconhecida"}
+              </h4>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-500 font-mono">
+                  {new Date(song.created_at * 1000).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-40 text-gray-400">
+          <RefreshCw className="animate-spin mr-2" size={20} /> Carregando biblioteca...
+        </div>
+      );
+    }
+    
+    if (library.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
+          <Music size={48} className="opacity-20" />
+          <p className="text-lg">Você ainda não baixou nenhuma música.</p>
+        </div>
+      );
+    }
+
+    if (activeTab === 'all') {
+      return renderSongList(library);
+    }
+
+    if (activeTab === 'artists') {
+      if (selectedArtist) {
+        return (
+          <div>
+            <button 
+              onClick={() => setSelectedArtist(null)}
+              className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 px-2 transition-colors font-medium"
+            >
+              <ChevronLeft size={20} />
+              Voltar para Artistas
+            </button>
+            <h3 className="text-xl font-bold text-white px-2 mb-4 tracking-tight">{selectedArtist}</h3>
+            {renderSongList(groupedByArtist[selectedArtist] || [])}
+          </div>
+        );
+      }
+
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-2">
+          {Object.entries(groupedByArtist).sort((a,b) => a[0].localeCompare(b[0])).map(([artist, songs]) => (
+            <div 
+              key={artist}
+              onClick={() => setSelectedArtist(artist)}
+              className="flex items-center gap-4 p-4 bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] border border-white/5"
+            >
+              <div className="w-14 h-14 bg-black/40 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner">
+                <Disc className="text-white/50" size={24} />
+              </div>
+              <div className="overflow-hidden">
+                <h4 className="text-white font-medium truncate text-sm">{artist}</h4>
+                <p className="text-xs text-gray-500">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -49,10 +176,10 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+          className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-transparent">
+          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-transparent flex-shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/5 rounded-full backdrop-blur-md">
                 <Music className="text-white" size={24} />
@@ -60,7 +187,7 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
               <div>
                 <h2 className="text-2xl font-bold text-white">Sua Biblioteca</h2>
                 <p className="text-sm text-gray-400">
-                  {library.length} músicas baixadas e salvas no seu PC
+                  {library.length} músicas salvas no seu PC
                 </p>
               </div>
             </div>
@@ -70,7 +197,7 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
                 className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-sm font-medium border border-transparent"
               >
                 <FolderOpen size={16} />
-                Abrir Pasta
+                <span className="hidden md:inline">Abrir Pasta</span>
               </button>
               <button
                 onClick={fetchLibrary}
@@ -88,56 +215,29 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
             </div>
           </div>
 
+          {/* Tabs */}
+          {!loading && library.length > 0 && (
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-white/5 flex-shrink-0">
+              <button
+                onClick={() => { setActiveTab('all'); setSelectedArtist(null); }}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+              >
+                <Music size={16} />
+                Geral
+              </button>
+              <button
+                onClick={() => setActiveTab('artists')}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'artists' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+              >
+                <Users size={16} />
+                Artistas
+              </button>
+            </div>
+          )}
+
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-2">
-            {loading ? (
-              <div className="flex items-center justify-center h-40 text-gray-400">
-                <RefreshCw className="animate-spin mr-2" size={20} /> Carregando biblioteca...
-              </div>
-            ) : library.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
-                <Music size={48} className="opacity-20" />
-                <p className="text-lg">Você ainda não baixou nenhuma música.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {library.map((song, idx) => (
-                  <div
-                    key={`${song.video_id}-${idx}`}
-                    className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl group transition-all duration-300 cursor-pointer"
-                    onClick={() => onPlaySong({
-                        title: song.title,
-                        file: song.file_path,
-                        quality: "Local"
-                    }, library)}
-                  >
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="w-16 h-16 bg-black/50 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner group-hover:scale-105 transition-transform">
-                        {song.video_id && (
-                          <img 
-                            src={`https://i.ytimg.com/vi/${song.video_id}/mqdefault.jpg`} 
-                            alt="" 
-                            className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity absolute inset-0" 
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
-                        )}
-                        <Play className="text-white opacity-0 group-hover:opacity-100 transition-opacity absolute z-10 drop-shadow-md" size={24} fill="currentColor" />
-                      </div>
-                      <div className="min-w-0 flex-1 pr-4">
-                        <h4 className="text-white font-medium truncate text-base tracking-tight">
-                          {song.title || "Música Desconhecida"}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500 font-mono">
-                            {new Date(song.created_at * 1000).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            {renderContent()}
           </div>
         </motion.div>
       </motion.div>
