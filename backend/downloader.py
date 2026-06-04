@@ -47,6 +47,8 @@ jobs: Dict[str, JobState] = {}
 download_queue: asyncio.Queue = asyncio.Queue()
 MAX_CONCURRENT_DOWNLOADS = 4
 download_sem = asyncio.Semaphore(MAX_CONCURRENT_DOWNLOADS)
+# Twitch streams require sequential processing due to live-stream token conflicts
+twitch_sem = asyncio.Semaphore(1)
 main_event_loop = None
 active_tasks = {}
 
@@ -434,7 +436,12 @@ def download_with_retries(job_id: str, request):
     print(f"  \033[1;31mERR Download permanentemente falhou para: {request.url}\033[0m\n")
 
 async def run_download(job_id: str, request):
-    await asyncio.to_thread(download_with_retries, job_id, request)
+    is_twitch = "twitch.tv" in getattr(request, 'url', '')
+    if is_twitch:
+        async with twitch_sem:
+            await asyncio.to_thread(download_with_retries, job_id, request)
+    else:
+        await asyncio.to_thread(download_with_retries, job_id, request)
 
 async def worker_loop():
     while True:

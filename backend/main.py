@@ -862,6 +862,35 @@ def get_terms_content():
         with open(path, "r", encoding="utf-8") as f: return {"content": f.read()}
     return {"content": "Termos de Uso Padrão"}
 
+@app.get("/api/settings/concurrent_downloads")
+def get_concurrent_downloads():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM app_settings WHERE key = 'concurrent_downloads'")
+        row = cur.fetchone()
+        conn.close()
+        return {"value": int(row['value']) if row else 2}
+    except:
+        return {"value": 2}
+
+@app.post("/api/settings/concurrent_downloads")
+def set_concurrent_downloads(body: dict):
+    import downloader
+    try:
+        value = max(1, min(4, int(body.get("value", 2))))
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('concurrent_downloads', ?)", (str(value),))
+        conn.commit()
+        conn.close()
+        # Update the live semaphore so it takes effect immediately without restart
+        downloader.download_sem = asyncio.Semaphore(value)
+        print(f"[Settings] Concurrent downloads updated to {value}")
+        return {"status": "ok", "value": value}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/settings/download_folder")
 def get_download_folder():
     from utils import get_downloads_dir

@@ -11,6 +11,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
   const [activeLang, setActiveLang] = useState(getLanguage());
+  const [concurrentDownloads, setConcurrentDownloads] = React.useState(2);
 
   const handleDbSync = async () => {
     setIsSyncing(true);
@@ -38,8 +39,20 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
       axios.get(`${apiUrl}/api/settings/download_folder`)
         .then(res => setDownloadFolder(res.data.folder))
         .catch(console.error);
+      axios.get(`${apiUrl}/api/settings/concurrent_downloads`)
+        .then(res => setConcurrentDownloads(res.data.value))
+        .catch(console.error);
     }
   }, [isOpen, apiUrl]);
+
+  const handleConcurrentChange = async (val) => {
+    setConcurrentDownloads(val);
+    try {
+      await axios.post(`${apiUrl}/api/settings/concurrent_downloads`, { value: val });
+    } catch (e) {
+      console.error('Failed to save concurrent downloads setting', e);
+    }
+  };
 
   const handleChooseFolder = async () => {
     try {
@@ -223,6 +236,32 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                 >
                   {t('settingsChangeFolder')}
                 </button>
+              </div>
+            </div>
+
+            {/* ── Concurrent Downloads Slider ── */}
+            <div className="p-4 bg-surface/30 rounded-xl border border-white/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white text-sm">Downloads Simultâneos</h4>
+                  <p className="text-xs text-secondary mt-0.5">Twitch é sempre sequencial para evitar conflitos.</p>
+                </div>
+                <span className="text-2xl font-bold text-primary min-w-[2rem] text-right">{concurrentDownloads}</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={4}
+                step={1}
+                value={concurrentDownloads}
+                onChange={(e) => handleConcurrentChange(Number(e.target.value))}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-xs text-secondary/60 px-0.5">
+                <span>1 (Sequencial)</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4 (Máximo)</span>
               </div>
             </div>
 
