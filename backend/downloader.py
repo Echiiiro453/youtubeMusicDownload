@@ -330,6 +330,26 @@ def download_with_retries(job_id: str, request):
                     
                     final_filename_relative = os.path.relpath(full_final_path, get_downloads_dir())
 
+                    # Clean filename by removing YouTube tags
+                    if request.mode != 'video':
+                        from metadata_fetcher import clean_title
+                        original_name = os.path.basename(base_path)
+                        cleaned_name = clean_title(original_name)
+                        
+                        if cleaned_name != original_name and cleaned_name.strip():
+                            new_base_path = os.path.join(os.path.dirname(base_path), cleaned_name)
+                            if request.quality == 'flac': new_full_final_path = new_base_path + '.flac'
+                            elif request.quality == 'best': new_full_final_path = new_base_path + '.m4a'
+                            else: new_full_final_path = new_base_path + '.mp3'
+                            
+                            try:
+                                if os.path.exists(full_final_path) and not os.path.exists(new_full_final_path):
+                                    os.rename(full_final_path, new_full_final_path)
+                                    full_final_path = new_full_final_path
+                                    final_filename_relative = os.path.relpath(full_final_path, get_downloads_dir())
+                            except Exception as e:
+                                print(f"  \033[33mWARN Erro ao renomear arquivo limpo: {e}\033[0m")
+
                     # Apply Premium Metadata
                     if request.mode != 'video':
                         st.status = "processing"
