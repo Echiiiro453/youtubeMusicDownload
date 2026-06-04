@@ -270,12 +270,88 @@ def save_preset(preset: PresetData):
 
 @app.post("/search")
 async def search_youtube(request: SearchRequest):
+    query = request.query.strip()
+    is_ytm = False
+    if query.lower().startswith("music:"):
+        is_ytm = True
+        query = query[6:].strip()
+    elif query.lower().startswith("ytm:"):
+        is_ytm = True
+        query = query[4:].strip()
+
+    if is_ytm:
+        try:
+            import json
+            from curl_cffi import requests as cffi_requests
+            api_url = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false"
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "com.google.android.apps.youtube.music/6.20.51 (Linux; U; Android 13; en_US) gzip"
+            }
+            payload = {
+                "context": {
+                    "client": {
+                        "clientName": "ANDROID_MUSIC",
+                        "clientVersion": "6.20.51",
+                        "androidSdkVersion": 33,
+                        "osName": "Android",
+                        "osVersion": "13",
+                    }
+                },
+                "query": query
+            }
+            res = cffi_requests.post(api_url, json=payload, headers=headers, impersonate="chrome120", timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                results = []
+                contents = data.get("contents", {}).get("tabbedSearchResultsRenderer", {}).get("tabs", [{}])[0].get("tabRenderer", {}).get("content", {}).get("sectionListRenderer", {}).get("contents", [])
+                for section in contents:
+                    if "musicShelfRenderer" in section:
+                        items = section["musicShelfRenderer"].get("contents", [])
+                        for item in items:
+                            if "musicResponsiveListItemRenderer" in item:
+                                info = item["musicResponsiveListItemRenderer"]
+                                columns = info.get("flexColumns", [])
+                                if len(columns) > 0:
+                                    first_col = columns[0].get("musicResponsiveListItemFlexColumnRenderer", {}).get("text", {}).get("runs", [{}])[0]
+                                    name = first_col.get("text", "Desconhecido")
+                                    video_id = first_col.get("navigationEndpoint", {}).get("watchEndpoint", {}).get("videoId")
+                                    if video_id:
+                                        uploader = "YouTube Music"
+                                        if len(columns) > 1:
+                                            second_col_runs = columns[1].get("musicResponsiveListItemFlexColumnRenderer", {}).get("text", {}).get("runs", [])
+                                            if second_col_runs:
+                                                uploader = "".join([r.get("text", "") for r in second_col_runs])
+                                        
+                                        thumbnail = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg"
+                                        thumbnails = info.get("thumbnail", {}).get("musicThumbnailRenderer", {}).get("thumbnail", {}).get("thumbnails", [])
+                                        if thumbnails:
+                                            thumbnail = thumbnails[-1].get("url", thumbnail)
+                                            
+                                        results.append({
+                                            "id": video_id,
+                                            "title": name,
+                                            "uploader": uploader,
+                                            "duration_string": "",
+                                            "url": f"https://music.youtube.com/watch?v={video_id}",
+                                            "thumbnail": thumbnail,
+                                            "view_count": 0
+                                        })
+                                        if len(results) >= request.limit:
+                                            break
+                        if len(results) >= request.limit:
+                            break
+                if results:
+                    return {"results": results}
+        except Exception as e:
+            print(f"YT Music search failed: {e}. Falling back to yt-dlp.")
+
     ydl_opts = {
         'quiet': True,
         'extract_flat': True,
         'cookiefile': get_cookies_path()
     }
-    query_str = f"ytsearch{request.limit}:{request.query}"
+    query_str = f"ytsearch{request.limit}:{query}"
     
     def perform_search(opts):
         with yt_dlp.YoutubeDL(opts) as ydl:
