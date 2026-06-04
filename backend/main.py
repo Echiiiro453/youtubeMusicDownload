@@ -974,6 +974,47 @@ def get_library():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/history")
+def get_history(limit: int = 100, offset: int = 0):
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT playlist_id, video_id, title, file_path, status, created_at, url
+            FROM downloads
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?;
+        """, (limit, offset))
+        rows = cur.fetchall()
+        cur.execute("SELECT COUNT(*) as total FROM downloads")
+        total = cur.fetchone()["total"]
+        conn.close()
+        history = []
+        for r in rows:
+            history.append({
+                "video_id": r["video_id"],
+                "title": r["title"],
+                "file_path": r["file_path"],
+                "status": r["status"],
+                "created_at": r["created_at"],
+                "url": r["url"]
+            })
+        return {"history": history, "total": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/history/{video_id}")
+def delete_history_item(video_id: str):
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM downloads WHERE video_id = ?", (video_id,))
+        conn.commit()
+        conn.close()
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class FixMetadataRequest(BaseModel):
     file_path: str
 

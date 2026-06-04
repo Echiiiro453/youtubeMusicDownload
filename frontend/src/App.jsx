@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { t, getLanguage, setLanguage } from './i18n';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2 } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock } from 'lucide-react';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -15,6 +15,7 @@ import { TermsModal } from './components/TermsModal';
 import { LibraryModal } from './components/LibraryModal';
 import StudioModal from './components/StudioModal';
 import ShazamModal from './components/ShazamModal';
+import { HistoryModal } from './components/HistoryModal';
 import { SkeletonCard, SkeletonPlaylistItem, QualityOption, ToastContainer } from './components/UIComponents';
 // Helper para detectar modo automaticamente (Music vs Video)
 const detectMode = (url) => {
@@ -93,6 +94,7 @@ function App() {
   });
 
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showStudioModal, setShowStudioModal] = useState(false);
   const [showShazamModal, setShowShazamModal] = useState(false);
 
@@ -133,6 +135,32 @@ function App() {
     } catch (e) {
       console.error("Failed to load saved queue", e);
     }
+  }, []);
+
+  // Ctrl+V / Cmd+V: Auto-paste URL from clipboard into the search bar
+  useEffect(() => {
+    const handlePaste = async (e) => {
+      const active = document.activeElement;
+      const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+      if (isTyping) return; // Don't interfere when user is typing in a field
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text) return;
+        const isUrl = text.startsWith('http://') || text.startsWith('https://');
+        if (isUrl) {
+          setUrl(text.trim());
+          setStep('search');
+          // auto-detect mode
+          const detected = detectMode(text);
+          if (detected === 'audio') setMode('audio');
+          addToast('🔗 URL colada automaticamente!', 'success');
+        }
+      } catch (err) {
+        // Clipboard permission denied — fail silently
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
   }, []);
 
   useEffect(() => {
@@ -903,6 +931,14 @@ function App() {
         >
           <List className="w-4 h-4" />
           <span className="hidden sm:inline">{t('navLibrary')}</span>
+        </button>
+        <button
+          onClick={() => setShowHistory(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
+          title="Histórico de Downloads"
+        >
+          <Clock className="w-4 h-4" />
+          <span className="hidden sm:inline">Histórico</span>
         </button>
         <button
           onClick={() => checkForUpdates(true)}
@@ -1832,6 +1868,16 @@ function App() {
         onPlaySong={(song, playlist) => {
           setCurrentSong(song);
           if (playlist) setCurrentPlaylist(playlist);
+        }}
+      />
+
+      <HistoryModal
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        apiUrl={getApiUrl('')}
+        onRedownload={(urlToDownload) => {
+          setUrl(urlToDownload);
+          setStep('search');
         }}
       />
     </div>
