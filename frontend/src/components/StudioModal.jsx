@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mic, Music, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { t } from '../i18n';
 
 export default function StudioModal({ isOpen, onClose, apiUrl }) {
   const [filePath, setFilePath] = useState('');
@@ -94,22 +95,22 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
             <Mic size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">AppMusica Studio</h2>
-            <p className="text-sm text-secondary">Inteligência Artificial (Vocais e Instrumental)</p>
+            <h2 className="text-xl font-bold text-white">{t('studioTitle')}</h2>
+            <p className="text-sm text-secondary">{t('studioSubtitle')}</p>
           </div>
         </div>
 
         {/* Corpo do Modal */}
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-secondary uppercase">Selecione a Música da Biblioteca</label>
+            <label className="text-xs font-semibold text-secondary uppercase">{t('studioSelectSong')}</label>
             <select 
               value={filePath}
               onChange={(e) => setFilePath(e.target.value)}
               disabled={loadingLib}
               className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none cursor-pointer"
             >
-              <option value="">{loadingLib ? "Carregando músicas..." : "-- Selecione uma música --"}</option>
+              <option value="">{loadingLib ? t('studioLoadingSongs') : t('studioSelectPlaceholder')}</option>
               {library.map((song, i) => (
                 <option key={i} value={song.file_path || song.title}>
                   {song.title || song.file_path}
@@ -124,7 +125,7 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
             className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Music size={20} />}
-            {loading ? statusMessage : "Separar Áudio Agora"}
+            {loading ? statusMessage : t('studioBtnProcess')}
           </button>
 
           {loading && (
@@ -141,13 +142,13 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                   transition={{ duration: 0.5 }}
                 />
               </div>
-              <p className="text-[10px] text-secondary mt-2 text-center">Isso pode levar alguns minutos dependendo da sua CPU.</p>
+              <p className="text-[10px] text-secondary mt-2 text-center">{t('studioCpuWarning')}</p>
             </div>
           )}
 
           {result && !loading && (
             <div className="mt-4 p-4 border border-green-500/30 bg-green-500/10 rounded-lg">
-              <h3 className="text-green-400 font-bold mb-1">Sucesso!</h3>
+              <h3 className="text-green-400 font-bold mb-1">{t('studioSuccess')}</h3>
               <p className="text-sm text-secondary">{result.message}</p>
               <p className="text-xs text-white/50 mt-2 font-mono break-all">{result.output_dir}</p>
             </div>

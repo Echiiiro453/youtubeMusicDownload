@@ -876,7 +876,7 @@ function App() {
         <div className="relative group">
           <button className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white">
             <Wand2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Ferramentas</span>
+            <span className="hidden sm:inline">{t('toolsMenu')}</span>
           </button>
           <div className="absolute right-0 top-full mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-surface border border-white/10 rounded-xl shadow-2xl py-2 z-50">
             <button 
@@ -884,14 +884,14 @@ function App() {
               className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-purple-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
             >
               <Music className="w-4 h-4" />
-              Studio IA
+              {t('studioTitle')}
             </button>
             <button 
               onClick={() => setShowShazamModal(true)}
               className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-blue-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
             >
               <Search className="w-4 h-4" />
-              Lab Shazam
+              {t('shazamTitle')}
             </button>
           </div>
         </div>
@@ -902,7 +902,7 @@ function App() {
           title="Abrir Biblioteca"
         >
           <List className="w-4 h-4" />
-          <span className="hidden sm:inline">Biblioteca</span>
+          <span className="hidden sm:inline">{t('navLibrary')}</span>
         </button>
         <button
           onClick={() => checkForUpdates(true)}

@@ -173,6 +173,24 @@ const translations = {
     groupDefaultPresets: 'Padrões',
     groupMyPresets: 'Meus Presets',
     labelPitch: 'Tom (Pitch)',
+    
+    // ── Tools / Modals
+    toolsMenu: 'Ferramentas',
+    studioTitle: 'AppMusica Studio',
+    studioSubtitle: 'Inteligência Artificial (Vocais e Instrumental)',
+    studioSelectSong: 'Selecione a Música da Biblioteca',
+    studioLoadingSongs: 'Carregando músicas...',
+    studioSelectPlaceholder: '-- Selecione uma música --',
+    studioBtnProcess: 'Separar Áudio Agora',
+    studioBtnProcessing: 'Processando IA...',
+    studioSuccess: 'Sucesso!',
+    studioCpuWarning: 'Isso pode levar alguns minutos dependendo da sua CPU.',
+    shazamTitle: 'Laboratório Shazam',
+    shazamSubtitle: 'Corrigir metadados e capas de músicas desconhecidas',
+    shazamBtnFix: 'Consertar Arquivo Agora',
+    shazamBtnFixing: 'Reconhecendo Áudio...',
+    shazamSuccessTitle: 'Música Identificada!',
+    shazamSuccessDesc: 'Tags ID3 e Capa foram injetados no arquivo!',
   },
 
   en: {
@@ -344,6 +362,24 @@ const translations = {
     groupDefaultPresets: 'Defaults',
     groupMyPresets: 'My Presets',
     labelPitch: 'Pitch',
+    
+    // ── Tools / Modals
+    toolsMenu: 'Tools',
+    studioTitle: 'AppMusica Studio',
+    studioSubtitle: 'Artificial Intelligence (Vocals and Instrumental)',
+    studioSelectSong: 'Select a Song from Library',
+    studioLoadingSongs: 'Loading songs...',
+    studioSelectPlaceholder: '-- Select a song --',
+    studioBtnProcess: 'Separate Audio Now',
+    studioBtnProcessing: 'Processing AI...',
+    studioSuccess: 'Success!',
+    studioCpuWarning: 'This might take a few minutes depending on your CPU.',
+    shazamTitle: 'Shazam Lab',
+    shazamSubtitle: 'Fix metadata and covers for unknown songs',
+    shazamBtnFix: 'Fix File Now',
+    shazamBtnFixing: 'Recognizing Audio...',
+    shazamSuccessTitle: 'Song Identified!',
+    shazamSuccessDesc: 'ID3 Tags and Cover have been injected into the file!',
   },
 
   es: {
@@ -511,6 +547,24 @@ const translations = {
     groupDefaultPresets: 'Predeterminados',
     groupMyPresets: 'Mis Ajustes',
     labelPitch: 'Tono (Pitch)',
+    
+    // ── Tools / Modals
+    toolsMenu: 'Herramientas',
+    studioTitle: 'AppMusica Studio',
+    studioSubtitle: 'Inteligencia Artificial (Voces e Instrumental)',
+    studioSelectSong: 'Selecciona una Canción de la Biblioteca',
+    studioLoadingSongs: 'Cargando canciones...',
+    studioSelectPlaceholder: '-- Selecciona una canción --',
+    studioBtnProcess: 'Separar Audio Ahora',
+    studioBtnProcessing: 'Procesando IA...',
+    studioSuccess: '¡Éxito!',
+    studioCpuWarning: 'Esto puede tardar unos minutos dependiendo de su CPU.',
+    shazamTitle: 'Laboratorio Shazam',
+    shazamSubtitle: 'Corregir metadatos y carátulas de canciones desconocidas',
+    shazamBtnFix: 'Arreglar Archivo Ahora',
+    shazamBtnFixing: 'Reconociendo Audio...',
+    shazamSuccessTitle: '¡Canción Identificada!',
+    shazamSuccessDesc: '¡Las etiquetas ID3 y la carátula han sido inyectadas en el archivo!',
   },
 };
 

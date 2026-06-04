@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wand2, CheckCircle, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { t } from '../i18n';
 
 export default function ShazamModal({ isOpen, onClose, apiUrl }) {
   const [filePath, setFilePath] = useState('');
@@ -62,22 +63,22 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
             <Wand2 size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Laboratório Shazam</h2>
-            <p className="text-sm text-secondary">Corrigir metadados e capas de músicas desconhecidas</p>
+            <h2 className="text-xl font-bold text-white">{t('shazamTitle')}</h2>
+            <p className="text-sm text-secondary">{t('shazamSubtitle')}</p>
           </div>
         </div>
 
         {/* Corpo do Modal */}
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-secondary uppercase">Selecione a Música da Biblioteca</label>
+            <label className="text-xs font-semibold text-secondary uppercase">{t('studioSelectSong')}</label>
             <select 
               value={filePath}
               onChange={(e) => setFilePath(e.target.value)}
               disabled={loadingLib}
               className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none cursor-pointer"
             >
-              <option value="">{loadingLib ? "Carregando músicas..." : "-- Selecione uma música --"}</option>
+              <option value="">{loadingLib ? t('studioLoadingSongs') : t('studioSelectPlaceholder')}</option>
               {library.map((song, i) => (
                 <option key={i} value={song.file_path || song.title}>
                   {song.title || song.file_path}
@@ -92,7 +93,7 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
-            {loading ? "Reconhecendo Áudio..." : "Consertar Arquivo Agora"}
+            {loading ? t('shazamBtnFixing') : t('shazamBtnFix')}
           </button>
 
           {result && (
@@ -107,7 +108,7 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
               <div>
                 <h3 className="text-white font-bold">{result.title}</h3>
                 <p className="text-sm text-secondary">{result.artist}</p>
-                <p className="text-xs text-blue-400 mt-1">ID3 Tags e Capa foram injetados no arquivo!</p>
+                <p className="text-xs text-blue-400 mt-1">{t('shazamSuccessDesc')}</p>
               </div>
             </div>
           )}
