@@ -382,6 +382,10 @@ def parse_magic_url(url: str):
                 clean_title = re.sub(r' on Apple Music.*', '', clean_title)
                 clean_title = clean_title.replace("Song ·", "").replace("Album ·", "").strip()
             
+            cover_match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+            if cover_match:
+                cover_url = cover_match.group(1)
+            
             matches = re.findall(r'"artistName":"([^"]+)".*?"name":"([^"]+)"', html)
             unique_m = []
             seen = set()
@@ -398,12 +402,14 @@ def parse_magic_url(url: str):
                         'id': f"apple_magic_{idx}",
                         'url': f"ytsearch1:{sq} audio",
                         'title': sq,
-                        'duration': 0
+                        'duration': 0,
+                        'thumbnail': cover_url
                     })
                 pseudo_playlist = {
                     'title': clean_title if clean_title else "Apple Music Playlist",
                     'uploader': 'Apple Music',
-                    'entries': entries
+                    'entries': entries,
+                    'thumbnail': cover_url
                 }
                 is_magic = True
                 magic_source = "Apple Music"
