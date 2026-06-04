@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
+export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isShuffle, setIsShuffle }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -405,6 +405,13 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
               {/* Buttons */}
               <div className="flex items-center gap-6 md:gap-10">
                 <button 
+                  onClick={() => setIsShuffle(!isShuffle)} 
+                  className={`transition-colors ${isShuffle ? 'text-primary' : 'text-white/30 hover:text-white/60'}`} 
+                  title="Aleatório"
+                >
+                  <Shuffle size={24} />
+                </button>
+                <button 
                   onClick={() => setIsLooping(!isLooping)} 
                   className={`transition-colors ${isLooping ? 'text-primary' : 'text-white/30 hover:text-white/60'}`} 
                   title="Repetir Faixa"
@@ -484,6 +491,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev }) {
 
               <div className="flex-1 flex flex-col items-center gap-1">
                 <div className="flex items-center gap-6">
+                  <button onClick={(e) => { e.stopPropagation(); setIsShuffle(!isShuffle); }} className={`transition-colors ${isShuffle ? 'text-green-400' : 'text-gray-400 hover:text-white'}`} title="Aleatório">
+                    <Shuffle size={18} />
+                  </button>
                   <button onClick={(e) => { e.stopPropagation(); if(onPrev) onPrev(); }} className="text-gray-400 hover:text-white transition-colors" title="Anterior">
                     <SkipBack size={20} />
                   </button>

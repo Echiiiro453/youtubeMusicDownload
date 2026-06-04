@@ -748,11 +748,32 @@ def get_track_metadata(file_path: str):
     lyrics = ""
     cover_b64 = ""
     mime_type = "image/jpeg"
+    artist = ""
+    album = ""
+    title = ""
+    year = ""
+    genre = ""
+    file_size = 0
+    try:
+        file_size = os.path.getsize(abs_path)
+    except:
+        pass
     
     try:
         if ext == '.mp3':
             from mutagen.mp3 import MP3
+            from mutagen.id3 import ID3
             audio = MP3(abs_path)
+            try:
+                tags = ID3(abs_path)
+                if 'TPE1' in tags: artist = tags['TPE1'].text[0]
+                if 'TALB' in tags: album = tags['TALB'].text[0]
+                if 'TIT2' in tags: title = tags['TIT2'].text[0]
+                if 'TDRC' in tags: year = str(tags['TDRC'].text[0])
+                elif 'TYER' in tags: year = str(tags['TYER'].text[0])
+                if 'TCON' in tags: genre = tags['TCON'].text[0]
+            except: pass
+            
             if audio.tags:
                 for key in audio.tags.keys():
                     if key.startswith('USLT'):
@@ -763,6 +784,12 @@ def get_track_metadata(file_path: str):
         elif ext == '.flac':
             from mutagen.flac import FLAC
             audio = FLAC(abs_path)
+            if 'artist' in audio: artist = audio['artist'][0]
+            if 'album' in audio: album = audio['album'][0]
+            if 'title' in audio: title = audio['title'][0]
+            if 'date' in audio: year = audio['date'][0]
+            if 'genre' in audio: genre = audio['genre'][0]
+            
             if 'LYRICS' in audio:
                 lyrics = audio['LYRICS'][0]
             if audio.pictures:
@@ -771,6 +798,12 @@ def get_track_metadata(file_path: str):
         elif ext in ('.m4a', '.aac', '.mp4'):
             from mutagen.mp4 import MP4
             audio = MP4(abs_path)
+            if '\xa9ART' in audio: artist = audio['\xa9ART'][0]
+            if '\xa9alb' in audio: album = audio['\xa9alb'][0]
+            if '\xa9nam' in audio: title = audio['\xa9nam'][0]
+            if '\xa9day' in audio: year = str(audio['\xa9day'][0])
+            if '\xa9gen' in audio: genre = audio['\xa9gen'][0]
+            
             if '\xa9lyr' in audio:
                 lyrics = audio['\xa9lyr'][0]
             if 'covr' in audio and len(audio['covr']) > 0:
@@ -780,7 +813,17 @@ def get_track_metadata(file_path: str):
     except Exception as e:
         print(f"Error reading metadata from {file_path}: {e}")
         
-    return {"lyrics": lyrics, "cover_b64": cover_b64, "mime_type": mime_type}
+    return {
+        "lyrics": lyrics, 
+        "cover_b64": cover_b64, 
+        "mime_type": mime_type,
+        "artist": artist,
+        "album": album,
+        "title": title,
+        "year": year,
+        "genre": genre,
+        "file_size": file_size
+    }
 
 from utils import get_downloads_dir
 try:

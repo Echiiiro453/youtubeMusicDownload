@@ -157,9 +157,18 @@ function App() {
   // Player
   const [currentSong, setCurrentSong] = useState(null);
   const [currentPlaylist, setCurrentPlaylist] = useState([]);
+  const [isShuffle, setIsShuffle] = useState(false);
 
   const handleNextTrack = () => {
     if (!currentPlaylist || currentPlaylist.length === 0 || !currentSong) return;
+    
+    if (isShuffle) {
+      const randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+      const nextSong = currentPlaylist[randomIndex];
+      setCurrentSong({ title: nextSong.title, file: nextSong.file_path, quality: "Local" });
+      return;
+    }
+
     const currentIndex = currentPlaylist.findIndex(s => s.file_path === currentSong.file);
     if (currentIndex !== -1 && currentIndex + 1 < currentPlaylist.length) {
       const nextSong = currentPlaylist[currentIndex + 1];
@@ -169,6 +178,14 @@ function App() {
 
   const handlePrevTrack = () => {
     if (!currentPlaylist || currentPlaylist.length === 0 || !currentSong) return;
+    
+    if (isShuffle) {
+      const randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+      const prevSong = currentPlaylist[randomIndex];
+      setCurrentSong({ title: prevSong.title, file: prevSong.file_path, quality: "Local" });
+      return;
+    }
+
     const currentIndex = currentPlaylist.findIndex(s => s.file_path === currentSong.file);
     if (currentIndex > 0) {
       const prevSong = currentPlaylist[currentIndex - 1];
@@ -1687,6 +1704,8 @@ function App() {
             onNext={handleNextTrack}
             onPrev={handlePrevTrack}
             onFinish={handleNextTrack}
+            isShuffle={isShuffle}
+            setIsShuffle={setIsShuffle}
           />
         )}
       </AnimatePresence>
