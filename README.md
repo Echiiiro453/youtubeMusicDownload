@@ -31,8 +31,12 @@ AppMusica is a professional solution for downloading music and videos from YouTu
 youtubeMusicDownload/
 ├── backend/           # Core Python Logic (FastAPI + yt-dlp + PyInstaller)
 ├── frontend/          # Web/Desktop Interface (React)
-└── README.md          # Documentation
+├── README.md          # Documentation
+└── TERMS.md           # Legal Disclaimer & Terms of Use
 ```
+
+### ⚖️ Legal Disclaimer & Terms of Use
+Please read the [Terms of Use & Privacy Policy](TERMS.md) before using this software. AppMusica is intended for personal and educational use only. The developer does not promote or endorse copyright infringement.
 
 ### Desktop Setup (Development)
 1. Install [Node.js](https://nodejs.org/) and [Python 3.10+](https://www.python.org/).
@@ -113,8 +117,12 @@ O AppMusica é uma solução profissional para download de músicas e vídeos do
 youtubeMusicDownload/
 ├── backend/           # Lógica central em Python (FastAPI + yt-dlp)
 ├── frontend/          # Interface Web/Desktop (React)
-└── README.md          # Documentação
+├── README.md          # Documentação
+└── TERMS.md           # Termos de Uso e Privacidade
 ```
+
+### ⚖️ Termos de Uso e Privacidade (Aviso Legal)
+Por favor, leia os [Termos de Uso e Política de Privacidade](TERMS.md) antes de utilizar este software. O AppMusica é destinado exclusivamente para uso pessoal e educacional. O desenvolvedor não promove ou endossa a pirataria ou infração de direitos autorais.
 
 ### Configuração Desktop (Desenvolvimento)
 1. Instale o [Node.js](https://nodejs.org/) e o [Python 3.10+](https://www.python.org/).
