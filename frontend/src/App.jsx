@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { t, getLanguage, setLanguage } from './i18n';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2 } from 'lucide-react';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -13,6 +13,8 @@ import { PlayerBar } from './components/PlayerBar';
 import { PlaylistModal } from './components/PlaylistModal';
 import { TermsModal } from './components/TermsModal';
 import { LibraryModal } from './components/LibraryModal';
+import StudioModal from './components/StudioModal';
+import ShazamModal from './components/ShazamModal';
 import { SkeletonCard, SkeletonPlaylistItem, QualityOption, ToastContainer } from './components/UIComponents';
 // Helper para detectar modo automaticamente (Music vs Video)
 const detectMode = (url) => {
@@ -91,6 +93,8 @@ function App() {
   });
 
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showStudioModal, setShowStudioModal] = useState(false);
+  const [showShazamModal, setShowShazamModal] = useState(false);
 
   // Playlist Manager
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
@@ -869,6 +873,29 @@ function App() {
       </div>
 
       <div className="absolute top-12 right-4 z-50 flex gap-2">
+        <div className="relative group">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white">
+            <Wand2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Ferramentas</span>
+          </button>
+          <div className="absolute right-0 top-full mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-surface border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+            <button 
+              onClick={() => setShowStudioModal(true)}
+              className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-purple-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
+            >
+              <Music className="w-4 h-4" />
+              Studio IA
+            </button>
+            <button 
+              onClick={() => setShowShazamModal(true)}
+              className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-blue-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
+            >
+              <Search className="w-4 h-4" />
+              Lab Shazam
+            </button>
+          </div>
+        </div>
+
         <button
           onClick={() => setShowLibrary(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
@@ -976,6 +1003,16 @@ function App() {
           isOpen={showUpdateModal} 
           onClose={() => setShowUpdateModal(false)} 
           updateData={updateData} 
+        />
+        <StudioModal
+          isOpen={showStudioModal}
+          onClose={() => setShowStudioModal(false)}
+          apiUrl={API_URL}
+        />
+        <ShazamModal
+          isOpen={showShazamModal}
+          onClose={() => setShowShazamModal(false)}
+          apiUrl={API_URL}
         />
       </AnimatePresence>
 
@@ -1141,13 +1178,11 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setShowSpotifyModal(true)}
-                  className="sm:flex-none h-12 px-6 rounded-full bg-[#1DB954]/10 text-[#1DB954] hover:bg-[#1DB954]/20 font-medium transition-all flex items-center justify-center gap-2 border border-[#1DB954]/20 hover:scale-[1.02]"
-                  title="Importar Playlist do Spotify"
+                  className="sm:flex-none h-12 px-6 rounded-full bg-gradient-to-r from-[#1DB954]/10 via-[#FA243C]/10 to-[#FF5500]/10 text-white hover:from-[#1DB954]/20 hover:via-[#FA243C]/20 hover:to-[#FF5500]/20 font-medium transition-all flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 hover:scale-[1.02]"
+                  title="Importar Playlist (Spotify/Apple/SoundCloud)"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.54.659.301 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-                  </svg>
-                  <span className="hidden sm:inline">Spotify Playlist</span>
+                  <Music size={18} className="text-[#1DB954]" />
+                  <span className="hidden sm:inline bg-clip-text text-transparent bg-gradient-to-r from-[#1DB954] via-[#FA243C] to-[#FF5500] font-bold">Importar Playlist</span>
                 </button>
               </div>
             </motion.form>
@@ -1726,7 +1761,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Custom Spotify Modal */}
+      {/* Custom Spotify/Apple/SoundCloud Modal */}
       <AnimatePresence>
         {showSpotifyModal && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -1734,34 +1769,32 @@ function App() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg bg-slate-900 border border-[#1DB954]/30 shadow-2xl shadow-[#1DB954]/10 rounded-[2rem] p-6 flex flex-col relative overflow-hidden"
+              className="w-full max-w-lg bg-slate-900 border border-transparent [background:padding-box_linear-gradient(#0f172a,#0f172a),border-box_linear-gradient(to_right,#1DB954,#FA243C,#FF5500)] shadow-2xl shadow-orange-500/10 rounded-[2rem] p-6 flex flex-col relative overflow-hidden"
             >
               {/* Decorative Background */}
               <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1DB954]/20 rounded-full blur-[80px] pointer-events-none" />
-              <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-[#1DB954]/10 rounded-full blur-[80px] pointer-events-none" />
+              <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-[#FA243C]/10 rounded-full blur-[80px] pointer-events-none" />
               
               <div className="flex justify-between items-center mb-6 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1DB954]/20 flex items-center justify-center text-[#1DB954]">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.54.659.301 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-                    </svg>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1DB954]/20 via-[#FA243C]/20 to-[#FF5500]/20 flex items-center justify-center text-white">
+                    <Music size={20} />
                   </div>
-                  <h3 className="text-xl font-bold text-white tracking-tight">Importar do Spotify</h3>
+                  <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#1DB954] via-[#FA243C] to-[#FF5500] tracking-tight">Importar Playlist</h3>
                 </div>
                 <button onClick={() => setShowSpotifyModal(false)} className="p-2 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
               </div>
 
               <div className="relative z-10 space-y-4">
                 <p className="text-sm text-gray-300">
-                  Cole o link da sua música ou Playlist do Spotify. O AppMusica encontrará as músicas equivalentes automaticamente.
+                  Cole o link da sua música ou Playlist do <b>Spotify</b>, <b>Apple Music</b> ou <b>SoundCloud</b>. O AppMusica encontrará as músicas automaticamente.
                 </p>
                 <input
                   type="text"
-                  placeholder="https://open.spotify.com/playlist/..."
+                  placeholder="Ex: open.spotify.com/..., music.apple.com/... ou soundcloud.com/..."
                   value={spotifyInputUrl}
                   onChange={(e) => setSpotifyInputUrl(e.target.value)}
-                  className="w-full h-14 px-4 bg-black/40 border border-[#1DB954]/30 rounded-xl focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] text-white placeholder:text-white/30 transition-all"
+                  className="w-full h-14 px-4 bg-black/40 border border-white/20 rounded-xl focus:outline-none focus:border-white/50 text-white placeholder:text-white/30 transition-all"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && spotifyInputUrl) {
@@ -1782,7 +1815,7 @@ function App() {
                     }
                   }}
                   disabled={!spotifyInputUrl}
-                  className="w-full h-12 rounded-xl bg-[#1DB954] hover:bg-[#1ed760] disabled:bg-white/10 disabled:text-white/30 text-black font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 mt-4"
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#1DB954] via-[#FA243C] to-[#FF5500] hover:opacity-90 disabled:opacity-50 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 mt-4 shadow-lg"
                 >
                   Confirmar e Buscar
                 </button>

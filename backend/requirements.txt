@@ -6,3 +6,11 @@ curl_cffi
 pydantic
 mutagen
 python-multipart
+spotipy
+spotipy
+beautifulsoup4
+syncedlyrics
+demucs
+torch
+torchaudio
+shazamio

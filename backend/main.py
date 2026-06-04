@@ -12,6 +12,16 @@ import time
 import uuid
 import shutil
 import asyncio
+
+# EXPERIMENTAL: Forçando importação para o PyInstaller rastrear o Demucs/Shazam
+try:
+    import demucs
+    import torch
+    import torchaudio
+    import shazamio
+except ImportError:
+    pass
+
 import collections
 from datetime import datetime
 from urllib.request import Request as URLRequest, urlopen
@@ -740,6 +750,93 @@ def get_library():
         return {"status": "success", "library": library}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class FixMetadataRequest(BaseModel):
+    file_path: str
+
+@app.post("/api/fix_metadata")
+def fix_metadata(request: FixMetadataRequest):
+    try:
+        from utils import get_downloads_dir
+        from shazam_fixer import fix_metadata_sync
+        
+        abs_path = os.path.join(get_downloads_dir(), request.file_path)
+        if not os.path.exists(abs_path):
+            raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
+            
+        result = fix_metadata_sync(abs_path)
+        if result.get("success"):
+            return {"status": "success", "data": result}
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "Erro desconhecido"))
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+import uuid
+import re
+from fastapi import BackgroundTasks
+
+studio_jobs = {}
+
+class StudioSplitRequest(BaseModel):
+    file_path: str
+    
+async def run_demucs_job(job_id: str, file_path: str):
+    try:
+        from utils import get_downloads_dir, get_studio_dir
+        import subprocess
+        
+        abs_path = os.path.join(get_downloads_dir(), file_path)
+        if not os.path.exists(abs_path):
+            studio_jobs[job_id] = {"status": "error", "message": "Arquivo original não encontrado.", "progress": 0}
+            return
+            
+        studio_dir = get_studio_dir()
+        CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+        
+        process = await asyncio.create_subprocess_exec(
+            'demucs', abs_path, '-n', 'htdemucs_ft', '--overlap', '0.25', '-o', studio_dir, '--mp3', '--mp3-bitrate', '320',
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            creationflags=CREATE_NO_WINDOW
+        )
+        
+        while True:
+            line = await process.stderr.read(256)
+            if not line:
+                break
+            text = line.decode(errors='replace')
+            # Extract progress like " 45%|"
+            match = re.search(r'(\d+)%\|', text)
+            if match:
+                progress = int(match.group(1))
+                studio_jobs[job_id]["progress"] = progress
+                studio_jobs[job_id]["status"] = "processing"
+                studio_jobs[job_id]["message"] = f"Separando faixas: {progress}%"
+                
+        await process.wait()
+        
+        if process.returncode != 0:
+            studio_jobs[job_id] = {"status": "error", "message": "Falha na separação da música.", "progress": 0}
+        else:
+            studio_jobs[job_id] = {"status": "success", "message": "Música separada por IA com sucesso!", "output_dir": studio_dir, "progress": 100}
+            
+    except Exception as e:
+        studio_jobs[job_id] = {"status": "error", "message": str(e), "progress": 0}
+
+@app.post("/api/studio/split")
+async def studio_split(request: StudioSplitRequest, background_tasks: BackgroundTasks):
+    job_id = str(uuid.uuid4())
+    studio_jobs[job_id] = {"status": "starting", "progress": 0, "message": "Inicializando IA..."}
+    background_tasks.add_task(run_demucs_job, job_id, request.file_path)
+    return {"job_id": job_id}
+
+@app.get("/api/studio/status/{job_id}")
+def get_studio_status(job_id: str):
+    if job_id not in studio_jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return studio_jobs[job_id]
 
 @app.get("/api/track_metadata")
 def get_track_metadata(file_path: str):

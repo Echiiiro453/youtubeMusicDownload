@@ -64,6 +64,18 @@ def get_downloads_dir():
         
     return os.path.join(data_dir, "downloads")
 
+def get_studio_dir():
+    d_dir = get_downloads_dir()
+    path = os.path.join(d_dir, "AppMusica_Studio")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+def get_shazam_dir():
+    d_dir = get_downloads_dir()
+    path = os.path.join(d_dir, "AppMusica_Lab")
+    os.makedirs(path, exist_ok=True)
+    return path
+
 def parse_time(time_str):
     if not time_str or time_str.strip() == "": return None
     try:

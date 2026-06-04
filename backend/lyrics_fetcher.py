@@ -107,12 +107,45 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
         try:
             lyrics_text = syncedlyrics.search(search_query, providers=providers, plain_only=True)
             if lyrics_text:
-                print(f"  [lyrics] Letra simples encontrada.")
+                print(f"  [lyrics] Letra simples encontrada no LRCLIB.")
         except Exception:
             pass
 
+    # FALLBACK: Se o LRCLIB falhar, nós usamos nosso raspador "hacker" do Genius!
     if not lyrics_text:
-        print(f"  [lyrics] Letra nao encontrada para: '{search_query}'")
+        print(f"  [lyrics] LRCLIB falhou. Acionando o raspador do Genius para: '{search_query}'")
+        try:
+            from curl_cffi import requests as curl_req
+            from bs4 import BeautifulSoup
+            
+            # 1. Pesquisa na API invisível do Genius
+            search_api = f"https://genius.com/api/search/multi?per_page=1&q={search_query}"
+            res = curl_req.get(search_api, impersonate="chrome120", timeout=10)
+            data = res.json()
+            
+            # Encontra a URL da letra
+            hits = data.get("response", {}).get("sections", [])[0].get("hits", [])
+            if hits:
+                song_url = hits[0].get("result", {}).get("url")
+                if song_url:
+                    # 2. Raspa o HTML real para contornar a segurança deles
+                    page_res = curl_req.get(song_url, impersonate="chrome120", timeout=10)
+                    soup = BeautifulSoup(page_res.text, "html.parser")
+                    lyrics_divs = soup.find_all("div", {"data-lyrics-container": "true"})
+                    
+                    if lyrics_divs:
+                        extracted_text = []
+                        for div in lyrics_divs:
+                            # Adiciona quebras de linha limpas
+                            extracted_text.append(div.get_text(separator="\n"))
+                        
+                        lyrics_text = "\n".join(extracted_text)
+                        print(f"  [lyrics] Sucesso! Letra extraída à força do Genius!")
+        except Exception as e:
+            print(f"  [lyrics] Genius raspador falhou: {e}")
+
+    if not lyrics_text:
+        print(f"  [lyrics] Letra nao encontrada em nenhum lugar para: '{search_query}'")
         return False
 
     return _embed_lyrics(file_path, ext, lyrics_text)
