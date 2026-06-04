@@ -1,37 +1,53 @@
-# Legal Disclaimer & Terms of Use
+# END-USER LICENSE AGREEMENT (EULA) & TERMS OF SERVICE
+
+**Last Updated:** June 2026
 
 ## English
+**PLEASE READ THIS END-USER LICENSE AGREEMENT CAREFULLY BEFORE USING APPMUSICA.**
 
-### 1. Educational and Personal Use Only
-AppMusica is developed exclusively for **educational purposes** and **personal use**. It is a software tool designed to allow users to archive and back up media content for which they have the right or permission to do so. The creator/developer of this software does **NOT** endorse, promote, or encourage the infringement of any copyrighted material.
+By downloading, installing, or using AppMusica ("the Software"), you explicitly agree to be bound by the terms of this EULA. If you do not agree to the terms of this EULA, do not install or use the Software.
 
-### 2. No Hosting or Distribution
-This application does **not** host, store, index, or distribute any copyrighted files on any server. It simply acts as a client-side interface that interacts with public APIs and third-party endpoints. All processing and file saving occur strictly on the user's local machine.
+### 1. License Grant
+The developer grants you a revocable, non-exclusive, non-transferable, limited license to download, install, and use the Software solely for your personal, non-commercial purposes strictly in accordance with the terms of this Agreement.
 
-### 3. Third-Party Platforms
-AppMusica interacts with external platforms (such as YouTube, SoundCloud, Apple Music, Deezer, etc.). By using this software, it is **your responsibility** to ensure that your actions comply with the Terms of Service of those respective platforms. The developer is not affiliated with, endorsed by, or sponsored by any of these third-party platforms.
+### 2. Intellectual Property and Copyright Disclaimer
+The Software acts strictly as a local client that accesses publicly available Application Programming Interfaces (APIs). The developer of this Software does **not** host, distribute, index, or provide access to copyrighted media. 
+- You agree that you will only use this Software to access, download, or interact with content for which you possess the legal rights, permissions, or under the doctrine of "Fair Use".
+- The Software must **not** be used for copyright infringement, piracy, or the unauthorized mass distribution of copyrighted materials.
 
-### 4. No Warranty and Limitation of Liability
-The software is provided **"AS IS"**, without warranty of any kind, express or implied. In no event shall the author or copyright holder be liable for any claim, damages, or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software. The developer is not responsible for any potential account bans, access restrictions, or legal issues you may face.
+### 3. Third-Party Services
+The Software interfaces with third-party platforms (e.g., YouTube, Spotify, Apple Music, Deezer, SoundCloud, Twitch). The developer is not affiliated with, endorsed by, or sponsored by any of these entities.
+- Your use of third-party services through this Software is subject to the respective Terms of Service of those platforms.
+- You are solely responsible for obtaining necessary accounts, API keys, or cookies, and you bear full liability for any breach of third-party Terms of Service.
 
-### 5. Privacy
-AppMusica is a fully local application. It **does not** collect, transmit, or sell any personal data, telemetry, IP addresses, or information about the files you download or process. All actions remain strictly on your device.
+### 4. Disclaimer of Warranties (AS-IS)
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. The developer does not warrant that the Software will meet your requirements, or that the operation of the Software will be uninterrupted, error-free, or secure from bans by third-party services.
+
+### 5. Limitation of Liability
+IN NO EVENT SHALL THE DEVELOPER OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES (INCLUDING DIRECT, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES), OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE, THE USE OF THE SOFTWARE, ACCOUNT BANS, IP BLOCKS, OR LEGAL ACTION TAKEN AGAINST YOU BY THIRD PARTIES.
 
 ---
 
 ## Português (Brasil)
+**POR FAVOR, LEIA ESTE ACORDO DE LICENÇA DE USUÁRIO FINAL (EULA) ATENTAMENTE ANTES DE USAR O APPMUSICA.**
 
-### 1. Uso Educacional e Pessoal
-O AppMusica é desenvolvido exclusivamente para **fins educacionais** e **uso pessoal**. Trata-se de uma ferramenta de software projetada para permitir que os usuários façam backup e arquivem conteúdos de mídia para os quais possuem o direito ou permissão legal. O criador/desenvolvedor deste software **NÃO** endossa, promove ou incentiva a pirataria ou a infração de direitos autorais.
+Ao baixar, instalar ou utilizar o AppMusica ("o Software"), você concorda expressamente em ficar vinculado aos termos deste EULA. Se você não concorda com os termos, não instale ou utilize o Software.
 
-### 2. Ausência de Hospedagem ou Distribuição
-Este aplicativo **não** hospeda, armazena, indexa ou distribui arquivos protegidos por direitos autorais em nenhum servidor. Ele funciona apenas como uma interface local (client-side) que interage com APIs públicas. Todo o processamento e salvamento de arquivos ocorrem estritamente na máquina local do usuário.
+### 1. Concessão de Licença
+O desenvolvedor concede a você uma licença revogável, não exclusiva, intransferível e limitada para baixar, instalar e usar o Software estritamente para seus fins pessoais e não comerciais.
 
-### 3. Plataformas de Terceiros
-O AppMusica interage com plataformas externas (como YouTube, SoundCloud, Apple Music, Deezer, etc.). Ao utilizar este software, é **sua responsabilidade** garantir que suas ações estejam em conformidade com os Termos de Serviço dessas respectivas plataformas. O desenvolvedor não possui qualquer afiliação, patrocínio ou endosso por parte de nenhuma dessas empresas.
+### 2. Propriedade Intelectual e Isenção de Direitos Autorais
+O Software atua estritamente como um cliente local que acessa Interfaces de Programação de Aplicações (APIs) disponíveis publicamente. O desenvolvedor **não** hospeda, distribui, indexa ou fornece acesso a mídia protegida por direitos autorais.
+- Você concorda que usará este Software apenas para acessar ou baixar conteúdo para o qual possui direitos legais, permissões, ou sob a doutrina de "Uso Justo" (Fair Use).
+- O Software **não** deve ser utilizado para pirataria, violação de direitos autorais ou distribuição em massa de materiais protegidos.
 
-### 4. Isenção de Garantias e Limitação de Responsabilidade
-O software é fornecido **"COMO ESTÁ" (As Is)**, sem qualquer tipo de garantia, expressa ou implícita. Em nenhuma circunstância o autor ou detentor dos direitos autorais será responsável por qualquer reclamação, danos ou outras responsabilidades decorrentes do uso do software. O desenvolvedor não se responsabiliza por eventuais banimentos de contas, restrições de acesso a IPs ou processos legais que o usuário venha a enfrentar.
+### 3. Serviços de Terceiros (Third-Party)
+O Software interage com plataformas de terceiros (ex: YouTube, Spotify, Apple Music, Deezer). O desenvolvedor não possui qualquer afiliação institucional com estas empresas.
+- O seu uso de serviços de terceiros através deste Software está sujeito aos Termos de Serviço dessas respectivas plataformas.
+- Você é o único responsável por qualquer violação de termos de terceiros, incluindo possíveis bloqueios de IP (banimentos) ou restrições de contas.
 
-### 5. Privacidade
-O AppMusica é um aplicativo de execução 100% local. Ele **não** coleta, transmite ou vende dados pessoais, telemetria, endereços IP ou informações sobre os arquivos que você baixa ou processa. Todas as suas ações permanecem estritamente restritas ao seu dispositivo.
+### 4. Isenção de Garantias (AS-IS)
+O SOFTWARE É FORNECIDO "COMO ESTÁ" (AS IS), SEM GARANTIA DE QUALQUER TIPO, EXPRESSA OU IMPLÍCITA. O desenvolvedor não garante que o Software será ininterrupto, livre de erros, ou seguro contra bloqueios impostos por plataformas de terceiros.
+
+### 5. Limitação de Responsabilidade
+EM NENHUMA CIRCUNSTÂNCIA O DESENVOLVEDOR SERÁ RESPONSÁVEL POR QUAISQUER REIVINDICAÇÕES, DANOS (INCLUINDO DANOS DIRETOS, INDIRETOS, INCIDENTAIS OU CONSEQUENCIAIS), SUSPENSÃO DE CONTAS, PROCESSOS LEGAIS OU OUTRA RESPONSABILIDADE DECORRENTE DO USO DESTE SOFTWARE. O RISCO DO USO É INTEGRALMENTE DO USUÁRIO.
