@@ -319,7 +319,7 @@ def parse_magic_url(url: str):
     is_magic = False
     magic_source = None
     cover_url = None
-    if "spotify.com" in url or "music.apple.com" in url:
+    if "spotify.com" in url or "music.apple.com" in url or "soundcloud.com" in url:
         if "spotify.com" in url:
             import re
             import json
@@ -380,7 +380,63 @@ def parse_magic_url(url: str):
                             magic_source = "Spotify"
                     except Exception as e:
                         print(f"Failed to parse Spotify embed: {e}")
-        else:
+        elif "soundcloud.com" in url and "/sets/" in url:
+            try:
+                import re
+                import json
+                from curl_cffi import requests as cffi_requests
+                html = cffi_requests.get(url, impersonate="chrome120", timeout=10).text
+                js_urls = re.findall(r'<script crossorigin src="([^"]+)"></script>', html)
+                client_id = None
+                for j_url in js_urls:
+                    try:
+                        js_code = cffi_requests.get(j_url, impersonate="chrome120", timeout=10).text
+                        match = re.search(r'client_id:"([^"]+)"', js_code)
+                        if match:
+                            client_id = match.group(1)
+                            break
+                    except: pass
+                
+                if client_id:
+                    hydration = re.search(r'window\.__sc_hydration = (\[.*?\]);</script>', html, re.DOTALL)
+                    if hydration:
+                        data = json.loads(hydration.group(1))
+                        for item in data:
+                            if 'data' in item and isinstance(item['data'], dict) and 'tracks' in item['data']:
+                                playlist = item['data']
+                                clean_title = playlist.get('title', 'SoundCloud Playlist')
+                                track_ids = [str(t['id']) for t in playlist['tracks']]
+                                
+                                api_url = f"https://api-v2.soundcloud.com/tracks?ids={','.join(track_ids)}&client_id={client_id}"
+                                res = cffi_requests.get(api_url, impersonate="chrome120", timeout=10)
+                                if res.status_code == 200:
+                                    tracks_data = res.json()
+                                    entries = []
+                                    cover_url = playlist.get('artwork_url', '')
+                                    if cover_url: cover_url = cover_url.replace('-large', '-t500x500')
+                                    for idx, t in enumerate(tracks_data):
+                                        t_artist = t.get('user', {}).get('username', '')
+                                        t_title = t.get('title', '')
+                                        sq = f"{t_artist} {t_title}".strip()
+                                        entries.append({
+                                            'id': f"soundcloud_magic_{idx}",
+                                            'url': f"ytsearch1:{sq} audio",
+                                            'title': sq,
+                                            'duration': int(t.get('duration', 0) / 1000),
+                                            'thumbnail': t.get('artwork_url', '').replace('-large', '-t500x500') if t.get('artwork_url') else cover_url
+                                        })
+                                    pseudo_playlist = {
+                                        'title': clean_title,
+                                        'uploader': 'SoundCloud',
+                                        'entries': entries,
+                                        'thumbnail': cover_url
+                                    }
+                                    is_magic = True
+                                    magic_source = "SoundCloud"
+                                    break
+            except Exception as e:
+                print(f"Failed to parse SoundCloud set: {e}")
+        elif "music.apple.com" in url:
             from curl_cffi import requests as cffi_requests
             res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
             html = res.text
