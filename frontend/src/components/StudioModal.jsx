@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mic, Music, Loader2 } from 'lucide-react';
+import { X, Mic, Music, Loader2, FolderOpen } from 'lucide-react';
 import axios from 'axios';
 import { t } from '../i18n';
 
@@ -21,11 +21,22 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
     setLoadingLib(true);
     try {
       const res = await axios.get(`${apiUrl}/api/library`);
-      setLibrary(res.data.library);
-    } catch (e) {
-      console.error("Failed to load library:", e);
+      setLibrary(res.data.songs || []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoadingLib(false);
+    }
+  };
+
+  const handleBrowseFile = async () => {
+    try {
+      const res = await axios.post(`${apiUrl}/api/choose_file`);
+      if (res.data.status === 'ok' && res.data.file) {
+        setFilePath(res.data.file);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -102,21 +113,34 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
 
         {/* Corpo do Modal */}
         <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-secondary uppercase">{t('studioSelectSong')}</label>
-            <select 
-              value={filePath}
-              onChange={(e) => setFilePath(e.target.value)}
-              disabled={loadingLib}
-              className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none cursor-pointer"
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 w-0">
+              <label className="text-xs font-semibold text-secondary uppercase">{t('studioSelectSong')}</label>
+              <select 
+                value={filePath}
+                onChange={(e) => setFilePath(e.target.value)}
+                disabled={loadingLib}
+                className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none cursor-pointer truncate"
+              >
+                <option value="">{loadingLib ? t('studioLoadingSongs') : t('studioSelectPlaceholder')}</option>
+                {filePath && !library.find(s => (s.file_path || s.title) === filePath) && (
+                  <option value={filePath}>{filePath.split('\\').pop().split('/').pop()}</option>
+                )}
+                {library.map((song, i) => (
+                  <option key={i} value={song.file_path || song.title}>
+                    {song.title || song.file_path}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button 
+              onClick={handleBrowseFile}
+              disabled={loadingLib || loading}
+              className="h-[50px] px-4 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/50 rounded-lg transition-colors flex items-center justify-center shrink-0"
+              title="Procurar arquivo no PC"
             >
-              <option value="">{loadingLib ? t('studioLoadingSongs') : t('studioSelectPlaceholder')}</option>
-              {library.map((song, i) => (
-                <option key={i} value={song.file_path || song.title}>
-                  {song.title || song.file_path}
-                </option>
-              ))}
-            </select>
+              <FolderOpen size={20} />
+            </button>
           </div>
 
           <button 

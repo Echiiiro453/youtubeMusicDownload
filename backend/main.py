@@ -709,6 +709,23 @@ def choose_folder():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.post("/api/choose_file")
+def choose_file():
+    try:
+        import webview
+        if webview.windows:
+            window = webview.windows[0]
+            result = window.create_file_dialog(
+                webview.OPEN_DIALOG,
+                allow_multiple=False,
+                file_types=('Audio Files (*.mp3;*.wav;*.m4a;*.flac)', 'All Files (*.*)')
+            )
+            if result and len(result) > 0:
+                return {"status": "ok", "file": result[0]}
+        return {"status": "error", "message": "Nenhuma janela ativa ou ação cancelada."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 class OpenExternalRequest(BaseModel):
     file_path: str
 
