@@ -26,7 +26,7 @@ def main():
     # Arquivos de dados (Estáticos do Frontend, Termos)
     datas = [
         ("static", "static"),
-        ("TERMOS_DE_USO.txt", "."),
+        ("../TERMS.md", "."),
         ("lyrics_fetcher.py", ".")
     ]
     

@@ -840,7 +840,7 @@ def get_terms_status():
     try:
         conn = get_conn()
         cur = conn.cursor()
-        cur.execute("SELECT value FROM app_settings WHERE key = 'terms_accepted'")
+        cur.execute("SELECT value FROM app_settings WHERE key = 'terms_accepted_v3'")
         row = cur.fetchone()
         conn.close()
         return {"accepted": row['value'] == 'true' if row else False}
@@ -850,14 +850,14 @@ def get_terms_status():
 def accept_terms():
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('terms_accepted', 'true')")
+    cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('terms_accepted_v3', 'true')")
     conn.commit()
     conn.close()
     return {"status": "ok"}
 
 @app.get("/terms/content")
 def get_terms_content():
-    path = get_resource_path("TERMOS_DE_USO.txt")
+    path = get_resource_path("TERMS.md")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f: return {"content": f.read()}
     return {"content": "Termos de Uso Padrão"}
