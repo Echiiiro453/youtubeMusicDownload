@@ -319,7 +319,7 @@ def parse_magic_url(url: str):
     is_magic = False
     magic_source = None
     cover_url = None
-    if "spotify.com" in url or "music.apple.com" in url or "soundcloud.com" in url:
+    if "spotify.com" in url or "music.apple.com" in url or "soundcloud.com" in url or "deezer.com" in url:
         if "spotify.com" in url:
             import re
             import json
@@ -436,6 +436,51 @@ def parse_magic_url(url: str):
                                     break
             except Exception as e:
                 print(f"Failed to parse SoundCloud set: {e}")
+        elif "deezer.com" in url:
+            try:
+                import re
+                import requests
+                match = re.search(r'/(track|album|playlist)/(\d+)', url)
+                if match:
+                    type_str = match.group(1)
+                    item_id = match.group(2)
+                    api_url = f"https://api.deezer.com/{type_str}/{item_id}"
+                    res = requests.get(api_url, timeout=10)
+                    if res.status_code == 200:
+                        data = res.json()
+                        cover_url = data.get('picture_xl') or data.get('cover_xl') or ''
+                        clean_title = data.get('title', 'Deezer Audio')
+                        
+                        if type_str == 'track':
+                            artist_name = data.get('artist', {}).get('name', '')
+                            sq = f"{artist_name} {clean_title}".strip()
+                            url = f"ytsearch1:{sq} audio"
+                            is_magic = True
+                            magic_source = "Deezer"
+                        else:
+                            tracks = data.get('tracks', {}).get('data', [])
+                            entries = []
+                            for idx, t in enumerate(tracks):
+                                t_artist = t.get('artist', {}).get('name', '')
+                                t_title = t.get('title', '')
+                                sq = f"{t_artist} {t_title}".strip()
+                                entries.append({
+                                    'id': f"deezer_magic_{idx}",
+                                    'url': f"ytsearch1:{sq} audio",
+                                    'title': sq,
+                                    'duration': t.get('duration', 0),
+                                    'thumbnail': cover_url
+                                })
+                            pseudo_playlist = {
+                                'title': clean_title,
+                                'uploader': 'Deezer',
+                                'entries': entries,
+                                'thumbnail': cover_url
+                            }
+                            is_magic = True
+                            magic_source = "Deezer"
+            except Exception as e:
+                print(f"Failed to parse Deezer link: {e}")
         elif "music.apple.com" in url:
             from curl_cffi import requests as cffi_requests
             res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
