@@ -39,7 +39,7 @@ export function PlaylistModal({
             <div>
               <h3 className="text-2xl font-bold text-white mb-1">{t('playlistSelectMusic')}</h3>
               <p className="text-gray-300 text-sm">{metadata?.title}</p>
-              {metadata?.magic_source && (
+              {metadata?.is_magic && metadata?.magic_source !== 'Spotify' && (
                 <div className="mt-2 text-xs bg-amber-500/20 text-amber-200 p-2 rounded-lg border border-amber-500/30 flex items-start gap-2 max-w-lg">
                   <span className="text-amber-400">⚠️</span>
                   <span>

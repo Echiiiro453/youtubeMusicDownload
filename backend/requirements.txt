@@ -7,7 +7,7 @@ pydantic
 mutagen
 python-multipart
 spotipy
-spotipy
+SpotipyFree
 beautifulsoup4
 syncedlyrics
 demucs

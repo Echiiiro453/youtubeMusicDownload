@@ -56,7 +56,11 @@ def main():
         "mutagen.mp4",
         "beautifulsoup4",
         "bs4",
-        "numpy.core.multiarray"
+        "torch",
+        "torchaudio",
+        "demucs",
+        "shazamio",
+        "pydantic"
     ]
     
     # Montar comando
@@ -65,13 +69,9 @@ def main():
         "--noconfirm",
         "--onefile", 
         "--windowed", # Esconder o console CMD
-        "--name", "AppMusica",
+        "--name", "AppMusica_AI_Test",
         "--icon", "icon.ico",
-        "--version-file", "version_info.txt",
-        "--collect-all", "demucs",
-        "--collect-all", "shazamio",
-        "--collect-all", "numpy",
-        "--collect-all", "torch"
+        "--version-file", "version_info.txt"
     ]
     
     for src, dst in binaries:

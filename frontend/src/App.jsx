@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { t, getLanguage, setLanguage } from './i18n';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu } from 'lucide-react';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -97,6 +97,22 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showStudioModal, setShowStudioModal] = useState(false);
   const [showShazamModal, setShowShazamModal] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuTimeoutRef = React.useRef(null);
+
+  const handleMenuEnter = () => {
+    if (menuTimeoutRef.current) {
+      clearTimeout(menuTimeoutRef.current);
+      menuTimeoutRef.current = null;
+    }
+    setIsMenuOpen(true);
+  };
+
+  const handleMenuLeave = () => {
+    menuTimeoutRef.current = setTimeout(() => {
+      setIsMenuOpen(false);
+    }, 500); // Tolerância de 500ms
+  };
 
   // Playlist Manager
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
@@ -615,7 +631,7 @@ function App() {
   };
 
   // ===== QUEUE LOGIC (PARALLEL) =====
-  const CONCURRENCY_LIMIT = 4;
+  const CONCURRENCY_LIMIT = 8;
 
   const processQueue = () => {
     setIsProcessingQueue(true);
@@ -900,67 +916,91 @@ function App() {
         <WindowControls />
       </div>
 
-      <div className="absolute top-12 right-4 z-50 flex gap-2">
-        <div className="relative group">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white">
-            <Wand2 className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('toolsMenu')}</span>
-          </button>
-          <div className="absolute right-0 top-full mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-surface border border-white/10 rounded-xl shadow-2xl py-2 z-50">
-            <button 
-              onClick={() => setShowStudioModal(true)}
-              className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-purple-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
+      <div 
+        className="absolute top-12 right-4 z-50 flex items-start justify-end gap-2"
+        onMouseEnter={handleMenuEnter}
+        onMouseLeave={handleMenuLeave}
+      >
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: 20, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: 'auto' }}
+              exit={{ opacity: 0, x: 20, width: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-2 overflow-visible whitespace-nowrap"
             >
-              <Music className="w-4 h-4" />
-              {t('studioTitle')}
-            </button>
-            <button 
-              onClick={() => setShowShazamModal(true)}
-              className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-blue-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
-            >
-              <Search className="w-4 h-4" />
-              {t('shazamTitle')}
-            </button>
-          </div>
-        </div>
+              <div className="relative group">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white">
+                  <Wand2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t('toolsMenu')}</span>
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-surface border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                  <button 
+                    onClick={() => setShowStudioModal(true)}
+                    className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-purple-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
+                  >
+                    <Music className="w-4 h-4" />
+                    {t('studioTitle')}
+                  </button>
+                  <button 
+                    onClick={() => setShowShazamModal(true)}
+                    className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-blue-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
+                  >
+                    <Search className="w-4 h-4" />
+                    {t('shazamTitle')}
+                  </button>
+                </div>
+              </div>
 
+              <button
+                onClick={() => setShowLibrary(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
+                title="Abrir Biblioteca"
+              >
+                <List className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('navLibrary')}</span>
+              </button>
+              <button
+                onClick={() => setShowHistory(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
+                title="Histórico de Downloads"
+              >
+                <Clock className="w-4 h-4" />
+                <span className="hidden sm:inline">Histórico</span>
+              </button>
+              <button
+                onClick={() => checkForUpdates(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
+                title={t('btnUpdateTitle')}
+              >
+                <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{t('btnUpdate')}</span>
+              </button>
+              <button
+                onClick={() => setShowDonate(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
+              >
+                <Heart className="w-4 h-4" />
+                {t('btnDonate')}
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all ${isAuthenticated ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-surface/50 text-secondary border border-white/10 hover:bg-surface'}`}
+              >
+                {isAuthenticated ? <CheckCircle className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
+                {isAuthenticated ? t('btnConnected') : t('btnConfigure')}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         <button
-          onClick={() => setShowLibrary(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-          title="Abrir Biblioteca"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="flex items-center justify-center p-2.5 h-10 w-10 rounded-full shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white z-50 shrink-0"
+          title="Menu"
         >
-          <List className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('navLibrary')}</span>
-        </button>
-        <button
-          onClick={() => setShowHistory(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-          title="Histórico de Downloads"
-        >
-          <Clock className="w-4 h-4" />
-          <span className="hidden sm:inline">Histórico</span>
-        </button>
-        <button
-          onClick={() => checkForUpdates(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-          title={t('btnUpdateTitle')}
-        >
-          <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">{t('btnUpdate')}</span>
-        </button>
-        <button
-          onClick={() => setShowDonate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-        >
-          <Heart className="w-4 h-4" />
-          {t('btnDonate')}
-        </button>
-        <button
-          onClick={() => setShowSettings(true)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all ${isAuthenticated ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-surface/50 text-secondary border border-white/10 hover:bg-surface'}`}
-        >
-          {isAuthenticated ? <CheckCircle className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
-          {isAuthenticated ? t('btnConnected') : t('btnConfigure')}
+          {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 

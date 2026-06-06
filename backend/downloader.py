@@ -447,14 +447,15 @@ async def worker_loop():
     while True:
         job_id, request = await download_queue.get()
         st = jobs.get(job_id)
-        if st:
-            if st.status == "cancelled":
-                download_queue.task_done()
-                continue
-            st.status = "running"
-            st.started_at = time.time()
+        if st and st.status == "cancelled":
+            download_queue.task_done()
+            continue
         
         async with download_sem:
+            if st:
+                st.status = "running"
+                st.started_at = time.time()
+                
             try:
                 task = asyncio.create_task(run_download(job_id, request))
                 done, pending = await asyncio.wait([task], timeout=300)

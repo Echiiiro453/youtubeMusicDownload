@@ -7,10 +7,19 @@ import io
 
 # [CORREÇÃO CRÍTICA] Força o stdout e stderr a aceitarem UTF-8 (Emojis/Caracteres Especiais)
 # Isso impede o erro fatal de "charmap codec can't encode character" quando o app roda sem console (windowed)
-if sys.stdout is None or getattr(sys, 'frozen', False):
-    log_file = open('AppMusica.log', 'wb')
-    sys.stdout = io.TextIOWrapper(log_file, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(log_file, encoding='utf-8')
+# IMPORTANTE: Não redirecionar se for o processo filho do Demucs (--run-demucs), senão a barra de progresso quebra!
+if '--run-demucs' not in sys.argv:
+    if sys.stdout is None or getattr(sys, 'frozen', False):
+        log_file = open('AppMusica.log', 'wb')
+        sys.stdout = io.TextIOWrapper(log_file, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(log_file, encoding='utf-8')
+else:
+    if sys.stdout is not None:
+        try: sys.stdout.reconfigure(encoding='utf-8')
+        except: pass
+    if sys.stderr is not None:
+        try: sys.stderr.reconfigure(encoding='utf-8')
+        except: pass
 
 # Import at top-level so PyInstaller statically detects it, but after stdout fix
 import main

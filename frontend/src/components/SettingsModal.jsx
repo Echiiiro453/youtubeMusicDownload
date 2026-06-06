@@ -244,14 +244,18 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-white text-sm">Downloads Simultâneos</h4>
-                  <p className="text-xs text-secondary mt-0.5">Twitch é sempre sequencial para evitar conflitos.</p>
+                  {concurrentDownloads > 4 ? (
+                    <p className="text-xs text-yellow-400 mt-0.5">⚠️ Valores altos podem causar travamentos por alto uso de CPU/RAM.</p>
+                  ) : (
+                    <p className="text-xs text-secondary mt-0.5">Acelera filas, mas usa mais do PC. Twitch é sempre sequencial.</p>
+                  )}
                 </div>
                 <span className="text-2xl font-bold text-primary min-w-[2rem] text-right">{concurrentDownloads}</span>
               </div>
               <input
                 type="range"
                 min={1}
-                max={4}
+                max={8}
                 step={1}
                 value={concurrentDownloads}
                 onChange={(e) => handleConcurrentChange(Number(e.target.value))}
@@ -259,9 +263,8 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               />
               <div className="flex justify-between text-xs text-secondary/60 px-0.5">
                 <span>1 (Sequencial)</span>
-                <span>2</span>
-                <span>3</span>
-                <span>4 (Máximo)</span>
+                <span>4</span>
+                <span>8 (Máximo)</span>
               </div>
             </div>
 

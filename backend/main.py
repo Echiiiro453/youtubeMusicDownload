@@ -22,6 +22,15 @@ try:
 except ImportError:
     pass
 
+# SECRET CLI INTERCEPT FOR DEMUCS:
+# This allows the compiled AppMusica.exe to act as the "demucs" CLI
+if len(sys.argv) > 1 and sys.argv[1] == "--run-demucs":
+    import demucs.separate
+    # Pass all arguments after --run-demucs to demucs
+    # e.g. AppMusica.exe --run-demucs file.mp3 -n htdemucs_6s ...
+    demucs.separate.main(sys.argv[2:])
+    sys.exit(0)
+
 import collections
 from datetime import datetime
 from urllib.request import Request as URLRequest, urlopen
@@ -67,7 +76,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "3.0.0"
+APP_VERSION = "3.2.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -163,7 +172,23 @@ async def ws_broadcast_loop():
 @app.on_event("startup")
 async def startup_event():
     init_db()
-    for _ in range(MAX_CONCURRENT_DOWNLOADS):
+    
+    # Initialize download_sem from database so it respects the saved user settings on boot
+    import downloader
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM app_settings WHERE key = 'concurrent_downloads'")
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            value = max(1, min(8, int(row['value'])))
+            downloader.download_sem = asyncio.Semaphore(value)
+            print(f"[Startup] Concurrent downloads restored to {value}")
+    except Exception as e:
+        print(f"[Startup] Error loading concurrent downloads setting: {e}")
+
+    for _ in range(20):
         asyncio.create_task(worker_loop())
     asyncio.create_task(ws_broadcast_loop())
 
@@ -390,6 +415,9 @@ async def search_youtube(request: SearchRequest):
             print(f"Search error: {error_msg}")
             raise HTTPException(status_code=500, detail=error_msg)
 
+import functools
+
+@functools.lru_cache(maxsize=32)
 def parse_magic_url(url: str):
     pseudo_playlist = None
     is_magic = False
@@ -559,9 +587,11 @@ def parse_magic_url(url: str):
                 print(f"Failed to parse Deezer link: {e}")
         elif "music.apple.com" in url:
             from curl_cffi import requests as cffi_requests
+            import re
+            
             res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
             html = res.text
-            import re
+            
             title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
             clean_title = ""
             if title_match:
@@ -570,28 +600,102 @@ def parse_magic_url(url: str):
                 clean_title = clean_title.replace("Song ·", "").replace("Album ·", "").strip()
             
             cover_match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
-            if cover_match:
-                cover_url = cover_match.group(1)
+            cover_url = cover_match.group(1) if cover_match else ""
             
-            matches = re.findall(r'"artistName":"([^"]+)".*?"name":"([^"]+)"', html)
-            unique_m = []
-            seen = set()
-            for m in matches:
-                if m not in seen:
-                    seen.add(m)
-                    unique_m.append(m)
-                    
-            if len(unique_m) > 1:
-                entries = []
-                for idx, m in enumerate(unique_m):
-                    sq = f"{m[0]} {m[1]}".strip()
-                    entries.append({
-                        'id': f"apple_magic_{idx}",
-                        'url': f"ytsearch1:{sq} audio",
-                        'title': sq,
-                        'duration': 0,
-                        'thumbnail': cover_url
-                    })
+            token = None
+            scripts = re.findall(r'<script[^>]+src="([^"]+/index[^"]+\.js)"', html)
+            if scripts:
+                js_url = scripts[0]
+                if js_url.startswith('/'): js_url = 'https://music.apple.com' + js_url
+                try:
+                    js_res = cffi_requests.get(js_url, timeout=10, impersonate='chrome120')
+                    for m in re.findall(r'"(eyJh[^"]+)"', js_res.text):
+                        if len(m) > 100:
+                            token = m
+                            break
+                except:
+                    pass
+            
+            is_playlist_or_album = False
+            entries = []
+            
+            url_match = re.search(r'/([a-z]{2})/(playlist|album)/[^/]+/([^/?]+)', url)
+            
+            if token and url_match:
+                storefront = url_match.group(1)
+                item_type = url_match.group(2)
+                item_id = url_match.group(3)
+                
+                headers = {
+                    'authorization': f'Bearer {token}',
+                    'origin': 'https://music.apple.com'
+                }
+                
+                api_url = f'https://amp-api.music.apple.com/v1/catalog/{storefront}/{item_type}s/{item_id}/tracks?limit=100'
+                
+                try:
+                    while api_url:
+                        api_res = cffi_requests.get(api_url, headers=headers, timeout=10, impersonate='chrome120')
+                        if api_res.status_code != 200:
+                            break
+                            
+                        data = api_res.json()
+                        tracks_data = data.get('data', [])
+                        
+                        for idx, track in enumerate(tracks_data):
+                            attrs = track.get('attributes', {})
+                            t_title = attrs.get('name', '')
+                            t_artist = attrs.get('artistName', '')
+                            duration_ms = attrs.get('durationInMillis', 0)
+                            
+                            if t_title and t_artist:
+                                sq = f"{t_artist} {t_title}".strip()
+                                entries.append({
+                                    'id': f"apple_magic_{len(entries)}_{idx}",
+                                    'url': f"ytsearch1:{sq} audio",
+                                    'title': sq,
+                                    'duration': int(duration_ms / 1000) if duration_ms else 0,
+                                    'thumbnail': cover_url
+                                })
+                        
+                        next_path = data.get('next')
+                        if next_path:
+                            api_url = f'https://amp-api.music.apple.com{next_path}'
+                        else:
+                            api_url = None
+                            
+                    if entries:
+                        is_playlist_or_album = True
+                except Exception as e:
+                    print(f"Apple Music API pagination failed: {e}")
+            
+            if not is_playlist_or_album:
+                match = re.search(r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', html, re.DOTALL)
+                if match:
+                    try:
+                        import json
+                        data = json.loads(match.group(1))
+                        tracks = data.get('track', [])
+                        if tracks:
+                            for idx, t in enumerate(tracks):
+                                t_name = t.get('name', '')
+                                artist_obj = t.get('byArtist', {})
+                                t_artist = artist_obj.get('name', '') if isinstance(artist_obj, dict) else (artist_obj if artist_obj else '')
+                                if t_name:
+                                    sq = f"{t_artist} {t_name}".strip()
+                                    entries.append({
+                                        'id': f"apple_magic_ld_{idx}",
+                                        'url': f"ytsearch1:{sq} audio",
+                                        'title': sq,
+                                        'duration': 0,
+                                        'thumbnail': cover_url
+                                    })
+                            if entries:
+                                is_playlist_or_album = True
+                    except Exception as e:
+                        print(f"Failed to parse Apple Music ld+json: {e}")
+            
+            if is_playlist_or_album:
                 pseudo_playlist = {
                     'title': clean_title if clean_title else "Apple Music Playlist",
                     'uploader': 'Apple Music',
@@ -878,7 +982,7 @@ def get_concurrent_downloads():
 def set_concurrent_downloads(body: dict):
     import downloader
     try:
-        value = max(1, min(4, int(body.get("value", 2))))
+        value = max(1, min(8, int(body.get("value", 2))))
         conn = get_conn()
         cur = conn.cursor()
         cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('concurrent_downloads', ?)", (str(value),))
@@ -1042,11 +1146,24 @@ import re
 from fastapi import BackgroundTasks
 
 studio_jobs = {}
+studio_install_jobs = {}
 
 class StudioSplitRequest(BaseModel):
     file_path: str
+    quality: str = "fast"
+    model: str = "htdemucs_ft"
+    two_stems: bool = True
+
+def is_python_installed():
+    import subprocess
+    try:
+        CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+        subprocess.run(["python", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=CREATE_NO_WINDOW, check=True)
+        return True
+    except Exception:
+        return False
     
-async def run_demucs_job(job_id: str, file_path: str):
+async def run_demucs_job(job_id: str, file_path: str, quality: str, model: str, two_stems: bool):
     try:
         from utils import get_downloads_dir, get_studio_dir
         import subprocess
@@ -1059,13 +1176,61 @@ async def run_demucs_job(job_id: str, file_path: str):
         studio_dir = get_studio_dir()
         CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
         
-        process = await asyncio.create_subprocess_exec(
-            'demucs', abs_path, '-n', 'htdemucs_ft', '--overlap', '0.25', '-o', studio_dir, '--mp3', '--mp3-bitrate', '320',
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            creationflags=CREATE_NO_WINDOW
-        )
+        overlap = '0.25'
+        shifts = '0'
+        if quality == 'balanced':
+            overlap = '0.50'
+        elif quality == 'studio':
+            overlap = '0.75'
+            shifts = '2' # Aumentado de 1 para 2
+        elif quality == 'ultra':
+            overlap = '0.99'
+            shifts = '4' # Aumentado de 2 para 4 para maior redução de ruído
+
+        if getattr(sys, 'frozen', False):
+            # PyInstaller mode: AppMusica.exe --run-demucs ...
+            cmd_args = [sys.executable, '--run-demucs']
+        else:
+            # Source mode: python main.py --run-demucs ...
+            main_script = os.path.abspath(sys.argv[0])
+            cmd_args = [sys.executable, main_script, '--run-demucs']
+
+        cmd_args.extend([
+            abs_path, '-n', model, 
+            '--overlap', overlap, 
+            '-o', studio_dir, '--mp3', '--mp3-bitrate', '320'
+        ])
         
+        if two_stems:
+            cmd_args.extend(['--two-stems', 'vocals'])
+
+        if shifts != '0':
+            cmd_args.extend(['--shifts', shifts])
+
+        print(f"[\033[94mIA Studio\033[0m] Executando comando IA: {' '.join(cmd_args)}")
+
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                creationflags=CREATE_NO_WINDOW
+            )
+        except FileNotFoundError:
+            python_installed = is_python_installed()
+            print("[\033[31mIA Studio\033[0m] ERRO: Demucs não encontrado no sistema.")
+            studio_jobs[job_id] = {
+                "status": "error", 
+                "message": "Motor de IA (Demucs) não encontrado neste PC.", 
+                "progress": 0,
+                "demucs_missing": True,
+                "python_missing": not python_installed
+            }
+            return
+            
+        print(f"[\033[94mIA Studio\033[0m] Iniciando separação para: {os.path.basename(abs_path)}")
+        
+        last_log_progress = -1
         while True:
             line = await process.stderr.read(256)
             if not line:
@@ -1079,21 +1244,28 @@ async def run_demucs_job(job_id: str, file_path: str):
                 studio_jobs[job_id]["status"] = "processing"
                 studio_jobs[job_id]["message"] = f"Separando faixas: {progress}%"
                 
+                if progress % 10 == 0 and progress != last_log_progress:
+                    print(f"[\033[94mIA Studio\033[0m] Extraindo canais: {progress}%")
+                    last_log_progress = progress
+                
         await process.wait()
         
         if process.returncode != 0:
+            print(f"[\033[31mIA Studio\033[0m] ERRO na separação: Código {process.returncode}")
             studio_jobs[job_id] = {"status": "error", "message": "Falha na separação da música.", "progress": 0}
         else:
+            print(f"[\033[32mIA Studio\033[0m] SUCESSO! Separação concluída e salva na pasta Studio.")
             studio_jobs[job_id] = {"status": "success", "message": "Música separada por IA com sucesso!", "output_dir": studio_dir, "progress": 100}
             
     except Exception as e:
+        print(f"[\033[31mIA Studio\033[0m] EXCEPTION: {e}")
         studio_jobs[job_id] = {"status": "error", "message": str(e), "progress": 0}
 
 @app.post("/api/studio/split")
 async def studio_split(request: StudioSplitRequest, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
     studio_jobs[job_id] = {"status": "starting", "progress": 0, "message": "Inicializando IA..."}
-    background_tasks.add_task(run_demucs_job, job_id, request.file_path)
+    background_tasks.add_task(run_demucs_job, job_id, request.file_path, request.quality, request.model, request.two_stems)
     return {"job_id": job_id}
 
 @app.get("/api/studio/status/{job_id}")
@@ -1101,6 +1273,166 @@ def get_studio_status(job_id: str):
     if job_id not in studio_jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     return studio_jobs[job_id]
+
+def install_ai_worker(job_id: str):
+    try:
+        import urllib.request
+        import subprocess
+        from utils import get_data_dir
+        
+        studio_jobs[job_id] = {"status": "processing", "progress": 10, "message": "Baixando Python (30 MB)..."}
+        data_dir = get_data_dir()
+        installer_path = os.path.join(data_dir, "python_installer.exe")
+        
+        # Download Python if not present
+        if not os.path.exists(installer_path):
+            urllib.request.urlretrieve("https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe", installer_path)
+            
+        studio_jobs[job_id] = {"status": "processing", "progress": 30, "message": "Instalando Python no sistema..."}
+        
+        # Install Python silently
+        subprocess.run([installer_path, "/passive", "InstallAllUsers=0", "PrependPath=1", "Include_test=0"], check=True)
+        
+        studio_jobs[job_id] = {"status": "processing", "progress": 50, "message": "Instalando Motor de IA (Download de 2.5 GB, aguarde)..."}
+        
+        # Find Python executable
+        local_app_data = os.environ.get('LOCALAPPDATA', '')
+        python_exe = os.path.join(local_app_data, "Programs", "Python", "Python310", "python.exe")
+        if not os.path.exists(python_exe):
+            python_exe = "python" # fallback to path
+            
+        subprocess.run([python_exe, "-m", "pip", "install", "demucs"], check=True)
+        
+        studio_jobs[job_id] = {"status": "success", "progress": 100, "message": "Inteligência Artificial instalada com sucesso!"}
+    except Exception as e:
+        print(f"Erro na instalacao da IA: {e}")
+        studio_jobs[job_id] = {"status": "error", "progress": 0, "message": f"Falha na instalação: {str(e)}"}
+
+@app.post("/api/studio/install")
+async def studio_install(background_tasks: BackgroundTasks):
+    job_id = str(uuid.uuid4())
+    studio_jobs[job_id] = {"status": "starting", "progress": 0, "message": "Iniciando instalação..."}
+    background_tasks.add_task(install_ai_worker, job_id)
+    return {"job_id": job_id}
+
+async def run_install_full(job_id: str):
+    import subprocess
+    import asyncio
+    import urllib.request
+    from utils import get_downloads_dir
+    
+    CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+    studio_install_jobs[job_id] = {"status": "processing", "message": "Baixando instalador do Python 3.10..."}
+    
+    installer_path = os.path.join(get_downloads_dir(), "python_installer.exe")
+    url = "https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe"
+    try:
+        urllib.request.urlretrieve(url, installer_path)
+    except Exception as e:
+        studio_install_jobs[job_id] = {"status": "error", "message": f"Erro ao baixar Python: {e}"}
+        return
+
+    studio_install_jobs[job_id]["message"] = "Instalando Python silenciosamente na pasta local...\nIsso não requer permissão de administrador."
+    cmd_install = [installer_path, '/quiet', 'InstallAllUsers=0', 'PrependPath=1', 'Include_test=0']
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd_install, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=CREATE_NO_WINDOW
+        )
+        await proc.wait()
+        if proc.returncode != 0:
+            studio_install_jobs[job_id] = {"status": "error", "message": f"Falha ao instalar o Python. Código: {proc.returncode}"}
+            return
+    except Exception as e:
+        studio_install_jobs[job_id] = {"status": "error", "message": f"Erro fatal ao instalar Python: {e}"}
+        return
+
+    studio_install_jobs[job_id]["message"] = "Python instalado com sucesso!\n\nIniciando download do Motor de IA (Demucs) (~2GB)..."
+    
+    # Python is installed in %LocalAppData%\Programs\Python\Python310\python.exe
+    python_exe = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Python', 'Python310', 'python.exe')
+    if not os.path.exists(python_exe):
+        # Fallback to general 'python' just in case
+        python_exe = "python"
+        
+    cmd_pip = [python_exe, '-m', 'pip', 'install', 'demucs']
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *cmd_pip,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            creationflags=CREATE_NO_WINDOW
+        )
+    except FileNotFoundError:
+        studio_install_jobs[job_id] = {"status": "error", "message": "Executável do Python não encontrado após instalação!"}
+        return
+        
+    while True:
+        line = await process.stdout.readline()
+        if not line:
+            break
+        text = line.decode(errors='replace').strip()
+        if text:
+            studio_install_jobs[job_id]["message"] = text
+    
+    await process.wait()
+    if process.returncode == 0:
+        studio_install_jobs[job_id]["status"] = "success"
+        studio_install_jobs[job_id]["message"] = "Inteligência Artificial instalada com sucesso!"
+    else:
+        studio_install_jobs[job_id]["status"] = "error"
+        studio_install_jobs[job_id]["message"] = f"Erro na instalação da IA (código {process.returncode})."
+
+@app.post("/api/studio/install_full")
+async def studio_install_full(background_tasks: BackgroundTasks):
+    job_id = str(uuid.uuid4())
+    studio_install_jobs[job_id] = {"status": "processing", "message": "Iniciando processo automatizado..."}
+    background_tasks.add_task(run_install_full, job_id)
+    return {"job_id": job_id}
+
+async def run_install_demucs(job_id: str):
+    import subprocess
+    import asyncio
+    CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+    cmd_args = ['python', '-m', 'pip', 'install', 'demucs']
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *cmd_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            creationflags=CREATE_NO_WINDOW
+        )
+    except FileNotFoundError:
+        studio_install_jobs[job_id] = {"status": "error", "message": "O Python não está instalado neste computador! Instale o Python primeiro."}
+        return
+        
+    while True:
+        line = await process.stdout.readline()
+        if not line:
+            break
+        text = line.decode(errors='replace').strip()
+        if text:
+            studio_install_jobs[job_id]["message"] = text
+    
+    await process.wait()
+    if process.returncode == 0:
+        studio_install_jobs[job_id]["status"] = "success"
+        studio_install_jobs[job_id]["message"] = "Inteligência Artificial instalada com sucesso!"
+    else:
+        studio_install_jobs[job_id]["status"] = "error"
+        studio_install_jobs[job_id]["message"] = f"Erro na instalação (código {process.returncode})."
+
+@app.post("/api/studio/install")
+async def studio_install(background_tasks: BackgroundTasks):
+    job_id = str(uuid.uuid4())
+    studio_install_jobs[job_id] = {"status": "processing", "message": "Iniciando instalação do Demucs..."}
+    background_tasks.add_task(run_install_demucs, job_id)
+    return {"job_id": job_id}
+
+@app.get("/api/studio/install/status/{job_id}")
+def get_studio_install_status(job_id: str):
+    if job_id not in studio_install_jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return studio_install_jobs[job_id]
 
 @app.get("/api/track_metadata")
 def get_track_metadata(file_path: str):

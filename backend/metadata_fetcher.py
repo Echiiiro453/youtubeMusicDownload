@@ -46,15 +46,33 @@ def clean_title(title: str) -> str:
         r'\[Sped\s*[Uu]p.*?\]',
         r'\(NSFW\)',
         r'\[NSFW\]',
+        # --- Languague specific & new noise ---
+        r'\(Clipe\s*Oficial.*?\)',
+        r'\[Clipe\s*Oficial.*?\]',
+        r'\(V[ií]deo\s*Oficial.*?\)',
+        r'\[V[ií]deo\s*Oficial.*?\]',
+        r'\(Ao\s*Vivo.*?\)',
+        r'\[Ao\s*Vivo.*?\]',
+        r'\(Ac[uú]stico.*?\)',
+        r'\[Ac[uú]stico.*?\]',
+        r'\(KondZilla\)',
+        r'\[KondZilla\]',
+        r'M/?V',
+        r'DANCE\s*PERFORMANCE\s*VIDEO',
+        # Catch-all pipe separators with video/clipe/official words
+        r'\|.*?(video|clipe|oficial|official|kondzilla).*',
         # Generic: anything inside brackets/parens that contains these words
-        r'\([^)]*(video|audio|mv|official|vevo|upgrade|remaster)[^)]*\)',
-        r'\[[^\]]*(video|audio|mv|official|vevo|upgrade|remaster)[^\]]*\]',
+        r'\([^)]*(video|audio|mv|official|oficial|clipe|vevo|upgrade|remaster)[^)]*\)',
+        r'\[[^\]]*(video|audio|mv|official|oficial|clipe|vevo|upgrade|remaster)[^\]]*\]',
     ]
     for p in patterns:
         title = re.sub(p, '', title, flags=re.IGNORECASE)
 
+    # Remove dashes separating noise like "- Vídeo Oficial"
+    title = re.sub(r'-\s*(V[ií]deo\s*Oficial.*|Clipe\s*Oficial.*)', '', title, flags=re.IGNORECASE)
+
     # Normalize feat/ft for better iTunes search
-    title = re.sub(r'(?i)\s+ft\.|\s+feat\.', ' ', title)
+    title = re.sub(r'(?i)\b(ft\.|feat\.)\b', ' ', title)
 
     # Collapse whitespace and strip
     title = re.sub(r'\s+', ' ', title)
@@ -99,11 +117,28 @@ def clean_title_for_tag(title: str) -> str:
         r'\[Sped\s*[Uu]p.*?\]',
         r'\(NSFW\)',
         r'\[NSFW\]',
-        r'\([^)]*(video|audio|mv|official|vevo|upgrade|remaster)[^)]*\)',
-        r'\[[^\]]*(video|audio|mv|official|vevo|upgrade|remaster)[^\]]*\]',
+        # --- Languague specific & new noise ---
+        r'\(Clipe\s*Oficial.*?\)',
+        r'\[Clipe\s*Oficial.*?\]',
+        r'\(V[ií]deo\s*Oficial.*?\)',
+        r'\[V[ií]deo\s*Oficial.*?\]',
+        r'\(Ao\s*Vivo.*?\)',
+        r'\[Ao\s*Vivo.*?\]',
+        r'\(Ac[uú]stico.*?\)',
+        r'\[Ac[uú]stico.*?\]',
+        r'\(KondZilla\)',
+        r'\[KondZilla\]',
+        r'M/?V',
+        r'DANCE\s*PERFORMANCE\s*VIDEO',
+        # Catch-all pipe separators
+        r'\|.*?(video|clipe|oficial|official|kondzilla).*',
+        r'\([^)]*(video|audio|mv|official|oficial|clipe|vevo|upgrade|remaster)[^)]*\)',
+        r'\[[^\]]*(video|audio|mv|official|oficial|clipe|vevo|upgrade|remaster)[^\]]*\]',
     ]
     for p in patterns:
         title = re.sub(p, '', title, flags=re.IGNORECASE)
+        
+    title = re.sub(r'-\s*(V[ií]deo\s*Oficial.*|Clipe\s*Oficial.*)', '', title, flags=re.IGNORECASE)
     title = re.sub(r'\s+', ' ', title)
     return title.strip(' -–—|')
 
