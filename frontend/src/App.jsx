@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { t, getLanguage, setLanguage } from './i18n';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, ArrowRightLeft, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu, Mic } from 'lucide-react';
+import { RippleButton } from './components/Ripple';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { WindowControls } from './components/WindowControls';
 import qrcodeImg from './assets/qrcode_custom.jpg';
+import { applyThemeFromImage, resetTheme } from './utils/theme';
 
 import { SettingsModal } from './components/SettingsModal';
 import { UpdateModal } from './components/UpdateModal';
@@ -16,6 +18,7 @@ import { LibraryModal } from './components/LibraryModal';
 import StudioModal from './components/StudioModal';
 import ShazamModal from './components/ShazamModal';
 import { HistoryModal } from './components/HistoryModal';
+import { ConverterModal } from './components/ConverterModal';
 import { SkeletonCard, SkeletonPlaylistItem, QualityOption, ToastContainer } from './components/UIComponents';
 // Helper para detectar modo automaticamente (Music vs Video)
 const detectMode = (url) => {
@@ -54,6 +57,54 @@ function App() {
       }
     }
   }, [url]);
+
+  // Wallpaper & Theme Manager
+  const [wallpaper, setWallpaper] = useState(() => localStorage.getItem('app_wallpaper'));
+  const [blurLevel, setBlurLevel] = useState(() => localStorage.getItem('app_blur_level') || 'md');
+
+  useEffect(() => {
+    if (wallpaper) {
+      if (wallpaper.match(/\.(mp4|webm|ogg)/i)) {
+        const video = document.createElement('video');
+        video.crossOrigin = "Anonymous";
+        video.src = wallpaper;
+        video.muted = true;
+        video.playsInline = true;
+        
+        video.onloadeddata = () => {
+          // Seek para um frame seguro (ex: 1 segundo) para evitar telas pretas iniciais
+          video.currentTime = Math.min(1, video.duration / 2 || 0);
+        };
+        
+        video.onseeked = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const img = new Image();
+            img.onload = () => {
+              applyThemeFromImage(img);
+            };
+            img.src = canvas.toDataURL('image/jpeg', 0.8);
+          } catch (e) {
+            console.error("Erro ao extrair cor do vídeo:", e);
+          }
+        };
+      } else {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+          applyThemeFromImage(img);
+        };
+        img.src = wallpaper;
+      }
+    } else {
+      resetTheme();
+    }
+  }, [wallpaper]);
 
   // Advanced Toasts
   const [toasts, setToasts] = useState([]);
@@ -95,6 +146,7 @@ function App() {
 
   const [showLibrary, setShowLibrary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showConverter, setShowConverter] = useState(false);
   const [showStudioModal, setShowStudioModal] = useState(false);
   const [showShazamModal, setShowShazamModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -250,7 +302,7 @@ function App() {
 
   // ===== API CONFIG =====
   // Single Port 8000 (Backend handles concurrency via Task Queue)
-  const API_URL = "http://localhost:8000";
+  const API_URL = `${window.location.protocol}//${window.location.hostname}:8000`;
   const getApiUrl = (endpoint = '') => `${API_URL}${endpoint}`;
 
   // Update Checker
@@ -894,7 +946,21 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-background text-white flex flex-col items-center justify-center p-4 font-sans selection:bg-primary selection:text-white relative ${currentSong ? 'pb-28' : ''}`}>
+    <>
+      {/* Background Wallpaper */}
+      {wallpaper && (
+        <div className="fixed inset-0 z-[-2] w-full h-full">
+          {wallpaper.match(/\.(mp4|webm|ogg)/i) ? (
+            <video src={wallpaper} autoPlay loop muted className="w-full h-full object-cover" />
+          ) : (
+            <img src={wallpaper} alt="wallpaper" className="w-full h-full object-cover" />
+          )}
+          {/* Dark Overlay with Blur to ensure text readability */}
+          <div className={`absolute inset-0 bg-black/30 backdrop-blur-${blurLevel}`}></div>
+        </div>
+      )}
+
+      <div className={`min-h-screen bg-background/50 text-white flex flex-col items-center justify-center p-4 font-sans selection:bg-primary selection:text-white relative ${currentSong ? 'pb-28' : ''}`}>
       <TermsModal
         showTerms={showTerms}
         termsLoading={termsLoading}
@@ -902,106 +968,59 @@ function App() {
         handleAcceptTerms={handleAcceptTerms}
       />
 
-      {/* Custom Title Bar */}
-      <div
-        data-tauri-drag-region
-        className="fixed top-0 left-0 right-0 h-10 flex items-center justify-between px-4 z-[100] group"
-      >
-        <div className="flex items-center gap-2 pointer-events-none">
-          <Music className="w-4 h-4 text-primary opacity-50" />
-          <span className="text-[10px] font-bold tracking-widest text-secondary uppercase opacity-30 group-hover:opacity-60 transition-opacity">
-            Music Downloader
-          </span>
-        </div>
-        <WindowControls />
-      </div>
-
-      <div 
-        className="absolute top-12 right-4 z-50 flex items-start justify-end gap-2"
-        onMouseEnter={handleMenuEnter}
-        onMouseLeave={handleMenuLeave}
-      >
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, x: 20, width: 0 }}
-              animate={{ opacity: 1, x: 0, width: 'auto' }}
-              exit={{ opacity: 0, x: 20, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 overflow-visible whitespace-nowrap"
-            >
-              <div className="relative group">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white">
-                  <Wand2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t('toolsMenu')}</span>
-                </button>
-                <div className="absolute right-0 top-full mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-surface border border-white/10 rounded-xl shadow-2xl py-2 z-50">
-                  <button 
-                    onClick={() => setShowStudioModal(true)}
-                    className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-purple-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
-                  >
-                    <Music className="w-4 h-4" />
-                    {t('studioTitle')}
-                  </button>
-                  <button 
-                    onClick={() => setShowShazamModal(true)}
-                    className="w-full px-4 py-2 text-left text-sm text-secondary hover:text-blue-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
-                  >
-                    <Search className="w-4 h-4" />
-                    {t('shazamTitle')}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowLibrary(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-                title="Abrir Biblioteca"
-              >
-                <List className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('navLibrary')}</span>
-              </button>
-              <button
-                onClick={() => setShowHistory(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-                title="Histórico de Downloads"
-              >
-                <Clock className="w-4 h-4" />
-                <span className="hidden sm:inline">Histórico</span>
-              </button>
-              <button
-                onClick={() => checkForUpdates(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-                title={t('btnUpdateTitle')}
-              >
-                <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{t('btnUpdate')}</span>
-              </button>
-              <button
-                onClick={() => setShowDonate(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white"
-              >
-                <Heart className="w-4 h-4" />
-                {t('btnDonate')}
-              </button>
-              <button
-                onClick={() => setShowSettings(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-lg backdrop-blur-md transition-all ${isAuthenticated ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-surface/50 text-secondary border border-white/10 hover:bg-surface'}`}
-              >
-                {isAuthenticated ? <CheckCircle className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
-                {isAuthenticated ? t('btnConnected') : t('btnConfigure')}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex items-center justify-center p-2.5 h-10 w-10 rounded-full shadow-lg backdrop-blur-md transition-all bg-white/5 text-secondary border border-white/10 hover:bg-white/10 hover:text-white z-50 shrink-0"
-          title="Menu"
+      {/* MD3 Floating App Bar (Pill Shape) */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-5xl pointer-events-none">
+        <div
+          data-tauri-drag-region
+          className="pointer-events-auto w-full h-16 bg-surface-container-highest rounded-full shadow-lg shadow-black/10 flex items-center justify-between px-4 border border-outline-variant/30 transition-colors duration-500"
         >
-          {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+          <div className="flex items-center gap-3 pointer-events-none pl-2">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-inner">
+              <Music className="w-5 h-5 text-on-primary" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-on-surface">
+              AppMúsica
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <RippleButton onClick={() => setShowConverter(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Conversor de Arquivos">
+              <ArrowRightLeft className="w-5 h-5" />
+            </RippleButton>
+            <RippleButton onClick={() => setShowStudioModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('studioTitle')}>
+              <Mic className="w-5 h-5" />
+            </RippleButton>
+            <RippleButton onClick={() => setShowShazamModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('shazamTitle')}>
+              <Search className="w-5 h-5" />
+            </RippleButton>
+            <RippleButton onClick={() => setShowLibrary(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('navLibrary')}>
+              <List className="w-5 h-5" />
+            </RippleButton>
+            <RippleButton onClick={() => setShowHistory(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Histórico">
+              <Clock className="w-5 h-5" />
+            </RippleButton>
+            <RippleButton onClick={() => checkForUpdates(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('btnUpdateTitle')}>
+              <RefreshCw className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+            </RippleButton>
+            <RippleButton onClick={() => setShowDonate(true)} className="w-10 h-10 rounded-full hover:bg-error/10 text-error hover:text-error flex items-center justify-center transition-colors" title={t('btnDonate')}>
+              <Heart className="w-5 h-5" />
+            </RippleButton>
+            
+            <div className="w-px h-8 bg-outline-variant/50 mx-2"></div>
+            
+            <div className="relative">
+              <RippleButton onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('btnConfigure')}>
+                <Settings className="w-5 h-5" />
+              </RippleButton>
+              {isAuthenticated && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 border-2 border-surface-container-highest rounded-full pointer-events-none"></span>
+              )}
+            </div>
+
+            <div className="w-px h-8 bg-outline-variant/50 mx-2"></div>
+            <WindowControls />
+          </div>
+        </div>
       </div>
 
       {/* Queue Resume Modal */}
@@ -1028,16 +1047,16 @@ function App() {
               </p>
               
               <div className="flex gap-4 w-full">
-                <button
+                <RippleButton
                   onClick={() => {
                     localStorage.removeItem('saved_queue');
                     setShowResumePrompt(false);
                   }}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium text-white/70 bg-white/5 hover:bg-white/10 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-full font-medium text-on-surface-variant border border-outline-variant hover:bg-surface-variant transition-colors"
                 >
                   {t('resumeNo')}
-                </button>
-                <button
+                </RippleButton>
+                <RippleButton
                   onClick={() => {
                     const queueToRestore = savedQueueData.map(item => {
                       if (item.status !== 'completed' && item.status !== 'error') {
@@ -1049,10 +1068,10 @@ function App() {
                     setShowResumePrompt(false);
                     setShowQueue(true);
                   }}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-primary hover:bg-primary/80 transition-colors shadow-lg shadow-primary/25"
+                  className="flex-1 py-3 px-4 rounded-full font-medium text-on-primary bg-primary hover:bg-primary/90 transition-colors shadow-md"
                 >
                   {t('resumeYes')}
-                </button>
+                </RippleButton>
               </div>
             </motion.div>
           </motion.div>
@@ -1072,6 +1091,10 @@ function App() {
           alert("Cookies atualizados com sucesso!");
           setShowSettings(false);
         }}
+        wallpaper={wallpaper}
+        setWallpaper={setWallpaper}
+        blurLevel={blurLevel}
+        setBlurLevel={setBlurLevel}
       />
 
       <AnimatePresence>
@@ -1106,12 +1129,12 @@ function App() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
+              className="bg-surface-container border border-outline-variant/30 rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
               onClick={e => e.stopPropagation()}
             >
               <button
                 onClick={() => setShowDonate(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1125,15 +1148,15 @@ function App() {
                   {t('donateTitle')}
                 </h3>
 
-                <p className="text-gray-400 text-sm">
+                <p className="text-on-surface-variant text-sm">
                   {t('donateDesc')}
                 </p>
 
-                <div className="bg-white p-4 rounded-xl inline-block mx-auto">
+                <div className="bg-surface-container-highest p-4 rounded-xl inline-block mx-auto">
                   <img src={qrcodeImg} alt="QR Code Pix" className="w-48 h-48 object-contain" />
                 </div>
 
-                <div className="bg-white/5 p-3 rounded-xl flex items-center justify-center gap-2 border border-white/10 relative group">
+                <div className="bg-surface-container-low p-3 rounded-xl flex items-center justify-center gap-2 border border-outline-variant/30 relative group">
                   {/* Hidden Text for reference but removed from UI */}
                   <button
                     onClick={() => {
@@ -1148,12 +1171,12 @@ function App() {
                   </button>
                 </div>
 
-                <div className="pt-4 border-t border-white/10 mt-4">
+                <div className="pt-4 border-t border-outline-variant/30 mt-4">
                   <a
                     href="https://github.com/Echiiiro453"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    className="flex items-center justify-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors"
                   >
                     <Github className="w-5 h-5" />
                     <span>github.com/Echiiiro453</span>
@@ -1198,12 +1221,12 @@ function App() {
             >
               <div className="relative">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search className="w-5 h-5 text-secondary group-focus-within:text-primary transition-colors" />
+                  <Search className="w-5 h-5 text-on-surface-variant group-focus-within:text-primary transition-colors" />
                 </div>
                 <input
                   type="text"
                   placeholder={t('searchPlaceholderText')}
-                  className="w-full h-14 pl-12 pr-4 bg-white/5 backdrop-blur-2xl rounded-full focus:outline-none focus:ring-1 focus:ring-white/30 transition-all text-lg placeholder:text-white/30 text-white"
+                  className="w-full h-14 pl-12 pr-4 bg-surface-container-high border border-outline-variant/30 rounded-full focus:outline-none focus:border-primary transition-all text-lg placeholder:text-on-surface-variant text-on-surface shadow-md"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   autoFocus
@@ -1211,12 +1234,12 @@ function App() {
 
                 {/* Progresso visual imediato */}
                 {(loading || isSearching) && (
-                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-white/10 overflow-hidden rounded-full">
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-surface-container-highest overflow-hidden rounded-full">
                     <motion.div
                       initial={{ x: '-100%' }}
                       animate={{ x: '100%' }}
                       transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                      className="w-1/3 h-full bg-white"
+                      className="w-1/3 h-full bg-primary"
                     />
                   </div>
                 )}
@@ -1229,8 +1252,8 @@ function App() {
                     onClick={() => handleSearch(url)}
                     disabled={loading || !url}
                     className={`flex-1 h-12 rounded-full font-medium transition-all flex items-center justify-center gap-2 ${!/^(http|https):\/\/[^ "]+$/i.test(url)
-                      ? 'bg-white text-black hover:scale-[1.02]'
-                      : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
+                      ? 'bg-primary text-on-primary hover:scale-[1.02] shadow-md shadow-primary/20'
+                      : 'bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                       }`}
                   >
                     <Search size={18} />
@@ -1242,8 +1265,8 @@ function App() {
                     onClick={() => loadVideoDetails(url)}
                     disabled={loading || !url}
                     className={`flex-1 h-12 rounded-full font-medium transition-all flex items-center justify-center gap-2 ${/^(http|https):\/\/[^ "]+$/i.test(url)
-                      ? 'bg-white text-black hover:scale-[1.02]'
-                      : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
+                      ? 'bg-primary text-on-primary hover:scale-[1.02] shadow-md shadow-primary/20'
+                      : 'bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                       }`}
                   >
                     <ArrowRight size={18} />
@@ -1254,11 +1277,11 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setShowSpotifyModal(true)}
-                  className="sm:flex-none h-12 px-6 rounded-full bg-gradient-to-r from-[#1DB954]/10 via-[#FA243C]/10 to-[#FF5500]/10 text-white hover:from-[#1DB954]/20 hover:via-[#FA243C]/20 hover:to-[#FF5500]/20 font-medium transition-all flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 hover:scale-[1.02]"
+                  className="sm:flex-none h-12 px-6 rounded-full bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-medium transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
                   title="Importar Playlist (Spotify/Apple/SoundCloud)"
                 >
-                  <Music size={18} className="text-[#1DB954]" />
-                  <span className="hidden sm:inline bg-clip-text text-transparent bg-gradient-to-r from-[#1DB954] via-[#FA243C] to-[#FF5500] font-bold">Importar Playlist</span>
+                  <Music size={18} />
+                  <span className="hidden sm:inline">Importar Playlist</span>
                 </button>
               </div>
             </motion.form>
@@ -1281,13 +1304,13 @@ function App() {
 
               {!isSearching && searchResults.length > 0 && (
                 <>
-                  <div className="flex items-center justify-between text-secondary px-1">
+                  <div className="flex items-center justify-between text-on-surface-variant px-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{t('labelQty')}</span>
                       <select
                         value={searchLimit}
                         onChange={(e) => setSearchLimit(Number(e.target.value))}
-                        className="bg-black/20 border border-white/10 rounded px-2 py-0.5 text-xs text-white focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-white/5"
+                        className="bg-surface-container border border-outline-variant/30 rounded-lg px-2 py-0.5 text-xs text-on-surface focus:border-primary outline-none cursor-pointer hover:bg-surface-container-high"
                       >
                         <option value={10} className="bg-slate-800 text-white">10</option>
                         <option value={30} className="bg-slate-800 text-white">30</option>
@@ -1297,7 +1320,7 @@ function App() {
                     </div>
                     <button
                       onClick={() => setSearchResults([])}
-                      className="text-xs hover:text-white transition-colors"
+                      className="text-xs text-on-surface-variant hover:text-on-surface transition-colors"
                     >
                       {t('btnClear')}
                     </button>
@@ -1308,7 +1331,7 @@ function App() {
                       <div
                         key={video.id}
                         onClick={() => handleSelectVideo(video.url)}
-                        className="bg-transparent hover:bg-white/5 p-3 rounded-2xl flex gap-4 cursor-pointer transition-all duration-300 group hover:shadow-2xl"
+                        className="bg-surface-container-low hover:bg-surface-container-high border border-transparent hover:border-outline-variant/30 p-3 rounded-3xl flex gap-4 cursor-pointer transition-all duration-300 group hover:shadow-2xl"
                       >
                         <div className="relative w-32 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-black/50">
                           <img
@@ -1321,10 +1344,10 @@ function App() {
                           </div>
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <h3 className="text-white font-medium line-clamp-2 leading-tight mb-1 group-hover:text-primary transition-colors text-[15px]">
+                          <h3 className="text-on-surface font-medium line-clamp-2 leading-tight mb-1 group-hover:text-primary transition-colors text-[15px]">
                             {video.title}
                           </h3>
-                          <div className="flex items-center gap-2 text-xs text-secondary">
+                          <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                             <span className="font-medium truncate">{video.uploader}</span>
                             {video.view_count && (
                               <span className="opacity-60">• {(video.view_count / 1000).toFixed(0)}k views</span>
@@ -1334,12 +1357,12 @@ function App() {
                         <div className="flex items-center gap-2 pr-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
                           <button
                             onClick={(e) => { e.stopPropagation(); addToQueue(video); }}
-                            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all"
+                            className="w-10 h-10 rounded-full bg-secondary-container hover:bg-primary text-on-secondary-container hover:text-on-primary flex items-center justify-center transition-all shadow-md"
                             title="Adicionar à fila"
                           >
                             <Plus size={18} />
                           </button>
-                          <div className="w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center">
                             <ArrowRight size={18} />
                           </div>
                         </div>
@@ -1360,20 +1383,20 @@ function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-transparent border border-white/5 rounded-3xl p-6 space-y-6"
+              className="bg-surface-container border border-outline-variant/30 rounded-4xl p-6 space-y-6 shadow-2xl"
             >
               {/* Media Info */}
               <div className="flex gap-4 items-center">
                 {metadata.thumbnail ? (
-                  <img src={metadata.thumbnail} alt="Cover" className="w-20 h-20 rounded-xl object-cover shadow-lg" />
+                  <img src={metadata.thumbnail} alt="Cover" className="w-20 h-20 rounded-2xl object-cover shadow-lg" />
                 ) : (
-                  <div className="w-20 h-20 bg-black/40 rounded-xl flex items-center justify-center">
-                    <Music className="w-8 h-8 text-secondary" />
+                  <div className="w-20 h-20 bg-surface-container-highest rounded-2xl flex items-center justify-center">
+                    <Music className="w-8 h-8 text-on-surface-variant" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg leading-tight line-clamp-2 text-white">{metadata.title}</h3>
-                  <p className="text-secondary text-sm mt-1">{t('readyToDownload')}</p>
+                  <h3 className="font-bold text-lg leading-tight line-clamp-2 text-on-surface">{metadata.title}</h3>
+                  <p className="text-on-surface-variant text-sm mt-1">{t('readyToDownload')}</p>
                 </div>
               </div>
 
@@ -1382,20 +1405,20 @@ function App() {
                   {/* Playlist Manager Button */}
                   {metadata.is_playlist && (
                     <div className="mb-4 space-y-2">
-                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-lg">
-                          <FileText className="w-5 h-5 text-purple-400" />
+                      <div className="bg-primary-container/20 border border-primary-container rounded-3xl p-4 flex items-center gap-3">
+                        <div className="p-2 bg-primary-container rounded-xl">
+                          <FileText className="w-5 h-5 text-on-primary-container" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-white">{t('playlistDetectedTitle')}</h4>
-                          <p className="text-xs text-secondary">{t('playlistDetectedDesc')}</p>
+                          <h4 className="font-bold text-on-surface">{t('playlistDetectedTitle')}</h4>
+                          <p className="text-xs text-on-surface-variant">{t('playlistDetectedDesc')}</p>
                         </div>
                       </div>
 
                       <button
                         onClick={fetchPlaylistDetails}
                         disabled={playlistLoading}
-                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                        className="w-full py-3 bg-primary hover:bg-primary/90 disabled:bg-surface-container-highest disabled:text-on-surface-variant text-on-primary font-bold rounded-full transition-all flex items-center justify-center gap-2 shadow-lg"
                       >
                         {playlistLoading ? (
                           <>{t('btnLoadingPlaylist')}</>
@@ -1410,17 +1433,17 @@ function App() {
                   )}
 
                   {/* Mode Toggle */}
-                  <div className="flex bg-white/5 p-1 rounded-full backdrop-blur-md">
+                  <div className="flex bg-surface-container-highest p-1 rounded-full">
                     <button
                       onClick={() => setMode('audio')}
-                      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${mode === 'audio' ? 'bg-white text-black shadow-md' : 'text-white/50 hover:text-white'
+                      className={`flex-1 py-2 rounded-full text-sm font-bold transition-all ${mode === 'audio' ? 'bg-secondary-container text-on-secondary-container shadow-md' : 'text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5'
                         }`}
                     >
                       {t('tabAudio')}
                     </button>
                     <button
                       onClick={() => setMode('video')}
-                      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${mode === 'video' ? 'bg-white text-black shadow-md' : 'text-white/50 hover:text-white'
+                      className={`flex-1 py-2 rounded-full text-sm font-bold transition-all ${mode === 'video' ? 'bg-secondary-container text-on-secondary-container shadow-md' : 'text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5'
                         }`}
                     >
                       {t('tabVideo')}
@@ -1429,7 +1452,7 @@ function App() {
 
                   {/* Audio Features (Pitch & Speed) - Only for Audio */}
                   {mode === 'audio' && (
-                    <div className="bg-surface/30 border border-white/5 rounded-xl p-4 space-y-4">
+                    <div className="bg-surface-container-high border border-outline-variant/30 rounded-3xl p-4 space-y-4">
 
                       {/* Presets Dropdown */}
                       <div className="space-y-2">
@@ -1442,16 +1465,16 @@ function App() {
                         <select
                           value={selectedPresetVal}
                           onChange={(e) => applyPreset(e.target.value)}
-                          className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-primary cursor-pointer"
+                          className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm outline-none focus:border-primary cursor-pointer"
                         >
-                          <option value="" className="bg-slate-900 text-gray-400">{t('selectPreset')}</option>
-                          <optgroup label={t('groupDefaultPresets')} className="bg-slate-900 text-white">
+                          <option value="" className="bg-surface-container text-on-surface-variant">{t('selectPreset')}</option>
+                          <optgroup label={t('groupDefaultPresets')} className="bg-surface-container text-on-surface">
                             {presets.defaults.map(p => (
                               <option key={p.name} value={p.name}>{p.name}</option>
                             ))}
                           </optgroup>
                           {presets.custom.length > 0 && (
-                            <optgroup label={t('groupMyPresets')} className="bg-slate-900 text-white">
+                            <optgroup label={t('groupMyPresets')} className="bg-surface-container text-on-surface">
                               {presets.custom.length > 0 && presets.custom.map(p => (
                                 <option key={p.name} value={p.name}>{p.name}</option>
                               ))}
@@ -1465,7 +1488,7 @@ function App() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Sliders className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm font-medium text-white">{t('labelPitch')}</span>
+                            <span className="text-sm font-medium text-on-surface">{t('labelPitch')}</span>
                           </div>
                           <span className={`text-xs font-mono font-bold ${pitch === 0 ? 'text-secondary' : 'text-purple-400'}`}>
                             {pitch > 0 ? `+${pitch}` : pitch} semi
@@ -1478,7 +1501,7 @@ function App() {
                           step="1"
                           value={pitch}
                           onChange={(e) => { setPitch(parseInt(e.target.value)); setSelectedPresetVal(''); }}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                          className="w-full h-1.5 bg-on-surface/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
                         />
                         <div className="flex justify-between text-[10px] text-secondary/50 font-mono px-1">
                           <span>-12</span>
@@ -1492,7 +1515,7 @@ function App() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Sliders className="w-4 h-4 text-blue-400" />
-                            <span className="text-sm font-medium text-white">{t('speedControl')}</span>
+                            <span className="text-sm font-medium text-on-surface">{t('speedControl')}</span>
                           </div>
                           <span className={`text-xs font-mono font-bold ${speed === 1.0 ? 'text-secondary' : 'text-blue-400'}`}>
                             {speed}x
@@ -1505,7 +1528,7 @@ function App() {
                           step="0.05"
                           value={speed}
                           onChange={(e) => { setSpeed(parseFloat(e.target.value)); setSelectedPresetVal(''); }}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                          className="w-full h-1.5 bg-on-surface/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
                         />
                         <div className="flex justify-between text-[10px] text-secondary/50 font-mono px-1">
                           <span>0.5x</span>
@@ -1585,8 +1608,8 @@ function App() {
                               );
                             })
                           ) : (
-                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
-                              <p className="text-red-300 text-sm font-medium">Nenhuma qualidade de vídeo encontrada.</p>
+                            <div className="p-4 bg-error-container border border-error/20 rounded-xl text-center">
+                              <p className="text-on-error-container text-sm font-medium">Nenhuma qualidade de vídeo encontrada.</p>
                             </div>
                           )}
                         </>
@@ -1597,13 +1620,13 @@ function App() {
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={reset}
-                      className="px-4 py-3 rounded-full hover:bg-white/5 text-white/50 font-medium transition-colors"
+                      className="px-4 py-3 rounded-full hover:bg-on-surface/5 text-on-surface-variant font-medium transition-colors"
                     >
                       {t('cancel')}
                     </button>
                     <button
                       onClick={handleDownload}
-                      className="flex-1 bg-white hover:bg-gray-200 text-black rounded-full font-bold shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                      className="flex-1 bg-primary hover:bg-primary/90 text-on-primary rounded-full font-bold shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
                     >
                       <Download className="w-5 h-5" />
                       {metadata.is_playlist && (metadata.url?.includes('v=') || metadata.url?.includes('youtu.be/')) 
@@ -1616,7 +1639,7 @@ function App() {
 
               {step === 'downloading' && (
                 <div className="py-6 text-center space-y-4">
-                  <div className="relative w-full h-4 bg-white/10 rounded-full overflow-hidden">
+                  <div className="relative w-full h-4 bg-surface-container-highest rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${progress.percent}%` }}
@@ -1671,7 +1694,7 @@ function App() {
                       Baixar Outra
                     </button>
                     <button
-                      onClick={() => axios.post('http://localhost:8000/open_folder')}
+                      onClick={() => axios.post(getApiUrl('/open_folder'))}
                       className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
                     >
                       📂 Abrir Pasta
@@ -1739,16 +1762,16 @@ function App() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900/80 backdrop-blur-2xl border-l border-white/10 z-[101] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
+              className="fixed top-0 right-0 h-full w-full max-w-md bg-surface border-l border-outline-variant z-[101] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
             >
-              <div className="p-6 border-b border-white/10 bg-gradient-to-l from-blue-900/20">
+              <div className="p-6 border-b border-outline-variant bg-surface-container-high">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-on-surface flex items-center gap-2">
                     <List className="text-primary" />
                     {t('queueTitle')}
                   </h3>
-                  <button onClick={() => setShowQueue(false)} className="p-2 hover:bg-white/10 rounded-full">
-                    <X className="text-gray-400" />
+                  <button onClick={() => setShowQueue(false)} className="p-2 hover:bg-surface-variant text-on-surface-variant rounded-full">
+                    <X />
                   </button>
                 </div>
                 <div className="flex justify-between items-center text-sm text-secondary">
@@ -1756,7 +1779,7 @@ function App() {
                   <button
                     onClick={() => setQueue([])}
                     disabled={isProcessingQueue}
-                    className="text-red-400 hover:text-red-300 flex items-center gap-1 disabled:opacity-50"
+                    className="text-error hover:text-error/80 flex items-center gap-1 disabled:opacity-50"
                   >
                     <Trash2 size={14} /> {t('queueClear')}
                   </button>
@@ -1784,19 +1807,19 @@ function App() {
                 )}
               </div>
 
-              <div className="p-6 border-t border-white/10 bg-slate-900/50 backdrop-blur-lg">
-                <button
+              <div className="p-6 border-t border-outline-variant bg-surface-container-high">
+                <RippleButton
                   id="start-downloads-btn"
                   onClick={processQueue}
                   disabled={isProcessingQueue || queue.filter(i => i.status === 'pending').length === 0}
                   className="w-full py-4 bg-white text-black hover:bg-gray-200 disabled:bg-white/10 disabled:text-white/30 font-bold rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
                 >
                   {isProcessingQueue ? (
-                    <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('loading')}</>
+                    <><div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" /> {t('loading')}</>
                   ) : (
                     <><PlayCircle size={20} /> {t('confirmDownload')}</>
                   )}
-                </button>
+                </RippleButton>
               </div>
             </motion.div>
           </>
@@ -1840,37 +1863,33 @@ function App() {
       {/* Custom Spotify/Apple/SoundCloud Modal */}
       <AnimatePresence>
         {showSpotifyModal && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg bg-slate-900 border border-transparent [background:padding-box_linear-gradient(#0f172a,#0f172a),border-box_linear-gradient(to_right,#1DB954,#FA243C,#FF5500)] shadow-2xl shadow-orange-500/10 rounded-[2rem] p-6 flex flex-col relative overflow-hidden"
+              className="w-full max-w-lg bg-surface-container border border-outline-variant/30 shadow-2xl rounded-[2rem] p-6 flex flex-col relative overflow-hidden"
             >
-              {/* Decorative Background */}
-              <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1DB954]/20 rounded-full blur-[80px] pointer-events-none" />
-              <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-[#FA243C]/10 rounded-full blur-[80px] pointer-events-none" />
-              
               <div className="flex justify-between items-center mb-6 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1DB954]/20 via-[#FA243C]/20 to-[#FF5500]/20 flex items-center justify-center text-white">
+                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
                     <Music size={20} />
                   </div>
-                  <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#1DB954] via-[#FA243C] to-[#FF5500] tracking-tight">Importar Playlist</h3>
+                  <h3 className="text-xl font-bold text-on-surface tracking-tight">Importar Playlist</h3>
                 </div>
-                <button onClick={() => setShowSpotifyModal(false)} className="p-2 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
+                <button onClick={() => setShowSpotifyModal(false)} className="p-2 text-on-surface-variant hover:text-on-surface bg-surface-container-high hover:bg-surface-variant rounded-full transition-colors"><X size={20}/></button>
               </div>
 
               <div className="relative z-10 space-y-4">
-                <p className="text-sm text-gray-300">
-                  Cole o link da sua música ou Playlist do <b>Spotify</b>, <b>Apple Music</b> ou <b>SoundCloud</b>. O AppMusica encontrará as músicas automaticamente.
+                <p className="text-sm text-on-surface-variant">
+                  Cole o link da sua música ou Playlist do <b className="text-on-surface">Spotify</b>, <b className="text-on-surface">Apple Music</b> ou <b className="text-on-surface">SoundCloud</b>. O AppMusica encontrará as músicas automaticamente.
                 </p>
                 <input
                   type="text"
                   placeholder="Ex: open.spotify.com/..., music.apple.com/... ou soundcloud.com/..."
                   value={spotifyInputUrl}
                   onChange={(e) => setSpotifyInputUrl(e.target.value)}
-                  className="w-full h-14 px-4 bg-black/40 border border-white/20 rounded-xl focus:outline-none focus:border-white/50 text-white placeholder:text-white/30 transition-all"
+                  className="w-full h-14 px-4 bg-surface-container-low border border-outline-variant/50 rounded-xl focus:outline-none focus:border-primary text-on-surface placeholder:text-on-surface-variant/50 transition-all"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && spotifyInputUrl) {
@@ -1891,7 +1910,7 @@ function App() {
                     }
                   }}
                   disabled={!spotifyInputUrl}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#1DB954] via-[#FA243C] to-[#FF5500] hover:opacity-90 disabled:opacity-50 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 mt-4 shadow-lg"
+                  className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:bg-surface-container-highest disabled:text-on-surface-variant text-on-primary font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary/20"
                 >
                   Confirmar e Buscar
                 </button>
@@ -1921,6 +1940,15 @@ function App() {
         }}
       />
     </div>
+      {/* New Converter Modal */}
+      <AnimatePresence>
+        <ConverterModal
+          isOpen={showConverter}
+          onClose={() => setShowConverter(false)}
+          apiUrl={getApiUrl()}
+        />
+      </AnimatePresence>
+    </>
   );
 }
 

@@ -151,21 +151,28 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
 
       return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-2">
-          {Object.entries(groupedByArtist).sort((a,b) => a[0].localeCompare(b[0])).map(([artist, songs]) => (
+          {Object.entries(groupedByArtist).sort((a,b) => a[0].localeCompare(b[0])).map(([artist, songs]) => {
+            const firstVideoId = songs.find(s => s.video_id)?.video_id;
+            return (
             <div 
               key={artist}
               onClick={() => setSelectedArtist(artist)}
-              className="flex items-center gap-4 p-4 bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] border border-white/5"
+              className="flex items-center gap-4 p-4 bg-white/5 hover:bg-white/10 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] border border-white/5 group"
             >
-              <div className="w-14 h-14 bg-black/40 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner">
-                <Disc className="text-white/50" size={24} />
+              <div className="w-14 h-14 bg-black/40 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner overflow-hidden relative">
+                {firstVideoId ? (
+                   <img src={`https://i.ytimg.com/vi/${firstVideoId}/mqdefault.jpg`} alt={artist} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; }} />
+                ) : (
+                   <Disc className="text-white/50" size={24} />
+                )}
               </div>
               <div className="overflow-hidden">
                 <h4 className="text-white font-medium truncate text-sm">{artist}</h4>
                 <p className="text-xs text-gray-500">{songs.length} música{songs.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       );
     }
@@ -219,7 +226,7 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
         onClick={onClose}
       >
         <motion.div
@@ -227,17 +234,17 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+          className="bg-surface-container-high rounded-[28px] w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-transparent flex-shrink-0">
+          <div className="p-6 border-b border-surface-container-highest flex items-center justify-between bg-transparent flex-shrink-0">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/5 rounded-full backdrop-blur-md">
-                <Music className="text-white" size={24} />
+              <div className="p-4 bg-primary-container rounded-full">
+                <Music className="text-on-primary-container" size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Sua Biblioteca</h2>
-                <p className="text-sm text-gray-400">
+                <h2 className="text-2xl font-bold text-on-surface">Sua Biblioteca</h2>
+                <p className="text-sm text-on-surface-variant">
                   {library.length} músicas salvas no seu PC
                 </p>
               </div>
@@ -245,21 +252,21 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
             <div className="flex items-center gap-4">
               <button
                 onClick={openFolder}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-sm font-medium border border-transparent"
+                className="flex items-center gap-2 px-4 py-2 bg-surface-variant hover:bg-surface-container-highest text-on-surface-variant rounded-full transition-colors text-sm font-medium border border-transparent"
               >
                 <FolderOpen size={16} />
                 <span className="hidden md:inline">Abrir Pasta</span>
               </button>
               <button
                 onClick={fetchLibrary}
-                className="p-2 text-gray-400 hover:text-white transition-colors hover:bg-white/10 rounded-full"
+                className="p-2 text-on-surface-variant hover:text-on-surface transition-colors hover:bg-surface-variant rounded-full"
                 title="Atualizar Biblioteca"
               >
                 <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
               </button>
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-white transition-colors hover:bg-white/10 rounded-full"
+                className="p-2 text-on-surface-variant hover:text-on-surface transition-colors hover:bg-surface-variant rounded-full"
               >
                 <X size={24} />
               </button>
@@ -268,19 +275,19 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
 
           {/* Tabs */}
           {!loading && (library.length > 0 || studioLibrary.length > 0) && (
-            <div className="flex items-center gap-2 px-6 py-4 border-b border-white/5 flex-shrink-0">
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-surface-container-highest flex-shrink-0">
               {library.length > 0 && (
                   <>
                       <button
                         onClick={() => { setActiveTab('all'); setSelectedArtist(null); }}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors ${activeTab === 'all' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}`}
                       >
                         <Music size={16} />
                         Geral
                       </button>
                       <button
                         onClick={() => setActiveTab('artists')}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'artists' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors ${activeTab === 'artists' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}`}
                       >
                         <Users size={16} />
                         Artistas
@@ -290,7 +297,7 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
               {studioLibrary.length > 0 && (
                   <button
                     onClick={() => setActiveTab('studio')}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'studio' ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' : 'text-gray-400 hover:bg-white/10 hover:text-purple-400'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors ${activeTab === 'studio' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}`}
                   >
                     <Mic size={16} />
                     IA Stems

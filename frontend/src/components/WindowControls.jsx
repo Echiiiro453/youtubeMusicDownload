@@ -24,21 +24,21 @@ export function WindowControls() {
         <div className="flex items-center gap-1">
             <button
                 onClick={onMinimize}
-                className="p-2 hover:bg-white/10 rounded-md transition-colors text-secondary hover:text-white"
+                className="p-2 hover:bg-on-surface/10 rounded-md transition-colors text-on-surface-variant hover:text-on-surface"
                 title="Minimizar"
             >
                 <Minus size={14} />
             </button>
             <button
                 onClick={onMaximize}
-                className="p-2 hover:bg-white/10 rounded-md transition-colors text-secondary hover:text-white"
+                className="p-2 hover:bg-on-surface/10 rounded-md transition-colors text-on-surface-variant hover:text-on-surface"
                 title="Maximizar"
             >
                 <Square size={12} />
             </button>
             <button
                 onClick={onClose}
-                className="p-2 hover:bg-red-500/80 rounded-md transition-colors text-secondary hover:text-white"
+                className="p-2 hover:bg-error rounded-md transition-colors text-on-surface-variant hover:text-on-error"
                 title="Fechar"
             >
                 <X size={14} />

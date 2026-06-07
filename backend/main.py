@@ -76,7 +76,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "3.2.0"
+APP_VERSION = "3.3.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -307,7 +307,7 @@ async def search_youtube(request: SearchRequest):
     if is_ytm:
         try:
             import json
-            from curl_cffi import requests as cffi_requests
+            import requests as cffi_requests
             api_url = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false"
             headers = {
                 "Content-Type": "application/json",
@@ -475,10 +475,13 @@ async def get_info(request: DownloadRequest):
                 if last_err: err_msg += f" Detalhes: {last_err}"
                 raise HTTPException(status_code=500, detail=err_msg)
                 
-            if is_magic and 'entries' in info:
-                info = info['entries'][0]
+            if is_magic and not pseudo_playlist and 'entries' in info:
+                if len(info['entries']) > 0:
+                    info = info['entries'][0]
+                else:
+                    raise HTTPException(status_code=404, detail="Música não encontrada")
                 
-            is_playlist = ('entries' in info or info.get('playlist_id')) and not is_magic 
+            is_playlist = ('entries' in info or info.get('playlist_id')) and (not is_magic or pseudo_playlist is not None) 
         
         duration_str = info.get('duration_string')
         if not duration_str and info.get('duration'):
@@ -753,6 +756,61 @@ def choose_file():
         return {"status": "error", "message": "Nenhuma janela ativa ou ação cancelada."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+class ConvertRequest(BaseModel):
+    input_path: str
+    output_format: str
+
+@app.post("/api/convert")
+async def convert_file(request: ConvertRequest):
+    try:
+        from utils import get_downloads_dir
+        input_path = request.input_path
+        if not os.path.exists(input_path):
+            raise HTTPException(status_code=404, detail="Arquivo original não encontrado.")
+
+        downloads_dir = get_downloads_dir()
+        filename = os.path.basename(input_path)
+        name, _ = os.path.splitext(filename)
+        output_filename = f"{name}.{request.output_format.lower()}"
+        output_path = os.path.join(downloads_dir, output_filename)
+
+        # Check if ffmpeg exists in root
+        ffmpeg_path = os.path.join(get_base_dir(), "ffmpeg.exe")
+        if not os.path.exists(ffmpeg_path):
+            ffmpeg_path = "ffmpeg" # Fallback to system ffmpeg
+
+        cmd = [
+            ffmpeg_path,
+            "-y",
+            "-i", input_path,
+        ]
+        
+        is_audio = request.output_format.lower() in ['mp3', 'wav', 'flac', 'm4a', 'ogg']
+        if is_audio:
+            cmd.append("-vn") # No video
+            
+        if request.output_format.lower() == 'mp3':
+            cmd.extend(["-q:a", "0"]) # Best VBR quality
+        elif request.output_format.lower() == 'ogg':
+            cmd.extend(["-q:a", "7"])
+
+        cmd.append(output_path)
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        if process.returncode != 0:
+            raise Exception(f"FFMPEG Error: {stderr.decode('utf-8', errors='ignore')}")
+
+        return {"status": "success", "output_path": output_path}
+    except Exception as e:
+        print(f"Error in convert: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class OpenExternalRequest(BaseModel):
     file_path: str
@@ -1191,6 +1249,184 @@ def get_studio_install_status(job_id: str):
     if job_id not in studio_install_jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     return studio_install_jobs[job_id]
+
+class ConvertRequest(BaseModel):
+    input_path: str
+    output_format: str
+
+@app.post("/api/choose_file")
+def api_choose_file():
+    import tkinter as tk
+    from tkinter import filedialog
+    import threading
+
+    result = {"file": ""}
+    
+    def open_dialog():
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        file_path = filedialog.askopenfilename(
+            title="Selecione um arquivo de mídia",
+            filetypes=[("Arquivos de Mídia", "*.mp4;*.mp3;*.wav;*.flac;*.m4a;*.ogg;*.aac;*.webm;*.mkv"), ("Todos os Arquivos", "*.*")]
+        )
+        result["file"] = file_path
+        root.destroy()
+        
+    # Execute in a new thread to avoid blocking issues or main thread errors
+    t = threading.Thread(target=open_dialog)
+    t.start()
+    t.join()
+    
+    if result["file"]:
+        return {"status": "ok", "file": result["file"]}
+    else:
+        return {"status": "cancelled", "message": "Nenhum arquivo selecionado."}
+
+@app.post("/api/convert")
+def api_convert(req: ConvertRequest):
+    import subprocess
+    import time
+    from utils import get_downloads_dir
+    
+    if not os.path.exists(req.input_path):
+        raise HTTPException(status_code=400, detail="Arquivo de entrada não encontrado.")
+        
+    valid_formats = ['mp3', 'wav', 'flac', 'm4a', 'ogg']
+    if req.output_format.lower() not in valid_formats:
+        raise HTTPException(status_code=400, detail="Formato de saída inválido.")
+        
+    filename = os.path.basename(req.input_path)
+    name_only = os.path.splitext(filename)[0]
+    
+    downloads_dir = get_downloads_dir()
+    output_path = os.path.join(downloads_dir, f"{name_only}_converted.{req.output_format.lower()}")
+    
+    # Se o arquivo já existir, adiciona timestamp
+    if os.path.exists(output_path):
+        output_path = os.path.join(downloads_dir, f"{name_only}_converted_{int(time.time())}.{req.output_format.lower()}")
+        
+    # Build ffmpeg command
+    cmd = [
+        'ffmpeg',
+        '-y', # overwrite
+        '-i', req.input_path
+    ]
+    
+    # Format specific options
+    if req.output_format.lower() == 'mp3':
+        cmd.extend(['-codec:a', 'libmp3lame', '-q:a', '2'])
+    elif req.output_format.lower() == 'm4a':
+        cmd.extend(['-codec:a', 'aac', '-b:a', '192k'])
+    elif req.output_format.lower() == 'ogg':
+        cmd.extend(['-codec:a', 'libvorbis', '-q:a', '4'])
+        
+    cmd.append(output_path)
+    
+    CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+    
+    try:
+        process = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            creationflags=CREATE_NO_WINDOW,
+            text=True
+        )
+        
+        if process.returncode != 0:
+            print(f"FFmpeg error: {process.stderr}")
+            raise HTTPException(status_code=500, detail="Erro na conversão do arquivo pelo FFmpeg.")
+            
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="FFmpeg não encontrado no sistema.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    return {
+        "status": "success",
+        "output_path": output_path
+    }
+
+@app.post("/api/upload_wallpaper")
+async def upload_wallpaper(file: UploadFile = File(...)):
+    from utils import get_downloads_dir
+    import shutil
+    
+    downloads_dir = get_downloads_dir()
+    os.makedirs(downloads_dir, exist_ok=True)
+    
+    ext = os.path.splitext(file.filename)[1].lower()
+    save_name = f"custom_wallpaper{ext}"
+    save_path = os.path.join(downloads_dir, save_name)
+    
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"status": "success", "url": f"/downloads/{save_name}?v={int(time.time())}"}
+
+@app.get("/api/artist_info")
+def get_artist_info(artist: str):
+    import requests
+    try:
+        url = f"https://api.deezer.com/search/artist?q={requests.utils.quote(artist)}"
+        response = requests.get(url, timeout=5).json()
+        if 'data' in response and len(response['data']) > 0:
+            artist_data = response['data'][0]
+            return {
+                "status": "success",
+                "name": artist_data.get('name'),
+                "picture": artist_data.get('picture_xl') or artist_data.get('picture_large'),
+                "link": artist_data.get('link')
+            }
+        return {"status": "not_found"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+@app.post("/api/system/startup")
+def toggle_startup(enable: bool):
+    import os
+    import sys
+    try:
+        startup_dir = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+        shortcut_path = os.path.join(startup_dir, "AppMusica.lnk")
+        
+        if not enable:
+            if os.path.exists(shortcut_path):
+                os.remove(shortcut_path)
+            return {"status": "success", "message": "Removido da inicialização"}
+            
+        target = os.path.abspath(sys.argv[0])
+        # Executable logic (se for .py ou .exe)
+        if target.endswith('.py'):
+            python_exe = sys.executable
+            args = f'"{target}"'
+            target_path = python_exe
+        else:
+            target_path = target
+            args = ""
+            
+        vbs_content = f"""
+Set oWS = WScript.CreateObject("WScript.Shell")
+sLinkFile = "{shortcut_path}"
+Set oLink = oWS.CreateShortcut(sLinkFile)
+oLink.TargetPath = "{target_path}"
+oLink.Arguments = "{args}"
+oLink.WorkingDirectory = "{os.path.dirname(target)}"
+oLink.IconLocation = "{target_path}, 0"
+oLink.Save
+"""
+        vbs_path = os.path.join(os.getenv("TEMP"), "create_shortcut.vbs")
+        with open(vbs_path, "w", encoding="utf-8") as f:
+            f.write(vbs_content)
+            
+        import subprocess
+        subprocess.run(["cscript", "//nologo", vbs_path], creationflags=0x08000000)
+        os.remove(vbs_path)
+        
+        return {"status": "success", "message": "Adicionado à inicialização"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/track_metadata")
 def get_track_metadata(file_path: str):

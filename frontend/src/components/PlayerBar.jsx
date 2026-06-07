@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info } from 'lucide-react';
+import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RippleButton } from './Ripple';
 
 export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isShuffle, setIsShuffle }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -14,8 +15,82 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   const [showInfo, setShowInfo] = useState(false);
   
   const audioRef = useRef(null);
+  
+  const [artistPhoto, setArtistPhoto] = useState(null);
+  const [showVisualizer, setShowVisualizer] = useState(false);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
 
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
+
+  // Initialize visualizer upon user play interaction
+  const initAudioVisualizer = () => {
+    if (!audioRef.current || audioContextRef.current) return;
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      const source = audioCtx.createMediaElementSource(audioRef.current);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      
+      audioContextRef.current = audioCtx;
+      analyserRef.current = analyser;
+      
+      drawVisualizer();
+    } catch (e) {
+      console.error("Erro ao inicializar visualizador:", e);
+    }
+  };
+
+  const drawVisualizer = () => {
+    if (!analyserRef.current || !canvasRef.current) {
+      animationRef.current = requestAnimationFrame(drawVisualizer);
+      return;
+    }
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    const draw = () => {
+      animationRef.current = requestAnimationFrame(draw);
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      const barWidth = (width / bufferLength) * 2.5;
+      let barHeight;
+      let x = 0;
+      
+      for (let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i];
+        
+        // Cor baseada no tema M3 (Primary)
+        const rootStyles = getComputedStyle(document.documentElement);
+        const primaryColor = rootStyles.getPropertyValue('--md-sys-color-primary').trim() || '#3b82f6';
+        
+        ctx.fillStyle = primaryColor;
+        ctx.globalAlpha = barHeight / 255;
+        ctx.fillRect(x, height - (barHeight / 2), barWidth, barHeight / 2);
+        
+        x += barWidth + 1;
+      }
+    };
+    draw();
+  };
+
+  // Cleanup visualizer
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!currentSong) return;
@@ -25,17 +100,33 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
     setHasVideoTrack(false);
 
     if (currentSong.file) {
-      const encodedFile = encodeURIComponent(currentSong.file);
-      const url = `http://localhost:8000/downloads/${encodedFile}`;
+      const urlPath = currentSong.file.split(/[\\/]/).map(encodeURIComponent).join('/');
+      const baseUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+      const url = `${baseUrl}/downloads/${urlPath}`;
       
       // Fetch embedded lyrics & cover from backend
-      fetch(`http://localhost:8000/api/track_metadata?file_path=${encodedFile}`)
+      fetch(`${baseUrl}/api/track_metadata?file_path=${encodeURIComponent(currentSong.file)}`)
         .then(res => res.json())
         .then(data => {
             if (data.cover_b64) {
                data.coverUrl = `data:${data.mime_type};base64,${data.cover_b64}`;
             }
             setMetadata(data);
+            
+            // Fetch Artist Photo via Deezer if artist exists
+            if (data.artist) {
+                fetch(`${baseUrl}/api/artist_info?artist=${encodeURIComponent(data.artist)}`)
+                  .then(r => r.json())
+                  .then(artistData => {
+                      if (artistData.status === 'success' && artistData.picture) {
+                          setArtistPhoto(artistData.picture);
+                      } else {
+                          setArtistPhoto(null);
+                      }
+                  }).catch(() => setArtistPhoto(null));
+            } else {
+                setArtistPhoto(null);
+            }
         })
         .catch(err => console.error("Error fetching metadata", err));
 
@@ -53,6 +144,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
 
   const togglePlay = () => {
     if (!audioRef.current) return;
+    initAudioVisualizer();
     if (isPlaying) audioRef.current.pause();
     else audioRef.current.play();
     setIsPlaying(!isPlaying);
@@ -166,7 +258,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   const openExternal = async () => {
     if (!currentSong?.file) return;
     try {
-      await fetch('http://localhost:8000/api/open_external', {
+      await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/open_external`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file_path: currentSong.file })
@@ -182,13 +274,14 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
         {`
         @keyframes wave-move {
           0% { background-position: 0 center; }
-          100% { background-position: -20px center; }
+          100% { background-position: -24px center; }
         }
         .wave-bg {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0,5 Q5,0 10,5 T20,5' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cpath d='M0,6 Q6,0 12,6 T24,6' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
           background-repeat: repeat-x;
           background-position: 0 center;
-          animation: wave-move 1s linear infinite;
+          animation: wave-move 0.8s linear infinite;
+          background-size: 24px 12px;
         }
         `}
       </style>
@@ -201,61 +294,61 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-2xl p-6 flex flex-col"
+              className="w-full max-w-md bg-surface-container/80 backdrop-blur-2xl rounded-[2rem] border border-outline-variant/30 shadow-2xl p-6 flex flex-col"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-medium text-white tracking-tight">Detalhes da Faixa</h3>
-                <button onClick={() => setShowInfo(false)} className="p-2 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
+                <h3 className="text-xl font-medium text-on-surface tracking-tight">Detalhes da Faixa</h3>
+                <button onClick={() => setShowInfo(false)} className="p-2 text-on-surface-variant hover:text-on-surface bg-surface-container-high hover:bg-surface-container-highest rounded-full transition-colors"><X size={20}/></button>
               </div>
               
-              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar text-sm text-gray-300 pr-2 max-h-[60vh]">
-                <div className="p-4 bg-white/5 rounded-2xl">
-                  <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Título</span>
-                  <span className="text-white font-medium">{metadata.title || currentSong.title}</span>
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar text-sm text-on-surface-variant pr-2 max-h-[60vh]">
+                <div className="p-4 bg-surface-container-high rounded-2xl">
+                  <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Título</span>
+                  <span className="text-on-surface font-medium">{metadata.title || currentSong.title}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Artista</span>
-                    <span className="text-white font-medium truncate block" title={metadata.artist || "Desconhecido"}>{metadata.artist || "Desconhecido"}</span>
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Artista</span>
+                    <span className="text-on-surface font-medium truncate block" title={metadata.artist || "Desconhecido"}>{metadata.artist || "Desconhecido"}</span>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Álbum</span>
-                    <span className="text-white font-medium truncate block" title={metadata.album || "Desconhecido"}>{metadata.album || "Desconhecido"}</span>
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Álbum</span>
+                    <span className="text-on-surface font-medium truncate block" title={metadata.album || "Desconhecido"}>{metadata.album || "Desconhecido"}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Duração</span>
-                    <span className="text-white font-mono">{formatTime(duration)}</span>
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Duração</span>
+                    <span className="text-on-surface font-mono">{formatTime(duration)}</span>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Ano</span>
-                    <span className="text-white">{metadata.year || "N/A"}</span>
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Ano</span>
+                    <span className="text-on-surface">{metadata.year || "N/A"}</span>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Gênero</span>
-                    <span className="text-white truncate block">{metadata.genre || "N/A"}</span>
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Gênero</span>
+                    <span className="text-on-surface truncate block">{metadata.genre || "N/A"}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Qualidade</span>
-                    <span className="text-white tracking-widest font-mono text-xs">{currentSong.quality || "Local"}</span>
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Qualidade</span>
+                    <span className="text-on-surface tracking-widest font-mono text-xs">{currentSong.quality || "Local"}</span>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-2xl">
-                    <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Tamanho</span>
-                    <span className="text-white font-mono text-xs">
+                  <div className="p-4 bg-surface-container-high rounded-2xl">
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Tamanho</span>
+                    <span className="text-on-surface font-mono text-xs">
                       {metadata.file_size ? `${(metadata.file_size / 1024 / 1024).toFixed(2)} MB` : "N/A"}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-4 bg-white/5 rounded-2xl mt-2">
-                  <span className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Caminho do Arquivo</span>
-                  <span className="text-xs break-all text-white/60 font-mono">{currentSong.file}</span>
+                <div className="p-4 bg-surface-container-high rounded-2xl mt-2">
+                  <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Caminho do Arquivo</span>
+                  <span className="text-xs break-all text-on-surface-variant font-mono">{currentSong.file}</span>
                 </div>
               </div>
             </motion.div>
@@ -266,6 +359,8 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
       {/* Persistent Media Element */}
       <video 
         ref={audioRef}
+        crossOrigin="anonymous"
+        onPlay={initAudioVisualizer}
         onLoadedMetadata={(e) => setHasVideoTrack(e.target.videoWidth > 0)}
         onTimeUpdate={handleTimeUpdate}
         onEnded={() => setIsPlaying(false)}
@@ -284,41 +379,45 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed inset-0 z-[200] flex flex-col bg-slate-900"
+            className="fixed inset-0 z-[200] flex flex-col bg-surface-container"
           >
-            {/* Blurred Background */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-70 blur-[80px] scale-125 saturate-150 transition-all duration-1000"
-              style={{ backgroundImage: `url(${coverSrc})` }}
-            />
-            <div className="absolute inset-0 bg-black/60" />
-            
-            {/* Header */}
-            <div className="relative z-10 flex items-center justify-between p-6">
-              <button onClick={() => setIsExpanded(false)} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors">
-                <Minimize2 size={24} />
-              </button>
-              <h2 className="text-sm font-bold tracking-widest uppercase text-white/50">Reproduzindo Agora</h2>
-              <button onClick={onClose} className="p-2 text-white/70 hover:text-red-400 hover:bg-white/10 rounded-full transition-colors">
-                <X size={24} />
-              </button>
-            </div>
+              {/* Blurred Background */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-70 blur-[80px] scale-125 saturate-150 transition-all duration-1000"
+                style={{ backgroundImage: `url(${coverSrc})` }}
+              />
+              <div className="absolute inset-0 bg-black/60" />
+              
+              {/* Header */}
+              <div className="relative z-10 flex items-center justify-between p-6">
+                <button onClick={() => setIsExpanded(false)} className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-on-surface/10 rounded-full transition-colors">
+                  <Minimize2 size={24} />
+                </button>
+                <h2 className="text-sm font-bold tracking-widest uppercase text-on-surface-variant/50">Reproduzindo Agora</h2>
+                <button onClick={onClose} className="p-2 text-on-surface-variant hover:text-error hover:bg-on-surface/10 rounded-full transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
 
             {/* Main Content Area */}
             <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-12 overflow-hidden">
               {!hasVideoTrack && (
                 <>
-                  {/* Cover Art (Minimalist Vinyl) */}
-                  <div className={`w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
-                    <img 
-                      src={coverSrc} 
-                      className="w-full h-full object-cover rounded-full"
-                      alt="Cover"
-                    />
-                    {/* Minimalist Vinyl Lines */}
-                    <div className="absolute inset-0 rounded-full border-[15px] border-black/10 pointer-events-none" />
-                    <div className="absolute inset-0 rounded-full border border-white/10 pointer-events-none" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 md:w-6 md:h-6 bg-black rounded-full shadow-inner z-10" />
+                  {/* Visualizer & Cover Art */}
+                  <div className="flex flex-col items-center gap-6">
+                    <div className={`w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
+                      <img 
+                        src={coverSrc} 
+                        className="w-full h-full object-cover rounded-full"
+                        alt="Cover"
+                      />
+                      <div className="absolute inset-0 rounded-full border-[15px] border-black/10 pointer-events-none" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 md:w-6 md:h-6 bg-black rounded-full shadow-inner z-10" />
+                    </div>
+                    
+                    <div className="w-full h-16 md:h-24 relative opacity-80 mix-blend-screen">
+                      <canvas ref={canvasRef} className="w-full h-full" width={300} height={100} />
+                    </div>
                   </div>
 
                   {/* Lyrics Area - Minimalist */}
@@ -335,11 +434,11 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                           const isActive = i === activeLineIndex;
                           const isPlain = line.time === -1;
                           
-                          let className = "transition-all duration-500 text-lg md:text-2xl font-medium leading-relaxed text-white/50 hover:text-white hover:scale-[1.02] origin-left";
+                          let className = "transition-all duration-500 text-lg md:text-2xl font-medium leading-relaxed text-on-surface-variant hover:text-on-surface hover:scale-[1.02] origin-left";
                           if (!isPlain && isActive) {
-                            className = "transition-all duration-500 text-2xl md:text-3xl font-bold leading-relaxed text-white scale-[1.05] origin-left drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]";
+                            className = "transition-all duration-500 text-2xl md:text-3xl font-bold leading-relaxed text-on-surface scale-[1.05] origin-left drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]";
                           } else if (!isPlain && activeLineIndex !== -1 && i < activeLineIndex) {
-                            className = "transition-all duration-500 text-lg md:text-xl font-medium leading-relaxed text-white/30";
+                            className = "transition-all duration-500 text-lg md:text-xl font-medium leading-relaxed text-on-surface-variant/50";
                           }
 
                           return (
@@ -349,7 +448,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                           );
                         })
                       ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-white/20 space-y-4">
+                        <div className="h-full flex flex-col items-center justify-center text-on-surface-variant/50 space-y-4">
                           <motion.div animate={isPlaying ? { scale: [1, 1.1, 1] } : {}} transition={{ repeat: Infinity, duration: 2 }}>
                             <Music size={64} className="opacity-30 drop-shadow-2xl" />
                           </motion.div>
@@ -364,16 +463,21 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
 
             {/* Controls Container */}
             <div className="relative z-10 p-6 md:p-10 flex flex-col items-center w-full max-w-4xl mx-auto space-y-8">
-              <div className="text-center relative w-full flex justify-center items-center">
+              <div className="text-center relative w-full flex flex-col justify-center items-center gap-4">
+                {artistPhoto && (
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-2 border-surface-container-highest animate-in fade-in zoom-in duration-500">
+                    <img src={artistPhoto} alt="Artist" className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-medium text-white mb-2 tracking-tight">{currentSong.title}</h1>
-                  <p className="text-white/50 font-light text-sm tracking-widest uppercase">{currentSong.quality || "Local Audio"}</p>
+                  <h1 className="text-3xl md:text-4xl font-medium text-on-surface mb-2 tracking-tight">{currentSong.title}</h1>
+                  <p className="text-on-surface-variant/50 font-light text-sm tracking-widest uppercase">{metadata?.artist || currentSong.quality || "Local Audio"}</p>
                 </div>
                 
                 {hasVideoTrack && (
                   <button 
                     onClick={openExternal}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm border border-white/20 backdrop-blur-md"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 bg-on-surface/10 hover:bg-on-surface/20 text-on-surface rounded-lg transition-colors text-sm border border-outline-variant/30 backdrop-blur-md"
                     title="Abrir no VLC / Player do Sistema"
                   >
                     <ExternalLink size={16} />
@@ -383,11 +487,11 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full flex items-center gap-4 text-xs md:text-sm text-gray-400 font-mono">
+              <div className="w-full flex items-center gap-4 text-xs md:text-sm text-on-surface-variant font-mono">
                 <span>{formatTime(progress)}</span>
-                <div className="relative flex-1 h-1.5 hover:h-3 transition-all duration-300 bg-white/20 rounded-full group cursor-pointer flex items-center overflow-hidden">
+                <div className="relative flex-1 h-3 hover:h-4 transition-all duration-300 bg-surface-container-highest rounded-full group cursor-pointer flex items-center overflow-hidden">
                   <div 
-                    className={`absolute left-0 h-full bg-white rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
+                    className={`absolute left-0 h-full bg-on-surface rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
                     style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
                   />
                   <input
@@ -404,49 +508,49 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
 
               {/* Buttons */}
               <div className="flex items-center gap-6 md:gap-10">
-                <button 
+                <RippleButton 
                   onClick={() => setIsShuffle(!isShuffle)} 
-                  className={`transition-colors ${isShuffle ? 'text-primary' : 'text-white/30 hover:text-white/60'}`} 
+                  className={`transition-colors ${isShuffle ? 'text-primary' : 'text-on-surface-variant/50 hover:text-on-surface'} rounded-full p-2`} 
                   title="Aleatório"
                 >
                   <Shuffle size={24} />
-                </button>
-                <button 
+                </RippleButton>
+                <RippleButton 
                   onClick={() => setIsLooping(!isLooping)} 
-                  className={`transition-colors ${isLooping ? 'text-primary' : 'text-white/30 hover:text-white/60'}`} 
+                  className={`transition-colors ${isLooping ? 'text-primary' : 'text-on-surface-variant/50 hover:text-on-surface'} rounded-full p-2`} 
                   title="Repetir Faixa"
                 >
                   <Repeat size={24} />
-                </button>
-                <button onClick={onPrev} className="text-white/50 hover:text-white transition-colors" title="Anterior">
+                </RippleButton>
+                <RippleButton onClick={onPrev} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-2" title="Anterior">
                   <SkipBack size={32} />
-                </button>
-                <button
+                </RippleButton>
+                <RippleButton
                   onClick={togglePlay}
-                  className="w-16 h-16 md:w-20 md:h-20 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-all hover:scale-105 shadow-xl"
+                  className="w-16 h-16 md:w-24 md:h-24 bg-primary text-on-primary rounded-[2rem] flex items-center justify-center transition-all hover:scale-105 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
                 >
                   {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-2" />}
-                </button>
-                <button onClick={onNext} className="text-white/50 hover:text-white transition-colors" title="Próxima">
+                </RippleButton>
+                <RippleButton onClick={onNext} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-2" title="Próxima">
                   <SkipForward size={32} />
-                </button>
-                <button 
+                </RippleButton>
+                <RippleButton 
                   onClick={() => setShowInfo(true)} 
-                  className="text-white/30 hover:text-white/60 transition-colors" 
+                  className="text-on-surface-variant/50 hover:text-on-surface transition-colors" 
                   title="Informações da Faixa"
                 >
                   <Info size={24} />
-                </button>
+                </RippleButton>
               </div>
               
               {/* Volume */}
               <div className="absolute bottom-10 right-10 flex items-center gap-3">
-                <button onClick={toggleMute} className="text-gray-400 hover:text-white">
+                <button onClick={toggleMute} className="text-on-surface-variant hover:text-on-surface">
                   {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
-                <div className="relative w-24 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                <div className="relative w-24 h-1.5 bg-surface-container-highest rounded-full group cursor-pointer flex items-center">
                   <div 
-                    className="absolute left-0 h-full bg-white rounded-full group-hover:bg-primary transition-colors"
+                    className="absolute left-0 h-full bg-on-surface rounded-full group-hover:bg-primary transition-colors"
                     style={{ width: `${volume * 100}%` }}
                   />
                   <input
@@ -468,7 +572,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             exit={{ y: 100 }}
-            className="fixed bottom-0 left-0 w-full bg-black/40 backdrop-blur-3xl border-t border-white/5 p-3 z-[150] shadow-[0_-10px_40px_rgba(0,0,0,0.3)] cursor-pointer hover:bg-white/5 transition-colors"
+            className="fixed bottom-4 left-4 right-4 z-[150] bg-surface-container-high border border-outline-variant shadow-2xl cursor-pointer hover:bg-surface-variant transition-colors rounded-[2rem] p-3 px-5"
             onClick={() => setIsExpanded(true)}
           >
             <div className="max-w-7xl mx-auto flex items-center gap-4 md:gap-8 relative" onClick={e => e.stopPropagation()}>
@@ -480,9 +584,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                   </div>
                 </div>
                 <div className="overflow-hidden">
-                  <h4 className="text-white font-medium text-sm truncate tracking-tight">{currentSong.title}</h4>
+                  <h4 className="text-on-surface font-medium text-sm truncate tracking-tight">{currentSong.title}</h4>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-white/50 border border-white/10 px-1.5 py-0.5 rounded-md uppercase font-medium tracking-widest">
+                    <span className="text-[10px] text-on-surface-variant border border-outline-variant/30 px-1.5 py-0.5 rounded-md uppercase font-medium tracking-widest">
                       {currentSong.quality || "Local Audio"}
                     </span>
                   </div>
@@ -491,28 +595,28 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
 
               <div className="flex-1 flex flex-col items-center gap-1">
                 <div className="flex items-center gap-6">
-                  <button onClick={(e) => { e.stopPropagation(); setIsShuffle(!isShuffle); }} className={`transition-colors ${isShuffle ? 'text-green-400' : 'text-gray-400 hover:text-white'}`} title="Aleatório">
+                  <RippleButton onClick={(e) => { e.stopPropagation(); setIsShuffle(!isShuffle); }} className={`transition-colors ${isShuffle ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`} title="Aleatório">
                     <Shuffle size={18} />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); if(onPrev) onPrev(); }} className="text-gray-400 hover:text-white transition-colors" title="Anterior">
+                  </RippleButton>
+                  <RippleButton onClick={(e) => { e.stopPropagation(); if(onPrev) onPrev(); }} className="text-on-surface-variant hover:text-on-surface transition-colors" title="Anterior">
                     <SkipBack size={20} />
-                  </button>
-                  <button
+                  </RippleButton>
+                  <RippleButton
                     onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-                    className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-md"
+                    className="w-12 h-12 bg-primary text-on-primary rounded-2xl flex items-center justify-center hover:scale-105 transition-transform shadow-md"
                   >
                     {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); if(onNext) onNext(); }} className="text-gray-400 hover:text-white transition-colors" title="Próxima">
+                  </RippleButton>
+                  <RippleButton onClick={(e) => { e.stopPropagation(); if(onNext) onNext(); }} className="text-on-surface-variant hover:text-on-surface transition-colors" title="Próxima">
                     <SkipForward size={20} />
-                  </button>
+                  </RippleButton>
                 </div>
 
-                <div className="w-full flex items-center gap-3 text-xs text-gray-400 font-mono">
+                <div className="w-full flex items-center gap-3 text-xs text-on-surface-variant font-mono">
                   <span>{formatTime(progress)}</span>
-                  <div className="relative flex-1 h-1.5 hover:h-2 transition-all duration-300 bg-white/10 rounded-full group cursor-pointer flex items-center overflow-hidden">
+                  <div className="relative flex-1 h-3 hover:h-4 transition-all duration-300 bg-surface-container-highest rounded-full group cursor-pointer flex items-center overflow-hidden">
                     <div 
-                      className={`absolute left-0 h-full bg-white rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
+                      className={`absolute left-0 h-full bg-on-surface rounded-full transition-colors ${isPlaying ? 'wave-bg' : ''}`}
                       style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
                     />
                     <input
@@ -529,16 +633,16 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
               </div>
 
               <div className="w-1/4 flex items-center justify-end gap-3 md:gap-6">
-                <button onClick={() => setIsExpanded(true)} className="text-gray-400 hover:text-white transition-colors mr-2">
+                <button onClick={() => setIsExpanded(true)} className="text-on-surface-variant hover:text-on-surface transition-colors mr-2">
                    <Maximize2 size={18} />
                 </button>
                 <div className="flex items-center gap-2 group">
-                  <button onClick={toggleMute} className="text-gray-400 group-hover:text-white">
+                  <button onClick={toggleMute} className="text-on-surface-variant group-hover:text-on-surface">
                     {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
                   </button>
-                  <div className="relative w-20 h-1.5 bg-white/10 rounded-full group cursor-pointer flex items-center">
+                  <div className="relative w-20 h-1.5 bg-surface-container-highest rounded-full group cursor-pointer flex items-center">
                     <div 
-                      className="absolute left-0 h-full bg-white transition-colors rounded-full"
+                      className="absolute left-0 h-full bg-on-surface transition-colors rounded-full"
                       style={{ width: `${volume * 100}%` }}
                     />
                     <input
@@ -552,8 +656,8 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                     />
                   </div>
                 </div>
-                <div className="h-8 w-px bg-white/10 mx-2"></div>
-                <button onClick={onClose} className="text-gray-400 hover:text-red-400 transition-colors">
+                <div className="h-8 w-px bg-outline-variant/30 mx-2"></div>
+                <button onClick={onClose} className="text-on-surface-variant hover:text-error transition-colors">
                   <X size={20} />
                 </button>
               </div>

@@ -62,20 +62,20 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-surface border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
+        className="bg-surface-container border border-outline-variant/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
       >
         
         {/* Cabeçalho */}
-        <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-white">
+        <button onClick={onClose} className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface">
           <X size={20} />
         </button>
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-blue-500/20 rounded-xl text-blue-400">
+          <div className="p-3 bg-primary-container rounded-xl text-on-primary-container">
             <Wand2 size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">{t('shazamTitle')}</h2>
-            <p className="text-sm text-secondary">{t('shazamSubtitle')}</p>
+            <h2 className="text-xl font-bold text-on-surface">{t('shazamTitle')}</h2>
+            <p className="text-sm text-on-surface-variant">{t('shazamSubtitle')}</p>
           </div>
         </div>
 
@@ -83,12 +83,12 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
         <div className="space-y-4">
           <div className="flex gap-2 items-end">
             <div className="flex-1 w-0">
-              <label className="text-xs font-semibold text-secondary uppercase">{t('studioSelectSong')}</label>
+              <label className="text-xs font-semibold text-on-surface-variant uppercase">{t('studioSelectSong')}</label>
               <select 
                 value={filePath}
                 onChange={(e) => setFilePath(e.target.value)}
                 disabled={loadingLib}
-                className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none cursor-pointer truncate"
+                className="w-full mt-1 bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:border-primary outline-none cursor-pointer truncate"
               >
                 <option value="">{loadingLib ? t('studioLoadingSongs') : t('studioSelectPlaceholder')}</option>
                 {filePath && !library.find(s => (s.file_path || s.title) === filePath) && (
@@ -104,7 +104,7 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
             <button 
               onClick={handleBrowseFile}
               disabled={loadingLib || loading}
-              className="h-[50px] px-4 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/50 rounded-lg transition-colors flex items-center justify-center shrink-0"
+              className="h-[50px] px-4 bg-primary-container/50 hover:bg-primary-container text-on-primary-container border border-primary-container rounded-lg transition-colors flex items-center justify-center shrink-0"
               title="Procurar arquivo no PC"
             >
               <FolderOpen size={20} />
@@ -114,25 +114,25 @@ export default function ShazamModal({ isOpen, onClose, apiUrl }) {
           <button 
             onClick={handleFix}
             disabled={loading || !filePath}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
+            className="w-full py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 text-on-primary font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
             {loading ? t('shazamBtnFixing') : t('shazamBtnFix')}
           </button>
 
           {result && (
-            <div className="mt-4 p-4 border border-blue-500/30 bg-blue-500/10 rounded-lg flex gap-4 items-center">
+            <div className="mt-4 p-4 border border-primary/30 bg-primary/10 rounded-lg flex gap-4 items-center">
               {result.cover_url ? (
                 <img src={result.cover_url} alt="Capa Identificada" className="w-16 h-16 rounded-md shadow-md" />
               ) : (
-                <div className="w-16 h-16 bg-black/30 rounded-md flex items-center justify-center">
-                  <CheckCircle className="text-blue-400" />
+                <div className="w-16 h-16 bg-surface-container-highest rounded-md flex items-center justify-center">
+                  <CheckCircle className="text-primary" />
                 </div>
               )}
               <div>
-                <h3 className="text-white font-bold">{result.title}</h3>
-                <p className="text-sm text-secondary">{result.artist}</p>
-                <p className="text-xs text-blue-400 mt-1">{t('shazamSuccessDesc')}</p>
+                <h3 className="text-on-surface font-bold">{result.title}</h3>
+                <p className="text-sm text-on-surface-variant">{result.artist}</p>
+                <p className="text-xs text-primary mt-1">{t('shazamSuccessDesc')}</p>
               </div>
             </div>
           )}

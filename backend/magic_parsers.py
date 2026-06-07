@@ -4,8 +4,7 @@ from config import CHROME_IMPERSONATE
 
 def get_spotify_token():
     import base64
-    from curl_cffi import requests
-    from config import CHROME_IMPERSONATE
+    import requests
     
     # Public spotdl credentials
     client_id = "5f573c9620494bae87890c0f08a60293"
@@ -18,14 +17,105 @@ def get_spotify_token():
         "Content-Type": "application/x-www-form-urlencoded"
     }
     data = {"grant_type": "client_credentials"}
-    res = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data, impersonate=CHROME_IMPERSONATE)
+    res = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
     if res.status_code == 200:
         return res.json().get("access_token")
     return None
 
+def _spotipy_fetch(url_type, item_id):
+    from SpotipyFree import Spotify as SpotipyFreeClient
+    sp = SpotipyFreeClient()
+    
+    if url_type == "playlist":
+        playlist = sp.playlist(item_id)
+        playlist_name = playlist.get('name', 'Spotify Playlist')
+        owner_dict = playlist.get('owner') or {}
+        owner = owner_dict.get('display_name') or owner_dict.get('name') or 'Spotify'
+        cover_url = ''
+        if playlist.get('images'):
+            cover_url = playlist['images'][0]['url']
+            
+        entries = []
+        tracks_data = sp.playlist_items(item_id) or {}
+        for idx, item in enumerate(tracks_data.get('items', [])):
+            track = item.get('track')
+            if not track: continue
+            
+            t_name = track.get('name', '')
+            t_artists = ", ".join([a.get('name', '') for a in track.get('artists', [])])
+            duration_ms = track.get('duration_ms', 0)
+            
+            t_cover = cover_url
+            album_dict = track.get('album') or {}
+            if album_dict.get('images'):
+                t_cover = album_dict['images'][0]['url']
+                
+            sq = f"{t_artists} {t_name}".strip()
+            entries.append({
+                'id': f"spotify_magic_{len(entries)}",
+                'url': f"ytsearch1:{sq} audio",
+                'title': sq,
+                'duration': int(duration_ms / 1000) if duration_ms else 0,
+                'thumbnail': t_cover
+            })
+            
+        return {
+            'title': playlist_name,
+            'uploader': owner,
+            'entries': entries,
+            'thumbnail': cover_url
+        }, True, "Spotify", cover_url
+        
+    elif url_type == "album":
+        album = sp.album(item_id)
+        album_name = album.get('name', 'Spotify Album')
+        owner = ", ".join([a.get('name', '') for a in album.get('artists', [])])
+        cover_url = ''
+        if album.get('images'):
+            cover_url = album['images'][0]['url']
+            
+        entries = []
+        tracks_data = sp.album_tracks(item_id) or {}
+        for idx, track in enumerate(tracks_data.get('items', [])):
+            if not track: continue
+            t_name = track.get('name', '')
+            t_artists = ", ".join([a.get('name', '') for a in track.get('artists', [])])
+            duration_ms = track.get('duration_ms', 0)
+            
+            sq = f"{t_artists} {t_name}".strip()
+            entries.append({
+                'id': f"spotify_magic_{len(entries)}",
+                'url': f"ytsearch1:{sq} audio",
+                'title': sq,
+                'duration': int(duration_ms / 1000) if duration_ms else 0,
+                'thumbnail': cover_url
+            })
+            
+        return {
+            'title': album_name,
+            'uploader': owner,
+            'entries': entries,
+            'thumbnail': cover_url
+        }, True, "Spotify", cover_url
+        
+    elif url_type == "track":
+        track = sp.track(item_id)
+        t_name = track.get('name', '')
+        t_artists = ", ".join([a.get('name', '') for a in track.get('artists', [])])
+        cover_url = ''
+        album_dict = track.get('album') or {}
+        if album_dict.get('images'):
+            cover_url = album_dict['images'][0]['url']
+        
+        sq = f"{t_artists} {t_name}".strip()
+        new_url = f"ytsearch1:{sq} audio"
+        return None, True, "Spotify", cover_url, new_url
+
+    return None, False, "Spotify", None, None
+
 def parse_spotify(url: str):
     import re
-    from SpotipyFree import Spotify as SpotipyFreeClient
+    from concurrent.futures import ProcessPoolExecutor
     
     match = re.search(r'/(playlist|album|track)/([a-zA-Z0-9]+)', url)
     if not match:
@@ -35,104 +125,25 @@ def parse_spotify(url: str):
     item_id = match.group(2)
     
     try:
-        sp = SpotipyFreeClient()
-        
-        if url_type == "playlist":
-            playlist = sp.playlist(item_id)
-            playlist_name = playlist.get('name', 'Spotify Playlist')
-            # Handle possible None for owner or display_name
-            owner_dict = playlist.get('owner') or {}
-            owner = owner_dict.get('display_name') or owner_dict.get('name') or 'Spotify'
-            cover_url = ''
-            if playlist.get('images'):
-                cover_url = playlist['images'][0]['url']
-                
-            entries = []
-            tracks_data = sp.playlist_items(item_id) or {}
-            for idx, item in enumerate(tracks_data.get('items', [])):
-                track = item.get('track')
-                if not track: continue
-                
-                t_name = track.get('name', '')
-                t_artists = ", ".join([a.get('name', '') for a in track.get('artists', [])])
-                duration_ms = track.get('duration_ms', 0)
-                
-                t_cover = cover_url
-                album_dict = track.get('album') or {}
-                if album_dict.get('images'):
-                    t_cover = album_dict['images'][0]['url']
-                    
-                sq = f"{t_artists} {t_name}".strip()
-                entries.append({
-                    'id': f"spotify_magic_{len(entries)}",
-                    'url': f"ytsearch1:{sq} audio",
-                    'title': sq,
-                    'duration': int(duration_ms / 1000),
-                    'thumbnail': t_cover
-                })
-                
-            return {
-                'title': playlist_name,
-                'uploader': owner,
-                'entries': entries,
-                'thumbnail': cover_url
-            }, True, "Spotify", cover_url, url
+        with ProcessPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_spotipy_fetch, url_type, item_id)
+            res = future.result(timeout=120)
             
-        elif url_type == "album":
-            album = sp.album(item_id)
-            album_name = album.get('name', 'Spotify Album')
-            owner = ", ".join([a.get('name', '') for a in album.get('artists', [])])
-            cover_url = ''
-            if album.get('images'):
-                cover_url = album['images'][0]['url']
-                
-            entries = []
-            tracks_data = sp.album_tracks(item_id) or {}
-            for idx, track in enumerate(tracks_data.get('items', [])):
-                if not track: continue
-                t_name = track.get('name', '')
-                t_artists = ", ".join([a.get('name', '') for a in track.get('artists', [])])
-                duration_ms = track.get('duration_ms', 0)
-                
-                sq = f"{t_artists} {t_name}".strip()
-                entries.append({
-                    'id': f"spotify_magic_{len(entries)}",
-                    'url': f"ytsearch1:{sq} audio",
-                    'title': sq,
-                    'duration': int(duration_ms / 1000),
-                    'thumbnail': cover_url
-                })
-                
-            return {
-                'title': album_name,
-                'uploader': owner,
-                'entries': entries,
-                'thumbnail': cover_url
-            }, True, "Spotify", cover_url, url
-            
-        elif url_type == "track":
-            track = sp.track(item_id)
-            t_name = track.get('name', '')
-            t_artists = ", ".join([a.get('name', '') for a in track.get('artists', [])])
-            cover_url = ''
-            album_dict = track.get('album') or {}
-            if album_dict.get('images'):
-                cover_url = album_dict['images'][0]['url']
-            
-            sq = f"{t_artists} {t_name}".strip()
-            new_url = f"ytsearch1:{sq} audio"
-            return None, True, "Spotify", cover_url, new_url
-            
+            if res and res[1]:  # if is_magic is True
+                # res is (pseudo_playlist, is_magic, magic_source, cover_url) or (None, True, "Spotify", cover_url, new_url)
+                if res[0] is not None:  # Playlist/Album
+                    return res[0], res[1], res[2], res[3], url
+                else:  # Track
+                    return None, res[1], res[2], res[3], res[4]
     except Exception as e:
-        print(f"SpotipyFree failed parsing Spotify link: {e}. Falling back to embed...")
+        print(f"Isolated SpotipyFree failed parsing Spotify link: {e}. Falling back to embed...")
         
-    # --- Fallback Path: Embed HTML (Limited to 100 tracks but always works) ---
+    # --- Embed HTML Path (Limited to 100 tracks but never crashes and bypasses rate limits) ---
     embed_url = f"https://open.spotify.com/embed/{url_type}/{item_id}"
     try:
-        from curl_cffi import requests as cffi_requests
-        from config import CHROME_IMPERSONATE
+        import requests as req
         import json
-        res = cffi_requests.get(embed_url, impersonate=CHROME_IMPERSONATE, timeout=10)
+        res = req.get(embed_url, timeout=10)
         match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', res.text)
         if match:
             data = json.loads(match.group(1))
@@ -212,7 +223,7 @@ def parse_soundcloud(url: str):
                     track_ids = [str(t['id']) for t in playlist['tracks']]
                     
                     api_url = f"https://api-v2.soundcloud.com/tracks?ids={','.join(track_ids)}&client_id={client_id}"
-                    res = cffi_requests.get(api_url, impersonate=CHROME_IMPERSONATE, timeout=10)
+                    res = req.get(api_url, timeout=10)
                     if res.status_code == 200:
                         tracks_data = res.json()
                         entries = []

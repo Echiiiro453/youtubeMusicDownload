@@ -17,7 +17,7 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="bg-surface border border-primary/30 rounded-2xl p-0 w-full max-w-lg shadow-2xl relative overflow-hidden"
+        className="bg-surface-container-high border border-primary/30 rounded-2xl p-0 w-full max-w-lg shadow-2xl relative overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
@@ -29,26 +29,26 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
                 <Gift className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Nova Versão Disponível!</h2>
-                <p className="text-sm text-secondary">
+                <h2 className="text-2xl font-bold text-on-surface">Nova Versão Disponível!</h2>
+                <p className="text-sm text-on-surface-variant">
                   Versão {updateData.latest_version} (Atual: {updateData.current_version})
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-secondary hover:text-white transition-colors"
+              className="text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          <div className="bg-black/30 border border-white/5 rounded-xl p-4 mb-6">
-            <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-2 flex items-center gap-2">
+          <div className="bg-surface-container-highest border border-outline-variant/30 rounded-xl p-4 mb-6">
+            <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wider mb-2 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Notas da Atualização
             </h3>
-            <div className="text-sm text-secondary whitespace-pre-wrap font-mono custom-scrollfoo max-h-48 overflow-y-auto pr-2">
+            <div className="text-sm text-on-surface-variant whitespace-pre-wrap font-mono custom-scrollfoo max-h-48 overflow-y-auto pr-2">
               {updateData.release_notes}
             </div>
           </div>
@@ -56,7 +56,7 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl font-medium text-white/70 bg-white/5 hover:bg-white/10 transition-colors"
+              className="flex-1 py-3 px-4 rounded-xl font-medium text-on-surface bg-surface-container-highest hover:bg-on-surface/10 transition-colors"
             >
               Lembrar depois
             </button>
@@ -65,7 +65,7 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-primary hover:bg-primary/80 transition-all shadow-lg flex items-center justify-center gap-2"
+              className="flex-1 py-3 px-4 rounded-xl font-medium text-on-primary bg-primary hover:bg-primary/90 transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" />
               Baixar Atualização
