@@ -12,6 +12,9 @@ def clean_title(title: str) -> str:
     Strips YouTube noise from a title for iTunes search and tag writing.
     Removes: (Official Video), [4K], (Explicit), (Slowed + Reverb), etc.
     """
+    if not title or not isinstance(title, str):
+        return ""
+
     patterns = [
         r'\(Official\s*(Music\s*)?Video\)',
         r'\[Official\s*(Music\s*)?Video\]',
@@ -83,6 +86,9 @@ def clean_title_for_tag(title: str) -> str:
     """
     Cleaner version for writing into the file tag — keeps feat. properly.
     """
+    if not title or not isinstance(title, str):
+        return ""
+
     patterns = [
         r'\(Official\s*(Music\s*)?Video\)',
         r'\[Official\s*(Music\s*)?Video\]',
@@ -153,7 +159,8 @@ def apply_metadata(filepath: str, raw_title: str) -> bool:
         
         # Request from iTunes API
         url = f"https://itunes.apple.com/search?term={urllib.parse.quote(search_query)}&entity=song&limit=1"
-        res = requests.get(url, timeout=15, impersonate="chrome120")
+        from config import CHROME_IMPERSONATE
+        res = requests.get(url, timeout=15, impersonate=CHROME_IMPERSONATE)
         
         itunes_found = False
         track_name = fallback_title
@@ -174,7 +181,7 @@ def apply_metadata(filepath: str, raw_title: str) -> bool:
                 # Get 1000x1000 High Res cover
                 if cover_url:
                     cover_url = cover_url.replace('100x100bb', '1000x1000bb')
-                    cover_res = requests.get(cover_url, timeout=15, impersonate="chrome120")
+                    cover_res = requests.get(cover_url, timeout=15, impersonate=CHROME_IMPERSONATE)
                     cover_data = cover_res.content if cover_res.status_code == 200 else None
 
         # Always write at minimum the cleaned title (even if iTunes failed)

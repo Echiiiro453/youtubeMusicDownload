@@ -419,309 +419,27 @@ import functools
 
 @functools.lru_cache(maxsize=32)
 def parse_magic_url(url: str):
-    pseudo_playlist = None
-    is_magic = False
-    magic_source = None
-    cover_url = None
-    if "spotify.com" in url or "music.apple.com" in url or "soundcloud.com" in url or "deezer.com" in url:
-        if "spotify.com" in url:
-            import re
-            import json
-            from curl_cffi import requests as cffi_requests
-            # Extract Spotify ID
-            spotify_id_match = re.search(r'/(track|album|playlist|episode)/([a-zA-Z0-9]+)', url)
-            if spotify_id_match:
-                type_str = spotify_id_match.group(1)
-                item_id = spotify_id_match.group(2)
-                embed_url = f"https://open.spotify.com/embed/{type_str}/{item_id}"
-                
-                res = cffi_requests.get(embed_url, impersonate="chrome120")
-                match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', res.text)
-                if match:
-                    try:
-                        data = json.loads(match.group(1))
-                        entity = data['props']['pageProps']['state']['data']['entity']
-                        title = entity.get('title') or entity.get('name') or ''
-                        artist = ""
-                        if 'artists' in entity and len(entity['artists']) > 0:
-                            artist = entity['artists'][0].get('name', '')
-                        
-                        cover_art = ""
-                        if 'coverArt' in entity and 'sources' in entity['coverArt'] and len(entity['coverArt']['sources']) > 0:
-                            cover_art = entity['coverArt']['sources'][0].get('url', '')
-                            cover_url = cover_art
-                        elif 'visuals' in entity and 'avatarImage' in entity['visuals'] and 'sources' in entity['visuals']['avatarImage']:
-                            cover_art = entity['visuals']['avatarImage']['sources'][0].get('url', '')
-                            cover_url = cover_art
-
-                        clean_title = f"{artist} {title}".strip()
-                        track_list = entity.get('trackList', [])
-                        
-                        if track_list and len(track_list) > 1:
-                            entries = []
-                            for idx, t in enumerate(track_list):
-                                t_title = t.get('title', '')
-                                t_artist = t.get('subtitle', '')
-                                sq = f"{t_artist} {t_title}".strip()
-                                entries.append({
-                                    'id': f"spotify_magic_{idx}",
-                                    'url': f"ytsearch1:{sq} audio",
-                                    'title': sq,
-                                    'duration': 0,
-                                    'thumbnail': cover_art
-                                })
-                            pseudo_playlist = {
-                                'title': clean_title if clean_title else "Spotify Playlist",
-                                'uploader': 'Spotify',
-                                'entries': entries,
-                                'thumbnail': cover_art
-                            }
-                            is_magic = True
-                            magic_source = "Spotify"
-                        else:
-                            url = f"ytsearch1:{clean_title} audio"
-                            is_magic = True
-                            magic_source = "Spotify"
-                    except Exception as e:
-                        print(f"Failed to parse Spotify embed: {e}")
-        elif "soundcloud.com" in url and "/sets/" in url:
-            try:
-                import re
-                import json
-                from curl_cffi import requests as cffi_requests
-                html = cffi_requests.get(url, impersonate="chrome120", timeout=10).text
-                js_urls = re.findall(r'<script crossorigin src="([^"]+)"></script>', html)
-                client_id = None
-                for j_url in js_urls:
-                    try:
-                        js_code = cffi_requests.get(j_url, impersonate="chrome120", timeout=10).text
-                        match = re.search(r'client_id:"([^"]+)"', js_code)
-                        if match:
-                            client_id = match.group(1)
-                            break
-                    except: pass
-                
-                if client_id:
-                    hydration = re.search(r'window\.__sc_hydration = (\[.*?\]);</script>', html, re.DOTALL)
-                    if hydration:
-                        data = json.loads(hydration.group(1))
-                        for item in data:
-                            if 'data' in item and isinstance(item['data'], dict) and 'tracks' in item['data']:
-                                playlist = item['data']
-                                clean_title = playlist.get('title', 'SoundCloud Playlist')
-                                track_ids = [str(t['id']) for t in playlist['tracks']]
-                                
-                                api_url = f"https://api-v2.soundcloud.com/tracks?ids={','.join(track_ids)}&client_id={client_id}"
-                                res = cffi_requests.get(api_url, impersonate="chrome120", timeout=10)
-                                if res.status_code == 200:
-                                    tracks_data = res.json()
-                                    entries = []
-                                    cover_url = playlist.get('artwork_url', '')
-                                    if cover_url: cover_url = cover_url.replace('-large', '-t500x500')
-                                    for idx, t in enumerate(tracks_data):
-                                        t_artist = t.get('user', {}).get('username', '')
-                                        t_title = t.get('title', '')
-                                        sq = f"{t_artist} {t_title}".strip()
-                                        entries.append({
-                                            'id': f"soundcloud_magic_{idx}",
-                                            'url': f"ytsearch1:{sq} audio",
-                                            'title': sq,
-                                            'duration': int(t.get('duration', 0) / 1000),
-                                            'thumbnail': t.get('artwork_url', '').replace('-large', '-t500x500') if t.get('artwork_url') else cover_url
-                                        })
-                                    pseudo_playlist = {
-                                        'title': clean_title,
-                                        'uploader': 'SoundCloud',
-                                        'entries': entries,
-                                        'thumbnail': cover_url
-                                    }
-                                    is_magic = True
-                                    magic_source = "SoundCloud"
-                                    break
-            except Exception as e:
-                print(f"Failed to parse SoundCloud set: {e}")
-        elif "deezer.com" in url:
-            try:
-                import re
-                import requests
-                match = re.search(r'/(track|album|playlist)/(\d+)', url)
-                if match:
-                    type_str = match.group(1)
-                    item_id = match.group(2)
-                    api_url = f"https://api.deezer.com/{type_str}/{item_id}"
-                    res = requests.get(api_url, timeout=10)
-                    if res.status_code == 200:
-                        data = res.json()
-                        cover_url = data.get('picture_xl') or data.get('cover_xl') or ''
-                        clean_title = data.get('title', 'Deezer Audio')
-                        
-                        if type_str == 'track':
-                            artist_name = data.get('artist', {}).get('name', '')
-                            sq = f"{artist_name} {clean_title}".strip()
-                            url = f"ytsearch1:{sq} audio"
-                            is_magic = True
-                            magic_source = "Deezer"
-                        else:
-                            tracks = data.get('tracks', {}).get('data', [])
-                            entries = []
-                            for idx, t in enumerate(tracks):
-                                t_artist = t.get('artist', {}).get('name', '')
-                                t_title = t.get('title', '')
-                                sq = f"{t_artist} {t_title}".strip()
-                                entries.append({
-                                    'id': f"deezer_magic_{idx}",
-                                    'url': f"ytsearch1:{sq} audio",
-                                    'title': sq,
-                                    'duration': t.get('duration', 0),
-                                    'thumbnail': cover_url
-                                })
-                            pseudo_playlist = {
-                                'title': clean_title,
-                                'uploader': 'Deezer',
-                                'entries': entries,
-                                'thumbnail': cover_url
-                            }
-                            is_magic = True
-                            magic_source = "Deezer"
-            except Exception as e:
-                print(f"Failed to parse Deezer link: {e}")
-        elif "music.apple.com" in url:
-            from curl_cffi import requests as cffi_requests
-            import re
-            
-            res = cffi_requests.get(url, timeout=10, impersonate="chrome120")
-            html = res.text
-            
-            title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
-            clean_title = ""
-            if title_match:
-                clean_title = re.sub(r' \| Spotify.*', '', title_match.group(1))
-                clean_title = re.sub(r' on Apple Music.*', '', clean_title)
-                clean_title = clean_title.replace("Song ·", "").replace("Album ·", "").strip()
-            
-            cover_match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
-            cover_url = cover_match.group(1) if cover_match else ""
-            
-            token = None
-            scripts = re.findall(r'<script[^>]+src="([^"]+/index[^"]+\.js)"', html)
-            if scripts:
-                js_url = scripts[0]
-                if js_url.startswith('/'): js_url = 'https://music.apple.com' + js_url
-                try:
-                    js_res = cffi_requests.get(js_url, timeout=10, impersonate='chrome120')
-                    for m in re.findall(r'"(eyJh[^"]+)"', js_res.text):
-                        if len(m) > 100:
-                            token = m
-                            break
-                except:
-                    pass
-            
-            is_playlist_or_album = False
-            entries = []
-            
-            url_match = re.search(r'/([a-z]{2})/(playlist|album)/[^/]+/([^/?]+)', url)
-            
-            if token and url_match:
-                storefront = url_match.group(1)
-                item_type = url_match.group(2)
-                item_id = url_match.group(3)
-                
-                headers = {
-                    'authorization': f'Bearer {token}',
-                    'origin': 'https://music.apple.com'
-                }
-                
-                api_url = f'https://amp-api.music.apple.com/v1/catalog/{storefront}/{item_type}s/{item_id}/tracks?limit=100'
-                
-                try:
-                    while api_url:
-                        api_res = cffi_requests.get(api_url, headers=headers, timeout=10, impersonate='chrome120')
-                        if api_res.status_code != 200:
-                            break
-                            
-                        data = api_res.json()
-                        tracks_data = data.get('data', [])
-                        
-                        for idx, track in enumerate(tracks_data):
-                            attrs = track.get('attributes', {})
-                            t_title = attrs.get('name', '')
-                            t_artist = attrs.get('artistName', '')
-                            duration_ms = attrs.get('durationInMillis', 0)
-                            
-                            if t_title and t_artist:
-                                sq = f"{t_artist} {t_title}".strip()
-                                entries.append({
-                                    'id': f"apple_magic_{len(entries)}_{idx}",
-                                    'url': f"ytsearch1:{sq} audio",
-                                    'title': sq,
-                                    'duration': int(duration_ms / 1000) if duration_ms else 0,
-                                    'thumbnail': cover_url
-                                })
-                        
-                        next_path = data.get('next')
-                        if next_path:
-                            api_url = f'https://amp-api.music.apple.com{next_path}'
-                        else:
-                            api_url = None
-                            
-                    if entries:
-                        is_playlist_or_album = True
-                except Exception as e:
-                    print(f"Apple Music API pagination failed: {e}")
-            
-            if not is_playlist_or_album:
-                match = re.search(r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', html, re.DOTALL)
-                if match:
-                    try:
-                        import json
-                        data = json.loads(match.group(1))
-                        tracks = data.get('track', [])
-                        if tracks:
-                            for idx, t in enumerate(tracks):
-                                t_name = t.get('name', '')
-                                artist_obj = t.get('byArtist', {})
-                                t_artist = artist_obj.get('name', '') if isinstance(artist_obj, dict) else (artist_obj if artist_obj else '')
-                                if t_name:
-                                    sq = f"{t_artist} {t_name}".strip()
-                                    entries.append({
-                                        'id': f"apple_magic_ld_{idx}",
-                                        'url': f"ytsearch1:{sq} audio",
-                                        'title': sq,
-                                        'duration': 0,
-                                        'thumbnail': cover_url
-                                    })
-                            if entries:
-                                is_playlist_or_album = True
-                    except Exception as e:
-                        print(f"Failed to parse Apple Music ld+json: {e}")
-            
-            if is_playlist_or_album:
-                pseudo_playlist = {
-                    'title': clean_title if clean_title else "Apple Music Playlist",
-                    'uploader': 'Apple Music',
-                    'entries': entries,
-                    'thumbnail': cover_url
-                }
-                is_magic = True
-                magic_source = "Apple Music"
-            elif clean_title:
-                url = f"ytsearch1:{clean_title} audio"
-                is_magic = True
-                magic_source = "Apple Music"
-    
-    return url, pseudo_playlist, is_magic, magic_source, cover_url
-
+    from magic_parsers import extract_magic_url
+    res = extract_magic_url(url)
+    if res:
+        pseudo_playlist, is_magic, magic_source, cover_url, new_url = res
+        return new_url, pseudo_playlist, is_magic, magic_source, cover_url
+    return url, None, False, None, None
 @app.post("/info")
 async def get_info(request: DownloadRequest):
     try:
         url = request.url
-        url, pseudo_playlist, is_magic, magic_source, magic_cover = parse_magic_url(url)
+        url, pseudo_playlist, is_magic, magic_source, magic_cover = await asyncio.to_thread(parse_magic_url, url)
 
         if pseudo_playlist:
             info = pseudo_playlist
             is_playlist = True
             is_magic = True
         else:
+            # Prevent falling back to yt-dlp for raw Spotify/Apple Music URLs if magic parser failed
+            if any(domain in url for domain in ['spotify.com', 'music.apple.com', 'deezer.com']) and not url.startswith('ytsearch'):
+                raise HTTPException(status_code=400, detail="Não foi possível extrair dados deste serviço (verifique se a playlist é privada ou tente novamente mais tarde).")
+                
             ydl_opts = {
                 'quiet': True,
                 'nocheckcertificate': True,
@@ -1170,7 +888,7 @@ async def run_demucs_job(job_id: str, file_path: str, quality: str, model: str, 
         
         abs_path = os.path.join(get_downloads_dir(), file_path)
         if not os.path.exists(abs_path):
-            studio_jobs[job_id] = {"status": "error", "message": "Arquivo original não encontrado.", "progress": 0}
+            studio_jobs[job_id].update({"status": "error", "message": "Arquivo original não encontrado.", "progress": 0})
             return
             
         studio_dir = get_studio_dir()
@@ -1219,30 +937,55 @@ async def run_demucs_job(job_id: str, file_path: str, quality: str, model: str, 
         except FileNotFoundError:
             python_installed = is_python_installed()
             print("[\033[31mIA Studio\033[0m] ERRO: Demucs não encontrado no sistema.")
-            studio_jobs[job_id] = {
+            studio_jobs[job_id].update({
                 "status": "error", 
                 "message": "Motor de IA (Demucs) não encontrado neste PC.", 
                 "progress": 0,
                 "demucs_missing": True,
                 "python_missing": not python_installed
-            }
+            })
             return
             
         print(f"[\033[94mIA Studio\033[0m] Iniciando separação para: {os.path.basename(abs_path)}")
         
         last_log_progress = -1
+        buffer = ""
         while True:
-            line = await process.stderr.read(256)
-            if not line:
+            chunk = await process.stderr.read(1024)
+            if not chunk:
                 break
-            text = line.decode(errors='replace')
-            # Extract progress like " 45%|"
-            match = re.search(r'(\d+)%\|', text)
-            if match:
-                progress = int(match.group(1))
+            text = chunk.decode(errors='replace')
+            buffer += text
+            
+            # Keep buffer size in check
+            if len(buffer) > 2048:
+                buffer = buffer[-2048:]
+            
+            # Extract progress
+            match_pct = re.findall(r'(\d+)%\|', buffer)
+            if match_pct:
+                progress = int(match_pct[-1])
                 studio_jobs[job_id]["progress"] = progress
                 studio_jobs[job_id]["status"] = "processing"
-                studio_jobs[job_id]["message"] = f"Separando faixas: {progress}%"
+                
+                # Check for elapsed time, ETA and speed in the buffer
+                last_idx = buffer.rfind(f"{progress}%|")
+                if last_idx != -1:
+                    sub = buffer[last_idx:]
+                    match_time = re.search(r'\[(\d+:\d+(?::\d+)?)\s*<\s*(\d+:\d+(?::\d+)?)\s*,\s*([^\]]+)\]', sub)
+                    if match_time:
+                        elapsed = match_time.group(1)
+                        eta = match_time.group(2)
+                        speed = match_time.group(3).strip()
+                        
+                        studio_jobs[job_id]["elapsed"] = elapsed
+                        studio_jobs[job_id]["eta"] = eta
+                        studio_jobs[job_id]["speed"] = speed
+                        studio_jobs[job_id]["message"] = f"Separando faixas: {progress}% (Restante: {eta} @ {speed})"
+                    else:
+                        studio_jobs[job_id]["message"] = f"Separando faixas: {progress}%"
+                else:
+                    studio_jobs[job_id]["message"] = f"Separando faixas: {progress}%"
                 
                 if progress % 10 == 0 and progress != last_log_progress:
                     print(f"[\033[94mIA Studio\033[0m] Extraindo canais: {progress}%")
@@ -1252,21 +995,36 @@ async def run_demucs_job(job_id: str, file_path: str, quality: str, model: str, 
         
         if process.returncode != 0:
             print(f"[\033[31mIA Studio\033[0m] ERRO na separação: Código {process.returncode}")
-            studio_jobs[job_id] = {"status": "error", "message": "Falha na separação da música.", "progress": 0}
+            studio_jobs[job_id].update({"status": "error", "message": "Falha na separação da música.", "progress": 0})
         else:
             print(f"[\033[32mIA Studio\033[0m] SUCESSO! Separação concluída e salva na pasta Studio.")
-            studio_jobs[job_id] = {"status": "success", "message": "Música separada por IA com sucesso!", "output_dir": studio_dir, "progress": 100}
+            studio_jobs[job_id].update({"status": "success", "message": "Música separada por IA com sucesso!", "output_dir": studio_dir, "progress": 100})
             
     except Exception as e:
         print(f"[\033[31mIA Studio\033[0m] EXCEPTION: {e}")
-        studio_jobs[job_id] = {"status": "error", "message": str(e), "progress": 0}
+        studio_jobs[job_id].update({"status": "error", "message": str(e), "progress": 0})
 
 @app.post("/api/studio/split")
 async def studio_split(request: StudioSplitRequest, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
-    studio_jobs[job_id] = {"status": "starting", "progress": 0, "message": "Inicializando IA..."}
+    studio_jobs[job_id] = {
+        "status": "starting",
+        "progress": 0,
+        "message": "Inicializando IA...",
+        "file_path": request.file_path,
+        "quality": request.quality,
+        "model": request.model,
+        "two_stems": request.two_stems,
+        "eta": "",
+        "speed": "",
+        "elapsed": ""
+    }
     background_tasks.add_task(run_demucs_job, job_id, request.file_path, request.quality, request.model, request.two_stems)
     return {"job_id": job_id}
+
+@app.get("/api/studio/jobs")
+def get_studio_all_jobs():
+    return studio_jobs
 
 @app.get("/api/studio/status/{job_id}")
 def get_studio_status(job_id: str):

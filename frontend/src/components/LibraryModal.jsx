@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, FolderOpen, RefreshCw, Music, Users, ChevronLeft, Disc } from 'lucide-react';
+import { X, Play, FolderOpen, RefreshCw, Music, Users, ChevronLeft, Disc, Mic } from 'lucide-react';
 import axios from 'axios';
 
 export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
   const [library, setLibrary] = useState([]);
+  const [studioLibrary, setStudioLibrary] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'artists'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'artists' | 'studio'
   const [selectedArtist, setSelectedArtist] = useState(null);
 
   useEffect(() => {
@@ -21,6 +22,16 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
     try {
       const res = await axios.get(getApiUrl('/api/library'));
       setLibrary(res.data.library);
+      
+      try {
+          const studioRes = await axios.get(getApiUrl('/api/studio_library'));
+          if (studioRes.data && studioRes.data.library) {
+              setStudioLibrary(studioRes.data.library);
+          }
+      } catch (e) {
+          console.error("Failed to load studio library", e);
+      }
+      
     } catch (e) {
       console.error("Failed to load library:", e);
     } finally {
@@ -158,6 +169,46 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
         </div>
       );
     }
+    
+    if (activeTab === 'studio') {
+      if (studioLibrary.length === 0) {
+        return (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
+            <Mic size={48} className="opacity-20" />
+            <p className="text-lg">Você ainda não processou nenhuma música na IA.</p>
+          </div>
+        );
+      }
+      return (
+        <div className="space-y-4">
+          {studioLibrary.map((item, idx) => (
+            <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Mic size={24} />
+                </div>
+                <div>
+                  <h4 className="text-white font-bold text-lg">{item.track}</h4>
+                  <p className="text-xs text-secondary mt-1">Modelo: {item.model} • {new Date(item.created_at * 1000).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3 pl-16">
+                {item.stems.map((stem, sIdx) => (
+                  <div key={sIdx} className="bg-black/30 rounded-lg p-3 flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold text-white capitalize">{stem.name.replace('.mp3', '')}</span>
+                      <span className="text-xs text-secondary bg-black/50 px-2 py-1 rounded-md">{stem.size}</span>
+                    </div>
+                    <audio controls src={getApiUrl(`/downloads/${stem.path}`)} className="w-full h-8" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
   };
 
   if (!isOpen) return null;
@@ -216,22 +267,35 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong }) {
           </div>
 
           {/* Tabs */}
-          {!loading && library.length > 0 && (
+          {!loading && (library.length > 0 || studioLibrary.length > 0) && (
             <div className="flex items-center gap-2 px-6 py-4 border-b border-white/5 flex-shrink-0">
-              <button
-                onClick={() => { setActiveTab('all'); setSelectedArtist(null); }}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
-              >
-                <Music size={16} />
-                Geral
-              </button>
-              <button
-                onClick={() => setActiveTab('artists')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'artists' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
-              >
-                <Users size={16} />
-                Artistas
-              </button>
+              {library.length > 0 && (
+                  <>
+                      <button
+                        onClick={() => { setActiveTab('all'); setSelectedArtist(null); }}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                      >
+                        <Music size={16} />
+                        Geral
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('artists')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'artists' ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                      >
+                        <Users size={16} />
+                        Artistas
+                      </button>
+                  </>
+              )}
+              {studioLibrary.length > 0 && (
+                  <button
+                    onClick={() => setActiveTab('studio')}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'studio' ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' : 'text-gray-400 hover:bg-white/10 hover:text-purple-400'}`}
+                  >
+                    <Mic size={16} />
+                    IA Stems
+                  </button>
+              )}
             </div>
           )}
 

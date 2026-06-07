@@ -120,7 +120,8 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
             
             # 1. Pesquisa na API invisível do Genius
             search_api = f"https://genius.com/api/search/multi?per_page=1&q={search_query}"
-            res = curl_req.get(search_api, impersonate="chrome120", timeout=10)
+            from config import CHROME_IMPERSONATE
+            res = curl_req.get(search_api, impersonate=CHROME_IMPERSONATE, timeout=10)
             data = res.json()
             
             # Encontra a URL da letra
@@ -129,7 +130,7 @@ def fetch_and_embed_lyrics(file_path: str, title: str, artist: str = '') -> bool
                 song_url = hits[0].get("result", {}).get("url")
                 if song_url:
                     # 2. Raspa o HTML real para contornar a segurança deles
-                    page_res = curl_req.get(song_url, impersonate="chrome120", timeout=10)
+                    page_res = curl_req.get(song_url, impersonate=CHROME_IMPERSONATE, timeout=10)
                     soup = BeautifulSoup(page_res.text, "html.parser")
                     lyrics_divs = soup.find_all("div", {"data-lyrics-container": "true"})
                     

@@ -10,6 +10,9 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
   const [result, setResult] = useState(null);
   const [library, setLibrary] = useState([]);
   const [loadingLib, setLoadingLib] = useState(false);
+  
+  const [studioJobs, setStudioJobs] = useState({});
+  const [isPollingQueue, setIsPollingQueue] = useState(false);
 
   const [installJobId, setInstallJobId] = useState(null);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -20,8 +23,41 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
   useEffect(() => {
     if (isOpen) {
       fetchLibrary();
+      fetchJobs();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    let interval;
+    if (isOpen) {
+      interval = setInterval(fetchJobs, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
+  const fetchJobs = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/api/studio/jobs`);
+      setStudioJobs(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar fila do Studio:", err);
+    }
+  };
+
+  useEffect(() => {
+    let missingDemucs = false;
+    let missingPython = false;
+    Object.values(studioJobs).forEach(job => {
+      if (job.status === 'error' && job.demucs_missing) {
+        missingDemucs = true;
+        missingPython = job.python_missing;
+      }
+    });
+    if (missingDemucs) {
+      setShowInstallButton(true);
+      setIsPythonMissing(missingPython);
+    }
+  }, [studioJobs]);
 
   const fetchLibrary = async () => {
     setLoadingLib(true);
@@ -53,56 +89,24 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
   const [aiModel, setAiModel] = useState('htdemucs_ft');
   const [twoStems, setTwoStems] = useState(true);
 
-  const handleSplit = async () => {
+  const handleAddToQueue = async () => {
     if (!filePath) return;
     setLoading(true);
-    setResult(null);
-    setProgress(0);
     setShowInstallButton(false);
     setIsPythonMissing(false);
-    setStatusMessage("Iniciando IA...");
+    
     try {
-      const res = await axios.post(`${apiUrl}/api/studio/split`, { 
+      await axios.post(`${apiUrl}/api/studio/split`, { 
         file_path: filePath,
         quality: quality,
         model: aiModel,
         two_stems: twoStems
       });
-      const currentJobId = res.data.job_id;
-      setJobId(currentJobId);
-
-      // Começa a fazer polling
-      const pollInterval = setInterval(async () => {
-        try {
-          const statusRes = await axios.get(`${apiUrl}/api/studio/status/${currentJobId}`);
-          const data = statusRes.data;
-          
-          setProgress(data.progress || 0);
-          setStatusMessage(data.message || "Processando...");
-
-          if (data.status === "success") {
-            clearInterval(pollInterval);
-            setLoading(false);
-            setJobId(null);
-            setResult({ message: data.message, output_dir: data.output_dir });
-          } else if (data.status === "error") {
-            clearInterval(pollInterval);
-            setLoading(false);
-            setJobId(null);
-            if (data.demucs_missing) {
-               setShowInstallButton(true);
-               setIsPythonMissing(data.python_missing);
-            } else {
-               alert("Erro na IA: " + data.message);
-            }
-          }
-        } catch (e) {
-          console.error("Erro ao checar status:", e);
-        }
-      }, 1000);
-
+      setFilePath(""); // Limpa o campo após adicionar à fila
+      fetchJobs(); // Atualiza a fila imediatamente
     } catch (err) {
       alert("Erro ao enviar para IA: " + (err.response?.data?.detail || err.message));
+    } finally {
       setLoading(false);
     }
   };
@@ -133,8 +137,6 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                setShowInstallButton(true);
             } else {
                alert("Sucesso: " + data.message);
-               // Dispara automaticamente a separação após instalar
-               handleSplit();
             }
           }
         } catch (e) {
@@ -257,15 +259,83 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
           </div>
 
           <button 
-            onClick={handleSplit}
+            onClick={handleAddToQueue}
             disabled={loading || !filePath || isInstalling}
             className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Music size={20} />}
-            {loading ? statusMessage : t('studioBtnProcess')}
+            Adicionar à Fila de Processamento
           </button>
 
-          {showInstallButton && !isPythonMissing && (
+          {/* Fila de Jobs */}
+          {Object.keys(studioJobs).length > 0 && (
+             <div className="mt-6 border-t border-white/10 pt-4 space-y-3">
+               <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                 Fila do IA Studio
+                 <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs">
+                   {Object.keys(studioJobs).length}
+                 </span>
+               </h3>
+               
+               <div className="max-h-48 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                 {Object.entries(studioJobs).reverse().map(([id, job]) => (
+                   <div key={id} className={`p-4 rounded-lg border flex flex-col gap-2 ${
+                     job.status === 'success' ? 'bg-green-500/10 border-green-500/30' :
+                     job.status === 'error' ? 'bg-red-500/10 border-red-500/30' :
+                     job.status === 'queued' ? 'bg-white/5 border-white/10' :
+                     'bg-purple-500/10 border-purple-500/30'
+                   }`}>
+                     <div className="flex justify-between items-center">
+                       <span className="text-xs font-bold text-white truncate max-w-[70%]" title={job.file_path}>
+                         {job.file_path ? job.file_path.split('\\').pop().split('/').pop() : 'Música'}
+                       </span>
+                       <span className={`text-[10px] font-bold uppercase ${
+                         job.status === 'success' ? 'text-green-400' :
+                         job.status === 'error' ? 'text-red-400' :
+                         job.status === 'queued' ? 'text-gray-400' :
+                         'text-purple-400'
+                       }`}>
+                         {job.status === 'queued' ? 'Aguardando' : 
+                          job.status === 'starting' ? 'Iniciando' : 
+                          job.status === 'processing' ? 'Processando' : 
+                          job.status === 'success' ? 'Concluído' : 'Erro'}
+                       </span>
+                     </div>
+                     
+                     <p className="text-xs text-secondary">{job.message}</p>
+                     
+                     {(job.status === 'starting' || job.status === 'processing') && (
+                       <div className="space-y-2 mt-1">
+                         <div className="w-full bg-black/40 rounded-full h-2 relative overflow-hidden border border-white/5">
+                           <motion.div 
+                             className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 h-full rounded-full" 
+                             initial={{ width: 0 }}
+                             animate={{ width: `${job.progress || 0}%` }}
+                             transition={{ duration: 0.5 }}
+                           />
+                           <div 
+                             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[pulse_1.5s_infinite]" 
+                             style={{ width: `${job.progress || 0}%` }} 
+                           />
+                         </div>
+                         <div className="flex justify-between items-center text-[10px] text-secondary font-mono">
+                           <span>Decorrido: {job.elapsed || '--:--'}</span>
+                           {job.speed && <span className="opacity-85">Velocidade: {job.speed}</span>}
+                           <span className="text-purple-400 font-bold">Restante: {job.eta || '--:--'}</span>
+                         </div>
+                       </div>
+                     )}
+
+                     {job.status === 'success' && job.output_dir && (
+                       <p className="text-[10px] text-white/40 mt-1 font-mono break-all">
+                         Salvo em: {job.output_dir}
+                       </p>
+                     )}
+                   </div>
+                 ))}
+               </div>
+             </div>
+          )}          {showInstallButton && !isPythonMissing && (
             <div className="mt-4 p-4 border border-blue-500/30 bg-blue-500/10 rounded-lg flex flex-col gap-3">
                <h3 className="text-blue-400 font-bold">Motor de IA Ausente</h3>
                <p className="text-sm text-blue-200">Para separar vocais, você precisa baixar o motor de IA no seu computador. O processo baixa arquivos pesados.</p>
@@ -285,7 +355,7 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                <p className="text-sm text-red-200">O seu sistema não possui o ambiente Python, que é obrigatório para usar o Motor de IA.</p>
                
                <div className="bg-black/20 p-3 rounded-lg border border-white/5 space-y-2">
-                 <p className="text-xs text-white/80 font-bold">👉 Opção Recomendada (Segura):</p>
+                 <p className="text-xs text-white/80 font-bold">Opção Recomendada (Segura):</p>
                  <a href="https://www.python.org/downloads/" target="_blank" rel="noreferrer" className="w-full py-2 bg-green-600/80 hover:bg-green-500 text-white text-sm font-bold rounded-lg transition-colors flex justify-center items-center">
                     1. Baixar Python (Site Oficial)
                  </a>
@@ -293,7 +363,7 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                </div>
 
                <div className="bg-black/20 p-3 rounded-lg border border-white/5 space-y-2">
-                 <p className="text-xs text-red-300 font-bold">⚠️ Opção Automatizada (Avançada):</p>
+                 <p className="text-xs text-red-300 font-bold">Opção Automatizada (Avançada):</p>
                  <button 
                     onClick={() => handleInstallDemucs(true)}
                     className="w-full py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-lg transition-colors flex justify-center items-center shadow-lg"
@@ -314,32 +384,6 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                  {installMessage}
               </div>
               <p className="text-[10px] text-blue-200 mt-3 text-center">Isso pode demorar de 2 a 10 minutos dependendo da sua internet. Não feche o aplicativo.</p>
-            </div>
-          )}
-
-          {loading && (
-            <div className="mt-4 p-4 border border-purple-500/30 bg-purple-500/10 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-purple-300 font-bold uppercase">{statusMessage}</span>
-                <span className="text-xs text-purple-300 font-bold">{progress}%</span>
-              </div>
-              <div className="w-full bg-black/40 rounded-full h-2">
-                <motion.div 
-                  className="bg-purple-500 h-2 rounded-full" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              <p className="text-[10px] text-secondary mt-2 text-center">{t('studioCpuWarning')}</p>
-            </div>
-          )}
-
-          {result && !loading && (
-            <div className="mt-4 p-4 border border-green-500/30 bg-green-500/10 rounded-lg">
-              <h3 className="text-green-400 font-bold mb-1">{t('studioSuccess')}</h3>
-              <p className="text-sm text-secondary">{result.message}</p>
-              <p className="text-xs text-white/50 mt-2 font-mono break-all">{result.output_dir}</p>
             </div>
           )}
         </div>

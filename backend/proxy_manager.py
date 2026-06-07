@@ -21,7 +21,8 @@ def fetch_proxies():
     
     for proto, url in endpoints:
         try:
-            res = requests.get(url, timeout=10, impersonate="chrome120")
+            from config import CHROME_IMPERSONATE
+            res = requests.get(url, timeout=10, impersonate=CHROME_IMPERSONATE)
             if res.status_code == 200:
                 lines = res.text.splitlines()
                 for p in lines:

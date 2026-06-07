@@ -80,4 +80,7 @@ def start_desktop():
     os._exit(0)
 
 if __name__ == "__main__":
-    start_desktop()
+    if '--server-only' in sys.argv:
+        run_server()
+    else:
+        start_desktop()

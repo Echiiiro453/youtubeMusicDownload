@@ -44,6 +44,8 @@ def main():
         "utils",
         "downloader",
         "database",
+        "magic_parsers",
+        "config",
         "yt_dlp.extractor",
         "curl_cffi",
         "webview",
@@ -56,7 +58,10 @@ def main():
         "mutagen.mp4",
         "beautifulsoup4",
         "bs4",
-        "numpy.core.multiarray"
+        "numpy.core.multiarray",
+        "SpotipyFree",
+        "spotapi",
+        "tls_client"
     ]
     
     # Montar comando
@@ -71,7 +76,10 @@ def main():
         "--collect-all", "demucs",
         "--collect-all", "shazamio",
         "--collect-all", "numpy",
-        "--collect-all", "torch"
+        "--collect-all", "torch",
+        "--collect-all", "tls_client",
+        "--collect-all", "spotapi",
+        "--collect-all", "SpotipyFree"
     ]
     
     for src, dst in binaries:
