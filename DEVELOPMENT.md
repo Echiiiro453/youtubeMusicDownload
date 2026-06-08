@@ -61,6 +61,9 @@ O executável final estará na pasta `backend/dist/AppMusica.exe`.
 ### 3. Internacionalização (i18n)
 - A função `t(key)` no frontend gerencia traduções. Qualquer nova string adicionada na interface deve ser registrada em `frontend/src/i18n.js` para manter a paridade com Inglês, Espanhol e Português.
 
+### 4. Integração Spotify/Apple Music e Processos Isolados
+- Para extrair dados de plataformas externas sem causar Memory Leaks ou travar a main thread do PyWebView, o backend utiliza um CLI interceptor. As buscas rodam invocando o próprio executável (ou script) com flags como `--run-spotify`. Esse isolamento garante estabilidade total mesmo ao processar playlists gigantescas.
+
 ## Manutenção Constante
 
 - **MUITO IMPORTANTE:** Sempre mantenha o `yt-dlp` atualizado. O YouTube muda constantemente suas APIs e o `yt-dlp` lança atualizações para lidar com isso.

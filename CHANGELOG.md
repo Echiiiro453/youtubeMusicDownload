@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-06-07
+### Added & Fixed
+- **Isolated Subprocess Architecture**: Spotify and Apple Music scrapers now run in isolated CLI instances (`--run-spotify`) to prevent memory crashes, zombie processes, and UI window cloning.
+- **Universal Jittering (Anti-Ban)**: Random sleep intervals now apply to all searches, preventing YouTube IP blocks when downloading massive Spotify playlists via `ytsearch`.
+- **Silent Engine**: CMD terminal windows are now completely hidden (`CREATE_NO_WINDOW`) during FFmpeg conversions, AI vocal extraction (Demucs), and data scraping.
+- **Persistent Wallpapers**: Custom wallpapers (images and videos) are now securely stored in the internal application data directory (`AppData`/`/data`), surviving app restarts and downloads folder clearings.
+- **Local Storage Bugfix**: Disabled `private_mode` in PyWebview to stop the engine from wiping user preferences (themes, language) on every application restart.
+- **Frontend Build Optimization**: Solved a Temporal Dead Zone (TDZ) bug related to `getApiUrl` that crashed the UI in minified production builds.
+- **Resilient Fallback**: Graceful error handling for empty search arrays (`list index out of range`) when facing soft YouTube IP blocks.
+
 ## [1.7.7] - 2026-06-01
 ### Fixed
 - **Cookie Validation**: Added a fallback to ignore corrupt or invalid `cookies.txt` files to prevent the app from crashing during link parsing and searching.

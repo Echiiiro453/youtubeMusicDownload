@@ -157,6 +157,10 @@
 - [x] Memória de Fila (Resume Downloads Interrompidos) ✅
 - [x] **Internacionalização (i18n)**: Suporte dinâmico para Inglês, Espanhol e Português. ✅
 - [x] **Desduplicação Robusta**: Correção de persistência no DB para evitar re-downloads de singles. ✅
+- [x] **Arquitetura de Subprocessos Isolados**: Prevenção de memory crashes e ghost UI clones ao processar Spotify/Apple Music. ✅
+- [x] **Proteção Avançada contra IP Bans**: Jittering/Sleep estendido para buscas massivas no Spotify (`ytsearch`). ✅
+- [x] **Ocultação de CMD**: Conversões FFmpeg e IA rodam de forma 100% invisível no Windows. ✅
+- [x] **Persistência Dinâmica UI**: WebView2 corrigido para não limpar localStorage (preservando wallpapers e preferências) e wallpapers armazenados via rotas seguras `/data`. ✅
 
 **Em Progresso:** 🔄
 - Sistema de Presets (Configuração Rápida de Pitch/Speed)
