@@ -7,8 +7,8 @@ import io
 
 # [CORREÇÃO CRÍTICA] Força o stdout e stderr a aceitarem UTF-8 (Emojis/Caracteres Especiais)
 # Isso impede o erro fatal de "charmap codec can't encode character" quando o app roda sem console (windowed)
-# IMPORTANTE: Não redirecionar se for o processo filho do Demucs (--run-demucs), senão a barra de progresso quebra!
-if '--run-demucs' not in sys.argv:
+# IMPORTANTE: Não redirecionar se for o processo filho do Demucs (--run-demucs) ou Spotify (--run-spotify), senão a saída/progresso quebra!
+if '--run-demucs' not in sys.argv and '--run-spotify' not in sys.argv:
     if sys.stdout is None or getattr(sys, 'frozen', False):
         log_file = open('AppMusica.log', 'wb')
         sys.stdout = io.TextIOWrapper(log_file, encoding='utf-8')
@@ -75,8 +75,8 @@ def start_desktop():
         background_color='#09090b'
     )
     
-    # Inicia a janela e roda a função wait_and_load em segundo plano para checar a porta
-    webview.start(wait_and_load, window)
+    # Inicia a janela com private_mode=False para não apagar o localStorage
+    webview.start(wait_and_load, window, private_mode=False)
     os._exit(0)
 
 if __name__ == "__main__":

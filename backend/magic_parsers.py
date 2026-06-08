@@ -115,7 +115,7 @@ def _spotipy_fetch(url_type, item_id):
 
 def parse_spotify(url: str):
     import re
-    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor
     
     match = re.search(r'/(playlist|album|track)/([a-zA-Z0-9]+)', url)
     if not match:
@@ -125,16 +125,34 @@ def parse_spotify(url: str):
     item_id = match.group(2)
     
     try:
-        with ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(_spotipy_fetch, url_type, item_id)
-            res = future.result(timeout=120)
+        import subprocess
+        import sys
+        import json
+        import os
+        
+        target = os.path.abspath(sys.argv[0])
+        cmd = [sys.executable]
+        if not getattr(sys, 'frozen', False) and target.endswith('.py'):
+            cmd.append(target)
             
-            if res and res[1]:  # if is_magic is True
-                # res is (pseudo_playlist, is_magic, magic_source, cover_url) or (None, True, "Spotify", cover_url, new_url)
-                if res[0] is not None:  # Playlist/Album
-                    return res[0], res[1], res[2], res[3], url
-                else:  # Track
-                    return None, res[1], res[2], res[3], res[4]
+        cmd.extend(["--run-spotify", url_type, item_id])
+        
+        CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=CREATE_NO_WINDOW, text=True, timeout=120)
+        
+        if proc.returncode == 0 and proc.stdout:
+            # We look for the JSON output in stdout
+            lines = proc.stdout.strip().splitlines()
+            for line in reversed(lines):
+                if line.startswith('[') or line.startswith('{'):
+                    res = json.loads(line)
+                    if not isinstance(res, dict) or "error" not in res:
+                        if res and len(res) >= 2 and res[1]:  # res is a list since JSON tuples become lists
+                            if res[0] is not None:
+                                return res[0], res[1], res[2], res[3], url
+                            else:
+                                return None, res[1], res[2], res[3], res[4]
+                    break
     except Exception as e:
         print(f"Isolated SpotipyFree failed parsing Spotify link: {e}. Falling back to embed...")
         

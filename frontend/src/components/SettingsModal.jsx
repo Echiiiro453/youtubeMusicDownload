@@ -48,9 +48,9 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         if (res.data.status === 'success') {
-          const videoUrl = apiUrl + res.data.url;
-          if (setWallpaper) setWallpaper(videoUrl);
-          localStorage.setItem('app_wallpaper', videoUrl);
+          const relativeUrl = res.data.url;
+          if (setWallpaper) setWallpaper(relativeUrl);
+          localStorage.setItem('app_wallpaper', relativeUrl);
         }
       } catch (err) {
         alert("Erro ao enviar vídeo. Tente novamente.");

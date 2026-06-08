@@ -62,17 +62,26 @@ function App() {
   const [wallpaper, setWallpaper] = useState(() => localStorage.getItem('app_wallpaper'));
   const [blurLevel, setBlurLevel] = useState(() => localStorage.getItem('app_blur_level') || 'md');
 
+  // Resolve wallpaper URL: relative paths need the apiUrl prefix
+  const resolvedWallpaper = React.useMemo(() => {
+    if (!wallpaper) return '';
+    if (wallpaper.startsWith('/')) {
+      const baseUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+      return baseUrl + wallpaper;
+    }
+    return wallpaper;
+  }, [wallpaper]);
+
   useEffect(() => {
-    if (wallpaper) {
-      if (wallpaper.match(/\.(mp4|webm|ogg)/i)) {
+    if (resolvedWallpaper) {
+      if (resolvedWallpaper.match(/\.(mp4|webm|ogg)/i) || resolvedWallpaper.includes('upload_wallpaper') || resolvedWallpaper.includes('custom_wallpaper')) {
         const video = document.createElement('video');
         video.crossOrigin = "Anonymous";
-        video.src = wallpaper;
+        video.src = resolvedWallpaper;
         video.muted = true;
         video.playsInline = true;
         
         video.onloadeddata = () => {
-          // Seek para um frame seguro (ex: 1 segundo) para evitar telas pretas iniciais
           video.currentTime = Math.min(1, video.duration / 2 || 0);
         };
         
@@ -99,12 +108,12 @@ function App() {
         img.onload = () => {
           applyThemeFromImage(img);
         };
-        img.src = wallpaper;
+        img.src = resolvedWallpaper;
       }
     } else {
       resetTheme();
     }
-  }, [wallpaper]);
+  }, [resolvedWallpaper]);
 
   // Advanced Toasts
   const [toasts, setToasts] = useState([]);
@@ -875,6 +884,14 @@ function App() {
     e?.preventDefault();
     if (!url) return;
 
+    // Detectar links de Spotify/Apple Music/SoundCloud e redirecionar para o fluxo de importação
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('spotify.com') || lowerUrl.includes('music.apple.com') || lowerUrl.includes('soundcloud.com')) {
+      setSpotifyInputUrl(url);
+      setShowSpotifyModal(true);
+      return;
+    }
+
     // Detectar Busca vs URL (Suporte Universal: Twitch, Kick, etc.)
     const isUrl = /^(http|https):\/\/[^ "]+$/i.test(url);
 
@@ -951,9 +968,9 @@ function App() {
       {wallpaper && (
         <div className="fixed inset-0 z-[-2] w-full h-full">
           {wallpaper.match(/\.(mp4|webm|ogg)/i) ? (
-            <video src={wallpaper} autoPlay loop muted className="w-full h-full object-cover" />
+            <video src={resolvedWallpaper} autoPlay loop muted className="w-full h-full object-cover" />
           ) : (
-            <img src={wallpaper} alt="wallpaper" className="w-full h-full object-cover" />
+            <img src={resolvedWallpaper} alt="wallpaper" className="w-full h-full object-cover" />
           )}
           {/* Dark Overlay with Blur to ensure text readability */}
           <div className={`absolute inset-0 bg-black/30 backdrop-blur-${blurLevel}`}></div>
@@ -1262,7 +1279,7 @@ function App() {
 
                   <button
                     type="button"
-                    onClick={() => loadVideoDetails(url)}
+                    onClick={(e) => fetchInfo(e)}
                     disabled={loading || !url}
                     className={`flex-1 h-12 rounded-full font-medium transition-all flex items-center justify-center gap-2 ${/^(http|https):\/\/[^ "]+$/i.test(url)
                       ? 'bg-primary text-on-primary hover:scale-[1.02] shadow-md shadow-primary/20'

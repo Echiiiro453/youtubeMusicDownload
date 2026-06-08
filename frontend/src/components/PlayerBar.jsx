@@ -404,8 +404,8 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
               {!hasVideoTrack && (
                 <>
                   {/* Visualizer & Cover Art */}
-                  <div className="flex flex-col items-center gap-6">
-                    <div className={`w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative group rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
+                  <div className="flex flex-col items-center gap-4 md:gap-6 min-h-0">
+                    <div className={`w-48 h-48 md:w-[min(24rem,45vh)] md:h-[min(24rem,45vh)] flex-shrink-0 relative group rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] ${isPlaying && !hasVideoTrack ? 'animate-[spin_20s_linear_infinite]' : ''}`}>
                       <img 
                         src={coverSrc} 
                         className="w-full h-full object-cover rounded-full"
@@ -415,30 +415,30 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 md:w-6 md:h-6 bg-black rounded-full shadow-inner z-10" />
                     </div>
                     
-                    <div className="w-full h-16 md:h-24 relative opacity-80 mix-blend-screen">
+                    <div className="w-full h-12 md:h-[min(6rem,10vh)] shrink-0 relative opacity-80 mix-blend-screen">
                       <canvas ref={canvasRef} className="w-full h-full" width={300} height={100} />
                     </div>
                   </div>
 
                   {/* Lyrics Area - Minimalist */}
                   <div 
-                    className="flex-1 w-full max-w-lg h-64 md:h-96 flex flex-col relative"
+                    className="flex-1 w-full max-w-lg h-full min-h-[200px] flex flex-col relative"
                     style={{ 
                       maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)', 
                       WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)' 
                     }}
                   >
-                    <div ref={lyricsContainerRef} className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-[30vh] pt-[15vh]">
+                    <div ref={lyricsContainerRef} className="flex-1 overflow-y-auto space-y-4 md:space-y-6 pr-4 custom-scrollbar text-center md:text-left relative z-0 pb-[30vh] pt-[15vh]">
                       {parsedLyrics.length > 0 ? (
                         parsedLyrics.map((line, i) => {
                           const isActive = i === activeLineIndex;
                           const isPlain = line.time === -1;
                           
-                          let className = "transition-all duration-500 text-lg md:text-2xl font-medium leading-relaxed text-on-surface-variant hover:text-on-surface hover:scale-[1.02] origin-left";
+                          let className = "transition-all duration-500 text-base md:text-xl font-medium leading-relaxed text-on-surface-variant hover:text-on-surface hover:scale-[1.02] origin-left";
                           if (!isPlain && isActive) {
-                            className = "transition-all duration-500 text-2xl md:text-3xl font-bold leading-relaxed text-on-surface scale-[1.05] origin-left drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]";
+                            className = "transition-all duration-500 text-xl md:text-3xl font-bold leading-relaxed text-on-surface scale-[1.05] origin-left drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]";
                           } else if (!isPlain && activeLineIndex !== -1 && i < activeLineIndex) {
-                            className = "transition-all duration-500 text-lg md:text-xl font-medium leading-relaxed text-on-surface-variant/50";
+                            className = "transition-all duration-500 text-base md:text-lg font-medium leading-relaxed text-on-surface-variant/50";
                           }
 
                           return (

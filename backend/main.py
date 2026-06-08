@@ -31,6 +31,20 @@ if len(sys.argv) > 1 and sys.argv[1] == "--run-demucs":
     demucs.separate.main(sys.argv[2:])
     sys.exit(0)
 
+# SECRET CLI INTERCEPT FOR SPOTIFY:
+# Run spotipy fetching in a completely isolated process to prevent crashes
+if len(sys.argv) > 1 and sys.argv[1] == "--run-spotify":
+    try:
+        from magic_parsers import _spotipy_fetch
+        url_type = sys.argv[2]
+        item_id = sys.argv[3]
+        res = _spotipy_fetch(url_type, item_id)
+        # Retorna o JSON da tupla resultante. Se der erro, captura na exception
+        print(json.dumps(res))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+    sys.exit(0)
+
 import collections
 from datetime import datetime
 from urllib.request import Request as URLRequest, urlopen
@@ -76,7 +90,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "3.3.0"
+APP_VERSION = "3.4.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -797,10 +811,12 @@ async def convert_file(request: ConvertRequest):
 
         cmd.append(output_path)
 
+        CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            creationflags=CREATE_NO_WINDOW
         )
         stdout, stderr = await process.communicate()
 
@@ -1176,7 +1192,7 @@ async def run_install_full(job_id: str):
             *cmd_pip,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            creationflags=CREATE_NO_WINDOW
+            creationflags=CREATE_NO_WINDOW,
         )
     except FileNotFoundError:
         studio_install_jobs[job_id] = {"status": "error", "message": "Executável do Python não encontrado após instalação!"}
@@ -1350,20 +1366,20 @@ def api_convert(req: ConvertRequest):
 
 @app.post("/api/upload_wallpaper")
 async def upload_wallpaper(file: UploadFile = File(...)):
-    from utils import get_downloads_dir
+    from utils import get_data_dir
     import shutil
     
-    downloads_dir = get_downloads_dir()
-    os.makedirs(downloads_dir, exist_ok=True)
+    data_dir = get_data_dir()
+    os.makedirs(data_dir, exist_ok=True)
     
     ext = os.path.splitext(file.filename)[1].lower()
     save_name = f"custom_wallpaper{ext}"
-    save_path = os.path.join(downloads_dir, save_name)
+    save_path = os.path.join(data_dir, save_name)
     
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    return {"status": "success", "url": f"/downloads/{save_name}?v={int(time.time())}"}
+    return {"status": "success", "url": f"/data/{save_name}?v={int(time.time())}"}
 
 @app.get("/api/artist_info")
 def get_artist_info(artist: str):
@@ -1518,12 +1534,18 @@ def get_track_metadata(file_path: str):
         "file_size": file_size
     }
 
-from utils import get_downloads_dir
+from utils import get_downloads_dir, get_data_dir
 try:
     os.makedirs(get_downloads_dir(), exist_ok=True)
     app.mount("/downloads", StaticFiles(directory=get_downloads_dir()), name="downloads")
 except Exception as e:
     print(f"Could not mount downloads dir: {e}")
+
+try:
+    os.makedirs(get_data_dir(), exist_ok=True)
+    app.mount("/data", StaticFiles(directory=get_data_dir()), name="data")
+except Exception as e:
+    print(f"Could not mount data dir: {e}")
 
 static_dir = get_resource_path("static")
 if os.path.exists(static_dir):

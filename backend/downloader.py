@@ -223,12 +223,12 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
         'concurrent_fragment_downloads': 16,
     }
     
-    # Re-ativa o "Jittering" (Anti-Ban Sleep) SOMENTE para YouTube
-    if "youtube.com" in request.url or "youtu.be" in request.url:
-        ydl_opts["sleep_requests"] = 1.5
-        ydl_opts["sleep_interval"] = 6
-        ydl_opts["max_sleep_interval"] = 25
-        ydl_opts["sleep_subtitles"] = 2
+    # Aplica o "Jittering" (Anti-Ban Sleep Aleatório) para TODOS os downloads e buscas
+    # Impede que metralhadoras de ytsearch1: (Spotify) bloqueiem o IP instantaneamente
+    ydl_opts["sleep_requests"] = 1.5
+    ydl_opts["sleep_interval"] = 6
+    ydl_opts["max_sleep_interval"] = 25
+    ydl_opts["sleep_subtitles"] = 2
     
 
     if request.cover_path and os.path.exists(request.cover_path):
@@ -320,7 +320,12 @@ def download_with_retries(job_id: str, request):
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     info = ydl.extract_info(target_url, download=True)
                     if 'entries' in info:
-                        info = info['entries'][0]
+                        entries = list(info['entries'])
+                        if not entries:
+                            raise Exception(f"Nenhum resultado encontrado na busca do YouTube para: {target_url}")
+                        info = entries[0]
+                        if info is None:
+                            raise Exception(f"Resultado vazio retornado pelo YouTube para: {target_url}")
                     filename = ydl.prepare_filename(info)
                     
                     base_path, _ = os.path.splitext(filename)
