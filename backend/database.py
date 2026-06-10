@@ -32,6 +32,14 @@ def init_db():
                 value   TEXT
             );
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS favorites (
+                video_id   TEXT PRIMARY KEY,
+                title      TEXT,
+                file_path  TEXT,
+                added_at   REAL
+            );
+        """)
         try:
             cur.execute("ALTER TABLE downloads ADD COLUMN url TEXT;")
         except: 
@@ -41,6 +49,58 @@ def init_db():
         print("Banco de dados SQLite inicializado.")
     except Exception as e:
         print(f"Erro ao inicializar DB: {e}")
+
+def add_favorite(video_id: str, title: str, file_path: str) -> bool:
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT OR IGNORE INTO favorites (video_id, title, file_path, added_at)
+            VALUES (?, ?, ?, ?);
+        """, (video_id, title, file_path, time.time()))
+        changed = cur.rowcount > 0
+        conn.commit()
+        conn.close()
+        return changed
+    except Exception as e:
+        print(f"Erro ao adicionar favorito: {e}")
+        return False
+
+def remove_favorite(video_id: str) -> bool:
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM favorites WHERE video_id = ?;", (video_id,))
+        changed = cur.rowcount > 0
+        conn.commit()
+        conn.close()
+        return changed
+    except Exception as e:
+        print(f"Erro ao remover favorito: {e}")
+        return False
+
+def get_favorites() -> list:
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT video_id, title, file_path, added_at FROM favorites ORDER BY added_at DESC;")
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return rows
+    except Exception as e:
+        print(f"Erro ao buscar favoritos: {e}")
+        return []
+
+def is_favorite(video_id: str) -> bool:
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM favorites WHERE video_id = ?;", (video_id,))
+        result = cur.fetchone() is not None
+        conn.close()
+        return result
+    except:
+        return False
 
 def mark_downloaded_db(playlist_id: str, video_id: str, title: str, file_path: str, url: str = None):
     # Use 'single' as fallback playlist_id for avulso downloads (no playlist context)

@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>AppMusica</h1>
+  <h1>Lumina</h1>
   <p>A professional, lightweight solution for downloading high-fidelity music and videos from YouTube, Spotify, and Apple Music.</p>
 
   [![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/youtubeMusicDownload/)
@@ -16,10 +16,10 @@
 ## English
 
 ### Overview
-AppMusica is an advanced media downloader built for performance and reliability. It features a modern desktop interface and powerful backend capable of handling massive playlists, bypassing anti-bot protections, and separating audio tracks using artificial intelligence.
+Lumina is an advanced media downloader built for performance and reliability. It features a modern desktop interface and powerful backend capable of handling massive playlists, bypassing anti-bot protections, and separating audio tracks using artificial intelligence.
 
 <div align="center">
-  <img src="fotos/4985593682559962246.jpg" alt="AppMusica Dashboard" width="800"/>
+  <img src="fotos/4985593682559962246.jpg" alt="Lumina Dashboard" width="800"/>
 </div>
 
 ### Key Features
@@ -28,19 +28,24 @@ AppMusica is an advanced media downloader built for performance and reliability.
 - **Smart Metadata**: Automatic embedding of album covers, artists, titles, and lyrics directly into your audio files.
 - **Multi-Platform**: Native desktop experience built with PyWebView and FastAPI.
 - **Magic Search**: Search and download songs by directly pasting Spotify, Deezer, SoundCloud, or Apple Music links.
+- **Infinite Radio**: Automatically discover and stream similar tracks when your local playlist ends.
+- **Sleep Timer & Crossfade**: Fall asleep to your music and enjoy gapless, smooth transitions between songs.
+- **Discord Rich Presence**: Show off what you're listening to directly on your Discord status.
+- **Lumina Sync**: Seamlessly sync your music to your mobile phone over local Wi-Fi with secure QR Code pairing.
+
 - **Smart Retry & Proxy Survival**: Intelligent system utilizing fallback clients and rotating proxies to bypass IP blocks and download thousands of songs seamlessly.
 - **Queue Memory**: Automatically saves pending downloads allowing you to resume interrupted sessions anytime.
-- **AppMusica Studio AI**: Built-in vocal and instrumental separator powered by Demucs (State-of-the-art music source separation by Meta Research).
+- **Lumina Studio AI**: Built-in vocal and instrumental separator powered by Demucs (State-of-the-art music source separation by Meta Research).
 - **Shazam Lab**: Native metadata fixer powered by Shazamio to recognize unknown MP3 files and automatically inject ID3 tags and album covers.
 - **Global Localization**: Dynamic UI translation supporting English (US), Spanish (ES), and Portuguese (BR).
 
 <div align="center">
-  <img src="fotos/4985593682559962247.jpg" alt="AppMusica Studio AI" width="800"/>
+  <img src="fotos/4985593682559962247.jpg" alt="Lumina Studio AI" width="800"/>
 </div>
 
 **Note on Video Playback**: The default Windows Media Player or "Movies & TV" app may struggle to play certain downloaded `.mp4` videos due to missing modern codecs. We highly recommend using [VLC Media Player](https://www.videolan.org/vlc/).
 
-**Note on AI Processing**: The AppMusica Studio AI feature utilizes up to 100% of your CPU cores during audio separation. This is because it performs heavy local Neural Network inference via PyTorch. This consumption is completely safe, expected, and ensures maximum privacy as no audio is uploaded to the cloud.
+**Note on AI Processing**: The Lumina Studio AI feature utilizes up to 100% of your CPU cores during audio separation. This is because it performs heavy local Neural Network inference via PyTorch. This consumption is completely safe, expected, and ensures maximum privacy as no audio is uploaded to the cloud.
 
 ### Project Structure
 ```text
@@ -53,7 +58,7 @@ youtubeMusicDownload/
 ```
 
 ### Legal Disclaimer & Privacy
-Please read the [Terms of Use](TERMS.md) and [Privacy Policy](PRIVACY.md) before using this software. AppMusica is intended for personal and educational use only. The developer does not promote or endorse copyright infringement.
+Please read the [Terms of Use](TERMS.md) and [Privacy Policy](PRIVACY.md) before using this software. Lumina is intended for personal and educational use only. The developer does not promote or endorse copyright infringement.
 
 ### Desktop Setup (Development)
 1. Install [Node.js](https://nodejs.org/) and [Python 3.10+](https://www.python.org/).
@@ -66,7 +71,7 @@ Please read the [Terms of Use](TERMS.md) and [Privacy Policy](PRIVACY.md) before
 **Option 1: Wine/Proton (Recommended)**
 Since the compiled release is a Windows executable (`.exe`), the easiest way to run it on Linux is via [Wine](https://www.winehq.org/) or [Proton](https://github.com/ValveSoftware/Proton) (via Steam or [Bottles](https://usebottles.com/)).
 ```bash
-wine AppMusica.exe
+wine Lumina.exe
 ```
 
 **Option 2: Native Execution (Source Code)**
@@ -107,10 +112,10 @@ python build_exe.py
 ## Português
 
 ### Visão Geral
-O AppMusica é uma solução avançada para download de mídias, construída para entregar performance e estabilidade. O software conta com uma interface moderna para desktop e um backend robusto capaz de lidar com playlists gigantes, desviar de proteções antibot e separar faixas de áudio usando inteligência artificial.
+O Lumina é uma solução avançada para download de mídias, construída para entregar performance e estabilidade. O software conta com uma interface moderna para desktop e um backend robusto capaz de lidar com playlists gigantes, desviar de proteções antibot e separar faixas de áudio usando inteligência artificial.
 
 <div align="center">
-  <img src="fotos/4985593682559962246.jpg" alt="Dashboard do AppMusica" width="800"/>
+  <img src="fotos/4985593682559962246.jpg" alt="Dashboard do Lumina" width="800"/>
 </div>
 
 ### Funcionalidades Principais
@@ -121,17 +126,17 @@ O AppMusica é uma solução avançada para download de mídias, construída par
 - **Magic Search**: Busque e baixe músicas simplesmente colando links do Spotify, Deezer, SoundCloud ou Apple Music.
 - **Smart Retry & Proxy Survival**: Sistema inteligente que utiliza clientes de fallback e proxies rotativos para ignorar bloqueios de IP e baixar milhares de músicas sem interrupções.
 - **Memória de Fila**: Salva automaticamente seus downloads pendentes, permitindo que você retome sessões interrompidas a qualquer momento.
-- **AppMusica Studio AI**: Separador de vocais e instrumentais integrado, alimentado pelo Demucs (Inteligência Artificial de ponta desenvolvida pela Meta Research).
+- **Lumina Studio AI**: Separador de vocais e instrumentais integrado, alimentado pelo Demucs (Inteligência Artificial de ponta desenvolvida pela Meta Research).
 - **Laboratório Shazam**: Corretor de metadados nativo alimentado pelo Shazamio para reconhecer arquivos MP3 desconhecidos e injetar tags ID3 e capas de álbuns automaticamente.
 - **Localização Global**: Interface com tradução dinâmica e suporte nativo a Inglês (US), Espanhol (ES) e Português (BR).
 
 <div align="center">
-  <img src="fotos/4985593682559962247.jpg" alt="AppMusica Studio AI" width="800"/>
+  <img src="fotos/4985593682559962247.jpg" alt="Lumina Studio AI" width="800"/>
 </div>
 
 **Aviso sobre Reprodução de Vídeo**: O Windows Media Player ou o aplicativo "Filmes e TV" padrão do Windows podem apresentar falhas ao reproduzir alguns vídeos `.mp4` baixados devido à falta de codecs modernos. Recomendamos fortemente o uso do [VLC Media Player](https://www.videolan.org/vlc/).
 
-**Aviso sobre Processamento de IA**: O recurso AppMusica Studio AI utiliza até 100% dos núcleos do seu processador durante a separação de áudio. Isso ocorre porque o sistema realiza cálculos matemáticos pesados de Rede Neural localmente via PyTorch. Esse consumo é totalmente seguro, esperado e garante máxima privacidade, pois nenhum áudio é enviado para a nuvem.
+**Aviso sobre Processamento de IA**: O recurso Lumina Studio AI utiliza até 100% dos núcleos do seu processador durante a separação de áudio. Isso ocorre porque o sistema realiza cálculos matemáticos pesados de Rede Neural localmente via PyTorch. Esse consumo é totalmente seguro, esperado e garante máxima privacidade, pois nenhum áudio é enviado para a nuvem.
 
 ### Estrutura do Projeto
 ```text
@@ -144,7 +149,7 @@ youtubeMusicDownload/
 ```
 
 ### Termos de Uso e Privacidade (Aviso Legal)
-Por favor, leia os [Termos de Uso](TERMS.md) e a [Política de Privacidade](PRIVACY.md) antes de utilizar este software. O AppMusica é destinado exclusivamente para uso pessoal e educacional. O desenvolvedor não promove ou endossa a pirataria ou infração de direitos autorais.
+Por favor, leia os [Termos de Uso](TERMS.md) e a [Política de Privacidade](PRIVACY.md) antes de utilizar este software. O Lumina é destinado exclusivamente para uso pessoal e educacional. O desenvolvedor não promove ou endossa a pirataria ou infração de direitos autorais.
 
 ### Configuração Desktop (Desenvolvimento)
 1. Instale o [Node.js](https://nodejs.org/) e o [Python 3.10+](https://www.python.org/).
@@ -157,7 +162,7 @@ Por favor, leia os [Termos de Uso](TERMS.md) e a [Política de Privacidade](PRIV
 **Opção 1: Wine/Proton (Recomendado)**
 Como o aplicativo final é um executável Windows (`.exe`), a maneira mais fácil e rápida de rodar no Linux é usando o [Wine](https://www.winehq.org/) ou o [Proton](https://github.com/ValveSoftware/Proton) (através da Steam ou do [Bottles](https://usebottles.com/)).
 ```bash
-wine AppMusica.exe
+wine Lumina.exe
 ```
 
 **Opção 2: Execução Nativa (Código Fonte)**

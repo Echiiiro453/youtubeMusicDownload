@@ -8,10 +8,17 @@ export function ConverterModal({ isOpen, onClose, apiUrl }) {
   const [inputFile, setInputFile] = useState('');
   const [outputFormat, setOutputFormat] = useState('mp3');
   const [isConverting, setIsConverting] = useState(false);
-  const [status, setStatus] = useState(null); // 'success', 'error', null
+  const [status, setStatus] = useState(null);
   const [message, setMessage] = useState('');
+  const [outputPath, setOutputPath] = useState(null);
 
   if (!isOpen) return null;
+
+  const handleOpenFile = () => {
+    if (outputPath) {
+      axios.post(`${apiUrl}/api/open_external`, { file_path: outputPath }).catch(console.error);
+    }
+  };
 
   const handleChooseFile = async () => {
     try {
@@ -34,6 +41,7 @@ export function ConverterModal({ isOpen, onClose, apiUrl }) {
     setIsConverting(true);
     setStatus(null);
     setMessage('');
+    setOutputPath(null);
 
     try {
       const res = await axios.post(`${apiUrl}/api/convert`, {
@@ -43,7 +51,8 @@ export function ConverterModal({ isOpen, onClose, apiUrl }) {
 
       if (res.data.status === 'success') {
         setStatus('success');
-        setMessage(`Salvo em: ${res.data.output_path}`);
+        setMessage(`Conversão concluída com sucesso!`);
+        setOutputPath(res.data.output_path);
       }
     } catch (e) {
       console.error(e);
@@ -135,8 +144,21 @@ export function ConverterModal({ isOpen, onClose, apiUrl }) {
                     : 'bg-red-500/10 border-red-500/30 text-red-400'
                 }`}
               >
-                {status === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-                <p className="text-xs break-all mt-0.5">{message}</p>
+                                {status === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium mt-0.5">{message}</p>
+                  {status === 'success' && outputPath && (
+                    <div className="mt-2 bg-green-500/20 rounded-lg p-2 flex flex-col gap-2 border border-green-500/20">
+                      <p className="text-[10px] font-mono break-all opacity-80">{outputPath}</p>
+                      <button 
+                        onClick={handleOpenFile} 
+                        className="flex items-center gap-1.5 self-start bg-green-500/30 hover:bg-green-500/50 text-green-300 transition-colors px-3 py-1.5 rounded-lg text-xs font-bold"
+                      >
+                        <FolderOpen size={14} /> Abrir Arquivo
+                      </button>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

@@ -176,7 +176,7 @@ const translations = {
     
     // ── Tools / Modals
     toolsMenu: 'Ferramentas',
-    studioTitle: 'AppMusica Studio',
+    studioTitle: 'Lumina Studio',
     studioSubtitle: 'Inteligência Artificial (Vocais e Instrumental)',
     studioSelectSong: 'Selecione a Música da Biblioteca',
     studioLoadingSongs: 'Carregando músicas...',
@@ -365,7 +365,7 @@ const translations = {
     
     // ── Tools / Modals
     toolsMenu: 'Tools',
-    studioTitle: 'AppMusica Studio',
+    studioTitle: 'Lumina Studio',
     studioSubtitle: 'Artificial Intelligence (Vocals and Instrumental)',
     studioSelectSong: 'Select a Song from Library',
     studioLoadingSongs: 'Loading songs...',
@@ -550,7 +550,7 @@ const translations = {
     
     // ── Tools / Modals
     toolsMenu: 'Herramientas',
-    studioTitle: 'AppMusica Studio',
+    studioTitle: 'Lumina Studio',
     studioSubtitle: 'Inteligencia Artificial (Voces e Instrumental)',
     studioSelectSong: 'Selecciona una Canción de la Biblioteca',
     studioLoadingSongs: 'Cargando canciones...',

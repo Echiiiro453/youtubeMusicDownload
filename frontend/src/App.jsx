@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { t, getLanguage, setLanguage } from './i18n';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, ArrowRightLeft, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu, Mic } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, ArrowRightLeft, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu, Mic, Smartphone, BellRing } from 'lucide-react';
 import { RippleButton } from './components/Ripple';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,11 +19,23 @@ import StudioModal from './components/StudioModal';
 import ShazamModal from './components/ShazamModal';
 import { HistoryModal } from './components/HistoryModal';
 import { ConverterModal } from './components/ConverterModal';
+import MobileSyncModal from './components/MobileSyncModal';
+import { SubscriptionsModal } from './components/SubscriptionsModal';
+import { TagEditorModal } from './components/TagEditorModal';
 import { SkeletonCard, SkeletonPlaylistItem, QualityOption, ToastContainer } from './components/UIComponents';
 // Helper para detectar modo automaticamente (Music vs Video)
 const detectMode = (url) => {
   if (!url) return 'video';
   const lowerUrl = url.toLowerCase();
+  
+  // Forçar modo Vídeo para Redes Sociais
+  if (lowerUrl.includes('tiktok.com') ||
+      lowerUrl.includes('instagram.com') ||
+      lowerUrl.includes('twitter.com') ||
+      lowerUrl.includes('x.com')) {
+      return 'video';
+  }
+  
   if (lowerUrl.includes('music.youtube.com') ||
     lowerUrl.includes('shorts') ||
     lowerUrl.includes('soundcloud.com') ||
@@ -52,10 +64,16 @@ function App() {
   useEffect(() => {
     if (url) {
       const detected = detectMode(url);
-      if (detected === 'audio') {
-        setMode('audio');
-      }
+      setMode(detected);
     }
+  }, [url]);
+
+  // Aviso específico para Instagram (separado para garantir que addToast já esteja definido)
+  useEffect(() => {
+    if (url && url.toLowerCase().includes('instagram.com')) {
+      addToast('Links do Instagram podem exigir autenticacao (Cookies) nas Configuracoes para funcionar.', 'warning');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   // Wallpaper & Theme Manager
@@ -154,10 +172,13 @@ function App() {
   });
 
   const [showLibrary, setShowLibrary] = useState(false);
+  const [tagEditorSong, setTagEditorSong] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showConverter, setShowConverter] = useState(false);
   const [showStudioModal, setShowStudioModal] = useState(false);
   const [showShazamModal, setShowShazamModal] = useState(false);
+  const [showMobileSync, setShowMobileSync] = useState(false);
+  const [showSubscriptionsModal, setShowSubscriptionsModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuTimeoutRef = React.useRef(null);
 
@@ -1019,6 +1040,12 @@ function App() {
             <RippleButton onClick={() => checkForUpdates(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('btnUpdateTitle')}>
               <RefreshCw className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
             </RippleButton>
+            <RippleButton onClick={() => setShowMobileSync(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Sincronizar com Celular">
+              <Smartphone className="w-5 h-5" />
+            </RippleButton>
+            <RippleButton onClick={() => setShowSubscriptionsModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Gerenciar Inscrições">
+              <BellRing className="w-5 h-5" />
+            </RippleButton>
             <RippleButton onClick={() => setShowDonate(true)} className="w-10 h-10 rounded-full hover:bg-error/10 text-error hover:text-error flex items-center justify-center transition-colors" title={t('btnDonate')}>
               <Heart className="w-5 h-5" />
             </RippleButton>
@@ -1422,14 +1449,42 @@ function App() {
                   {/* Playlist Manager Button */}
                   {metadata.is_playlist && (
                     <div className="mb-4 space-y-2">
-                      <div className="bg-primary-container/20 border border-primary-container rounded-3xl p-4 flex items-center gap-3">
-                        <div className="p-2 bg-primary-container rounded-xl">
-                          <FileText className="w-5 h-5 text-on-primary-container" />
+                      <div className="bg-primary-container/20 border border-primary-container rounded-3xl p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary-container rounded-xl">
+                            <FileText className="w-5 h-5 text-on-primary-container" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-on-surface">{t('playlistDetectedTitle')}</h4>
+                            <p className="text-xs text-on-surface-variant">{t('playlistDetectedDesc')}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-bold text-on-surface">{t('playlistDetectedTitle')}</h4>
-                          <p className="text-xs text-on-surface-variant">{t('playlistDetectedDesc')}</p>
-                        </div>
+                        <button
+                          onClick={() => {
+                            fetch('/api/subscriptions/add', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                playlist_id: metadata.id,
+                                url: metadata.webpage_url || metadata.url,
+                                title: metadata.title,
+                                platform: metadata.magic_source || 'YouTube'
+                              })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                              if (data.success) {
+                                addToast('Inscricao confirmada! Playlist monitorada a cada 4 horas.', 'success');
+                              } else {
+                                addToast(data.message || 'Ja inscrito.', 'warning');
+                              }
+                            });
+                          }}
+                          className="p-2 bg-primary/10 hover:bg-primary text-primary hover:text-on-primary rounded-full transition-all flex-shrink-0"
+                          title="Monitorar Playlist Automaticamente"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                        </button>
                       </div>
 
                       <button
@@ -1599,6 +1654,18 @@ function App() {
                             selected={quality}
                             set={setQuality}
                           />
+                          {quality === 'flac' && (
+                            <div className="flex items-start gap-3 mt-4 p-4 bg-tertiary/10 border border-tertiary/30 rounded-xl">
+                              <AlertCircle size={20} className="text-tertiary flex-shrink-0 mt-0.5" />
+                              <div>
+                                <h5 className="text-sm font-semibold text-tertiary mb-1">Aviso sobre o formato FLAC</h5>
+                                <p className="text-xs text-on-surface-variant leading-relaxed">
+                                  O YouTube fornece áudio original com qualidade máxima de 256kbps (Opus/AAC). 
+                                  A conversão para FLAC gerará um arquivo bem maior, mas <strong>não aumentará a qualidade real do áudio</strong> além da fonte original.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </>
                       ) : (
                         <>
@@ -1899,7 +1966,7 @@ function App() {
 
               <div className="relative z-10 space-y-4">
                 <p className="text-sm text-on-surface-variant">
-                  Cole o link da sua música ou Playlist do <b className="text-on-surface">Spotify</b>, <b className="text-on-surface">Apple Music</b> ou <b className="text-on-surface">SoundCloud</b>. O AppMusica encontrará as músicas automaticamente.
+                  Cole o link da sua música ou Playlist do <b className="text-on-surface">Spotify</b>, <b className="text-on-surface">Apple Music</b> ou <b className="text-on-surface">SoundCloud</b>. O Lumina encontrará as músicas automaticamente.
                 </p>
                 <input
                   type="text"
@@ -1945,6 +2012,17 @@ function App() {
           setCurrentSong(song);
           if (playlist) setCurrentPlaylist(playlist);
         }}
+        onEditTags={(song) => setTagEditorSong(song)}
+      />
+
+      <TagEditorModal
+        isOpen={!!tagEditorSong}
+        onClose={() => setTagEditorSong(null)}
+        song={tagEditorSong}
+        getApiUrl={getApiUrl}
+        onSaved={() => {
+          // You could optionally refresh the library here
+        }}
       />
 
       <HistoryModal
@@ -1955,6 +2033,16 @@ function App() {
           setUrl(urlToDownload);
           setStep('search');
         }}
+      />
+      
+      <MobileSyncModal
+        isOpen={showMobileSync}
+        onClose={() => setShowMobileSync(false)}
+      />
+
+      <SubscriptionsModal
+        isOpen={showSubscriptionsModal}
+        onClose={() => setShowSubscriptionsModal(false)}
       />
     </div>
       {/* New Converter Modal */}

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info, Activity } from 'lucide-react';
+import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info, Activity, Layers, SlidersHorizontal, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RippleButton } from './Ripple';
+import { EqualizerModal, EQ_PRESETS, EQ_BANDS } from './EqualizerModal';
 
 export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isShuffle, setIsShuffle }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  
+
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -13,6 +16,77 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   const [metadata, setMetadata] = useState(null);
   const [isLooping, setIsLooping] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+
+
+  // Sleep Timer Countdown
+  useEffect(() => {
+    if (sleepTimer === null) return;
+    const interval = setInterval(() => {
+      setSleepTimeLeft(prev => {
+        if (prev <= 1) {
+          togglePlay(false);
+          setSleepTimer(null);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimer]);
+
+  const handleSetSleepTimer = (minutes) => {
+    if (minutes === 0) {
+      setSleepTimer(null);
+      setSleepTimeLeft(null);
+    } else {
+      setSleepTimer(minutes);
+      setSleepTimeLeft(minutes * 60);
+    }
+    setShowSleepMenu(false);
+  };
+
+  // Sync state to backend for MiniPlayer
+  useEffect(() => {
+    if (!currentSong) return;
+    
+    let cover = '';
+    if (metadata?.coverUrl) cover = metadata.coverUrl;
+    else if (currentSong.video_id) cover = `https://i.ytimg.com/vi/${currentSong.video_id}/mqdefault.jpg`;
+    else if (currentSong.thumbnails && currentSong.thumbnails.length > 0) cover = currentSong.thumbnails[0].url;
+
+    fetch('http://localhost:8000/api/miniplayer/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: currentSong.title || 'Música',
+        artist: currentSong.artist || currentSong.author || 'Desconhecido',
+        cover_url: cover,
+        isPlaying,
+        progress,
+        duration
+      })
+    }).catch(() => {});
+  }, [currentSong, isPlaying, progress, duration, metadata]);
+
+  // Poll commands from MiniPlayer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch('http://localhost:8000/api/miniplayer/command')
+        .then(res => res.json())
+        .then(data => {
+          if (data.command === 'play') togglePlay(true);
+          else if (data.command === 'pause') togglePlay(false);
+          else if (data.command === 'next' && onNext) onNext();
+          else if (data.command === 'prev' && onPrev) onPrev();
+        })
+        .catch(() => {});
+    }, 500);
+    return () => clearInterval(interval);
+  }, [onNext, onPrev]);
+
+  const openMiniPlayer = () => {
+    fetch('http://localhost:8000/api/miniplayer/open', { method: 'POST' }).catch(console.error);
+  };
   
   const audioRef = useRef(null);
   
@@ -24,6 +98,31 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   const animationRef = useRef(null);
 
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
+  const [showEqModal, setShowEqModal] = useState(false);
+  const [eqPreset, setEqPreset] = useState(() => localStorage.getItem('appmusica_eq_preset') || 'Normal');
+  const [eqGains, setEqGains] = useState(() => {
+    try {
+      const saved = localStorage.getItem('appmusica_eq_bands');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return EQ_PRESETS['Normal'] || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  });
+  const eqFiltersRef = useRef([]);
+
+  useEffect(() => {
+    localStorage.setItem('appmusica_eq_preset', eqPreset);
+    localStorage.setItem('appmusica_eq_bands', JSON.stringify(eqGains));
+    
+    // Apply to Web Audio API filters
+    if (eqFiltersRef.current.length === 10) {
+      eqGains.forEach((gain, i) => {
+        if (eqFiltersRef.current[i]) {
+          eqFiltersRef.current[i].gain.setTargetAtTime(gain, audioContextRef.current.currentTime, 0.1);
+        }
+      });
+    }
+  }, [eqGains, eqPreset]);
+
 
   // Initialize visualizer upon user play interaction
   const initAudioVisualizer = () => {
@@ -33,7 +132,28 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
       const source = audioCtx.createMediaElementSource(audioRef.current);
-      source.connect(analyser);
+      
+      // Criar 10 bandas do equalizador
+      const filters = [];
+      for (let i = 0; i < EQ_BANDS.length; i++) {
+        const filter = audioCtx.createBiquadFilter();
+        if (i === 0) filter.type = 'lowshelf';
+        else if (i === EQ_BANDS.length - 1) filter.type = 'highshelf';
+        else filter.type = 'peaking';
+        
+        filter.frequency.value = EQ_BANDS[i];
+        filter.Q.value = 1.0;
+        filter.gain.value = eqGains[i];
+        filters.push(filter);
+      }
+      eqFiltersRef.current = filters;
+
+      // Conectar source -> f0 -> f1 -> ... -> f9 -> analyser -> destination
+      source.connect(filters[0]);
+      for (let i = 0; i < filters.length - 1; i++) {
+        filters[i].connect(filters[i+1]);
+      }
+      filters[filters.length - 1].connect(analyser);
       analyser.connect(audioCtx.destination);
       
       audioContextRef.current = audioCtx;
@@ -41,7 +161,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
       
       drawVisualizer();
     } catch (e) {
-      console.error("Erro ao inicializar visualizador:", e);
+      console.error("Erro ao inicializar visualizador/equalizador:", e);
     }
   };
 
@@ -205,9 +325,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
     return `${min}:${sec < 10 ? '0' : ''}${sec}`;
   };
 
-  if (!currentSong) return null;
+  const coverSrc = metadata?.coverUrl || currentSong?.thumbnail || "https://github.com/shadcn.png";
 
-  const coverSrc = metadata?.coverUrl || currentSong.thumbnail || "https://github.com/shadcn.png";
+
   const parsedLyrics = React.useMemo(() => {
     if (!metadata?.lyrics) return [];
     const lines = metadata.lyrics.split('\n');
@@ -244,6 +364,8 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   }, [progress, parsedLyrics]);
 
   const lyricsContainerRef = useRef(null);
+
+  if (!currentSong) return null;
 
   useEffect(() => {
     if (activeLineIndex !== -1 && lyricsContainerRef.current && isExpanded) {
@@ -534,13 +656,61 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                 <RippleButton onClick={onNext} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-2" title="Próxima">
                   <SkipForward size={32} />
                 </RippleButton>
+
+                <div className="relative">
+                  <RippleButton 
+                    onClick={() => setShowSleepMenu(!showSleepMenu)} 
+                    className={`transition-colors ${sleepTimer ? 'text-primary' : 'text-on-surface-variant/50 hover:text-on-surface'}`}
+                    title={sleepTimer ? `Sleep Timer: ${Math.floor(sleepTimeLeft / 60)}:${(sleepTimeLeft % 60).toString().padStart(2, '0')}` : "Sleep Timer"}
+                  >
+                    <Moon size={24} />
+                    {sleepTimer && (
+                      <span className="absolute -bottom-2 -right-1 text-[9px] font-bold bg-surface-container px-1 rounded-full">
+                        {Math.floor(sleepTimeLeft / 60)}m
+                      </span>
+                    )}
+                  </RippleButton>
+                  
+                  <AnimatePresence>
+                    {showSleepMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-40 bg-surface-container-high border border-outline-variant/30 rounded-2xl shadow-xl overflow-hidden z-50 flex flex-col"
+                      >
+                        <div className="p-3 border-b border-outline-variant/30 text-center">
+                          <span className="text-xs font-bold text-on-surface uppercase tracking-widest">Sleep Timer</span>
+                        </div>
+                        {[15, 30, 45, 60].map(mins => (
+                          <button key={mins} onClick={() => handleSetSleepTimer(mins)} className="py-3 px-4 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors text-left border-b border-outline-variant/10">
+                            Em {mins} minutos
+                          </button>
+                        ))}
+                        <button onClick={() => handleSetSleepTimer(0)} className="py-3 px-4 text-sm text-error font-medium hover:bg-error/10 transition-colors text-left">
+                          Desativar
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                
                 <RippleButton 
-                  onClick={() => setShowInfo(true)} 
+ 
                   className="text-on-surface-variant/50 hover:text-on-surface transition-colors" 
                   title="Informações da Faixa"
                 >
                   <Info size={24} />
                 </RippleButton>
+
+                <RippleButton 
+                  onClick={() => setShowEqModal(true)} 
+                  className="text-on-surface-variant/50 hover:text-on-surface transition-colors" 
+                  title="Equalizador"
+                >
+                  <SlidersHorizontal size={24} />
+                </RippleButton>
+
               </div>
               
               {/* Volume */}
@@ -633,6 +803,9 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
               </div>
 
               <div className="w-1/4 flex items-center justify-end gap-3 md:gap-6">
+                <button onClick={openMiniPlayer} className="text-on-surface-variant hover:text-on-surface transition-colors mr-2" title="Mini Player Flutuante (Always on top)">
+                   <Layers size={18} />
+                </button>
                 <button onClick={() => setIsExpanded(true)} className="text-on-surface-variant hover:text-on-surface transition-colors mr-2">
                    <Maximize2 size={18} />
                 </button>

@@ -218,7 +218,19 @@ def parse_spotify(url: str):
 
 def parse_soundcloud(url: str):
     from curl_cffi import requests as cffi_requests
-    html = cffi_requests.get(url, impersonate=CHROME_IMPERSONATE, timeout=10).text
+
+    # Parse username and playlist slug from URL
+    # URL format: https://soundcloud.com/{username}/sets/{playlist-slug}
+    url_match = re.match(r'https://soundcloud\.com/([^/]+)/sets/([^/?]+)', url)
+    if not url_match:
+        print(f"[SoundCloud] Could not parse URL: {url}")
+        return None, False, None, None, url
+
+    username = url_match.group(1)
+    playlist_slug = url_match.group(2)
+
+    # Step 1: Get client_id from JS bundles
+    html = cffi_requests.get(url, impersonate=CHROME_IMPERSONATE, timeout=15).text
     js_urls = re.findall(r'<script crossorigin src="([^"]+)"></script>', html)
     client_id = None
     for j_url in js_urls:
@@ -229,43 +241,85 @@ def parse_soundcloud(url: str):
                 client_id = match.group(1)
                 break
         except: pass
-    
-    if client_id:
-        hydration = re.search(r'window\.__sc_hydration = (\[.*?\]);</script>', html, re.DOTALL)
-        if hydration:
-            data = json.loads(hydration.group(1))
-            for item in data:
-                if 'data' in item and isinstance(item['data'], dict) and 'tracks' in item['data']:
-                    playlist = item['data']
-                    clean_title = playlist.get('title', 'SoundCloud Playlist')
-                    track_ids = [str(t['id']) for t in playlist['tracks']]
-                    
-                    api_url = f"https://api-v2.soundcloud.com/tracks?ids={','.join(track_ids)}&client_id={client_id}"
-                    res = req.get(api_url, timeout=10)
-                    if res.status_code == 200:
-                        tracks_data = res.json()
-                        entries = []
-                        cover_url = playlist.get('artwork_url', '')
-                        if cover_url: cover_url = cover_url.replace('-large', '-t500x500')
-                        for idx, t in enumerate(tracks_data):
-                            t_artist = t.get('user', {}).get('username', '')
-                            t_title = t.get('title', '')
-                            sq = f"{t_artist} {t_title}".strip()
-                            entries.append({
-                                'id': f"soundcloud_magic_{idx}",
-                                'url': f"ytsearch1:{sq} audio",
-                                'title': sq,
-                                'duration': int(t.get('duration', 0) / 1000),
-                                'thumbnail': t.get('artwork_url', '').replace('-large', '-t500x500') if t.get('artwork_url') else cover_url
-                            })
-                        pseudo_playlist = {
-                            'title': clean_title,
-                            'uploader': 'SoundCloud',
-                            'entries': entries,
-                            'thumbnail': cover_url
-                        }
-                        return pseudo_playlist, True, "SoundCloud", cover_url, url
-    return None, False, None, None, url
+
+    if not client_id:
+        print("[SoundCloud] Could not extract client_id")
+        return None, False, None, None, url
+
+    # Step 2: Get user_id from the user profile page
+    user_page = cffi_requests.get(f"https://soundcloud.com/{username}", impersonate=CHROME_IMPERSONATE, timeout=15).text
+    user_id_match = re.search(r'"id":(\d{5,12})', user_page)
+    if not user_id_match:
+        print(f"[SoundCloud] Could not find user_id for {username}")
+        return None, False, None, None, url
+    user_id = user_id_match.group(1)
+
+    # Step 3: Fetch all user playlists and find the matching one
+    playlists_url = f"https://api-v2.soundcloud.com/users/{user_id}/playlists_without_albums?client_id={client_id}&limit=200"
+    res = cffi_requests.get(playlists_url, impersonate=CHROME_IMPERSONATE, timeout=15)
+    if res.status_code != 200:
+        print(f"[SoundCloud] playlists API returned {res.status_code}")
+        return None, False, None, None, url
+
+    data = res.json()
+    playlist = None
+    for p in data.get('collection', []):
+        # Compare by full permalink_url or by slug extracted from it
+        p_url = p.get('permalink_url', '')
+        p_slug = p_url.rstrip('/').split('/')[-1]
+        if p_slug == playlist_slug or p.get('permalink', '') == playlist_slug:
+            playlist = p
+            break
+
+    if not playlist:
+        print(f"[SoundCloud] Playlist '{playlist_slug}' not found among user playlists")
+        return None, False, None, None, url
+
+    clean_title = playlist.get('title', 'SoundCloud Playlist')
+    cover_url = playlist.get('artwork_url', '') or ''
+    if cover_url:
+        cover_url = cover_url.replace('-large', '-t500x500')
+
+    # Step 4: Collect tracks (split into full and stub)
+    raw_tracks = playlist.get('tracks', [])
+    full_tracks = [t for t in raw_tracks if t.get('title')]
+    stub_ids = [str(t['id']) for t in raw_tracks if not t.get('title')]
+
+    all_tracks = list(full_tracks)
+    for i in range(0, len(stub_ids), 50):
+        batch = stub_ids[i:i+50]
+        batch_url = f"https://api-v2.soundcloud.com/tracks?ids={','.join(batch)}&client_id={client_id}"
+        batch_res = cffi_requests.get(batch_url, impersonate=CHROME_IMPERSONATE, timeout=15)
+        if batch_res.status_code == 200:
+            all_tracks.extend(batch_res.json())
+
+    entries = []
+    for idx, t in enumerate(all_tracks):
+        t_artist = t.get('user', {}).get('username', '')
+        t_title = t.get('title', '')
+        sq = f"{t_artist} {t_title}".strip()
+        thumb = t.get('artwork_url', '') or cover_url
+        if thumb:
+            thumb = thumb.replace('-large', '-t500x500')
+        entries.append({
+            'id': f"soundcloud_magic_{idx}",
+            'url': f"ytsearch1:{sq} audio",
+            'title': sq,
+            'duration': int(t.get('duration', 0) / 1000),
+            'thumbnail': thumb
+        })
+
+    if not entries:
+        print("[SoundCloud] No tracks found in playlist")
+        return None, False, None, None, url
+
+    pseudo_playlist = {
+        'title': clean_title,
+        'uploader': 'SoundCloud',
+        'entries': entries,
+        'thumbnail': cover_url
+    }
+    return pseudo_playlist, True, "SoundCloud", cover_url, url
 
 def parse_deezer(url: str):
     import requests

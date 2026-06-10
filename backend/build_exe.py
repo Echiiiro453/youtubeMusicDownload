@@ -4,7 +4,7 @@ import sys
 import shutil
 
 def main():
-    print("Iniciando processo de compilação do AppMusica...")
+    print("Iniciando processo de compilação do Lumina...")
     
     # Certificar-se de que o PyInstaller está instalado
     try:
@@ -61,7 +61,8 @@ def main():
         "numpy.core.multiarray",
         "SpotipyFree",
         "spotapi",
-        "tls_client"
+        "tls_client",
+        "keyboard"
     ]
     
     # Montar comando
@@ -70,7 +71,7 @@ def main():
         "--noconfirm",
         "--onefile", 
         "--windowed", # Esconder o console CMD
-        "--name", "AppMusica",
+        "--name", "Lumina",
         "--icon", "icon.ico",
         "--version-file", "version_info.txt",
         "--collect-all", "demucs",
@@ -107,7 +108,7 @@ def main():
     
     print("\n=======================================================")
     print("Compilação Concluída!")
-    print("O seu executável 100% portátil está na pasta: backend/dist/AppMusica.exe")
+    print("O seu executável 100% portátil está na pasta: backend/dist/Lumina.exe")
     print("=======================================================")
 
 if __name__ == "__main__":

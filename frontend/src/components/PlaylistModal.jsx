@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Download, Users, ChevronDown } from 'lucide-react';
+import { X, Check, Download, Users, ChevronDown, BellRing, AlertTriangle } from 'lucide-react';
 import { SkeletonPlaylistItem } from './UIComponents';
 import { t } from '../i18n';
 
@@ -21,10 +21,31 @@ export function PlaylistModal({
   executeRetry
 }) {
   const [showArtistDropdown, setShowArtistDropdown] = useState(false);
+  const [subscribeStatus, setSubscribeStatus] = useState(null); // null | 'success' | 'already'
 
   if (!isOpen) return null;
 
   const uniqueArtists = Array.from(new Set(playlistVideos.map(v => v.uploader))).filter(Boolean).sort();
+
+  const handleSubscribe = async () => {
+    try {
+      const res = await fetch('/api/subscriptions/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playlist_id: metadata.id,
+          url: metadata.webpage_url || metadata.url,
+          title: metadata.title,
+          platform: metadata.magic_source || 'YouTube'
+        })
+      });
+      const data = await res.json();
+      setSubscribeStatus(data.success ? 'success' : 'already');
+      setTimeout(() => setSubscribeStatus(null), 3000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowArtistDropdown(false)}>
@@ -36,18 +57,41 @@ export function PlaylistModal({
       >
         <div className="p-6 border-b border-outline-variant/30 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-bold text-on-surface mb-1">{t('playlistSelectMusic')}</h3>
-              <p className="text-on-surface-variant text-sm">{metadata?.title}</p>
-              {metadata?.is_magic && metadata?.magic_source !== 'Spotify' && (
-                <div className="mt-2 text-xs bg-amber-500/20 text-amber-200 p-2 rounded-lg border border-amber-500/30 flex items-start gap-2 max-w-lg">
-                  <span className="text-amber-400">⚠️</span>
-                  <span>
-                    Como você está usando um link do <b>{metadata.magic_source}</b>, apenas as primeiras ~50 músicas serão carregadas devido às restrições para visitantes anônimos da plataforma. (Mudar o Limite de Carga abaixo não fará efeito). Para contornar, use um link equivalente do YouTube.
-                  </span>
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="text-2xl font-bold text-on-surface">{t('playlistSelectMusic')}</h3>
+                  {metadata?.id && (
+                    <div className="relative">
+                      <button
+                        onClick={handleSubscribe}
+                        className={`p-2 rounded-full transition-all flex items-center justify-center ${subscribeStatus === 'success' ? 'bg-primary text-on-primary' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                        title="Monitorar playlist (Auto-Download)"
+                      >
+                        <BellRing size={16} />
+                      </button>
+                      {subscribeStatus && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap z-50 shadow-lg bg-surface-container-highest text-on-surface border border-outline-variant/30"
+                        >
+                          {subscribeStatus === 'success' ? 'Monitoramento ativado!' : 'Ja inscrito nesta playlist'}
+                        </motion.div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="flex items-center gap-2 mt-2 bg-black/20 p-1.5 rounded-lg w-fit">
+                <p className="text-on-surface-variant text-sm">{metadata?.title}</p>
+                {metadata?.is_magic && metadata?.magic_source !== 'Spotify' && (
+                  <div className="mt-2 text-xs bg-tertiary-container/30 text-on-tertiary-container p-2 rounded-xl border border-tertiary/20 flex items-start gap-2 max-w-lg">
+                    <AlertTriangle size={14} className="text-tertiary flex-shrink-0 mt-0.5" />
+                    <span>
+                      Link do <b>{metadata.magic_source}</b>: apenas ~50 musicas sao carregadas por limitacoes da plataforma para visitantes. Para contornar, use um link equivalente do YouTube.
+                    </span>
+                  </div>
+                )}
+              <div className="flex items-center gap-2 mt-2 bg-surface-container-low p-1.5 rounded-xl w-fit border border-outline-variant/20">
                 <span className="text-on-surface-variant text-xs font-medium">{t('playlistLoadLimit')}</span>
                 <select
                   value={playlistLimit}
