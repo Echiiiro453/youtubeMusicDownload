@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import BackgroundMedia from './components/BackgroundMedia';
+import TopAppBar from './components/TopAppBar';
+import QueueDrawer from './components/QueueDrawer';
+import SpotifyModal from './components/SpotifyModal';
 import { t, getLanguage, setLanguage } from './i18n';
 import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, ArrowRightLeft, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu, Mic, Smartphone, BellRing } from 'lucide-react';
 import { RippleButton } from './components/Ripple';
@@ -53,6 +57,7 @@ function App() {
   const [url, setUrl] = useState('');
   const [metadata, setMetadata] = useState(null);
   const [quality, setQuality] = useState('320'); // Default: Ultra MP3
+  const [subtitle, setSubtitle] = useState('none');
   const [mode, setMode] = useState('audio'); // 'audio' | 'video'
   const [playlist, setPlaylist] = useState(false); // Baixar playlist inteira?
   const [loading, setLoading] = useState(false);
@@ -374,6 +379,10 @@ function App() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.type === 'voice_command') {
+            window.dispatchEvent(new CustomEvent('voiceCommand', { detail: data.action }));
+            return;
+          }
           setGlobalJobs(data);
         } catch (e) {}
       };
@@ -614,6 +623,7 @@ function App() {
       uniqueId: Date.now() + Math.random() + idx,
       pitch: mode === 'audio' ? pitch : 0,
       speed: mode === 'audio' ? speed : 1.0,
+      subtitle: mode === 'video' ? subtitle : 'none',
       playlist_id: video.playlistIdRef, // Pass ref from backend
       status: 'pending',
       progress: 0,
@@ -815,6 +825,7 @@ function App() {
         mode: mode,
         pitch: item.pitch !== undefined ? item.pitch : pitch,
         speed: item.speed !== undefined ? item.speed : speed,
+        subtitle: item.subtitle !== undefined ? item.subtitle : (mode === 'video' ? subtitle : 'none'),
         organize: organizeByArtist,
         title: item.title,
         artist: item.uploader,
@@ -951,6 +962,7 @@ function App() {
         url: metadata.url,
         quality,
         mode,
+        subtitle: mode === 'video' ? subtitle : 'none',
         playlist: false,
         pitch: mode === 'audio' ? pitch : 0,
         speed: mode === 'audio' ? speed : 1.0
@@ -985,18 +997,11 @@ function App() {
 
   return (
     <>
-      {/* Background Wallpaper */}
-      {wallpaper && (
-        <div className="fixed inset-0 z-[-2] w-full h-full">
-          {wallpaper.match(/\.(mp4|webm|ogg)/i) ? (
-            <video src={resolvedWallpaper} autoPlay loop muted className="w-full h-full object-cover" />
-          ) : (
-            <img src={resolvedWallpaper} alt="wallpaper" className="w-full h-full object-cover" />
-          )}
-          {/* Dark Overlay with Blur to ensure text readability */}
-          <div className={`absolute inset-0 bg-black/30 backdrop-blur-${blurLevel}`}></div>
-        </div>
-      )}
+      <BackgroundMedia 
+        wallpaper={wallpaper} 
+        resolvedWallpaper={resolvedWallpaper} 
+        blurLevel={blurLevel} 
+      />
 
       <div className={`min-h-screen bg-background/50 text-white flex flex-col items-center justify-center p-4 font-sans selection:bg-primary selection:text-white relative ${currentSong ? 'pb-28' : ''}`}>
       <TermsModal
@@ -1006,66 +1011,20 @@ function App() {
         handleAcceptTerms={handleAcceptTerms}
       />
 
-      {/* MD3 Floating App Bar (Pill Shape) */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-5xl pointer-events-none">
-        <div
-          data-tauri-drag-region
-          className="pointer-events-auto w-full h-16 bg-surface-container-highest rounded-full shadow-lg shadow-black/10 flex items-center justify-between px-4 border border-outline-variant/30 transition-colors duration-500"
-        >
-          <div className="flex items-center gap-3 pointer-events-none pl-2">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-inner">
-              <Music className="w-5 h-5 text-on-primary" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-on-surface">
-              AppMúsica
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <RippleButton onClick={() => setShowConverter(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Conversor de Arquivos">
-              <ArrowRightLeft className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => setShowStudioModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('studioTitle')}>
-              <Mic className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => setShowShazamModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('shazamTitle')}>
-              <Search className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => setShowLibrary(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('navLibrary')}>
-              <List className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => setShowHistory(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Histórico">
-              <Clock className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => checkForUpdates(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('btnUpdateTitle')}>
-              <RefreshCw className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-            </RippleButton>
-            <RippleButton onClick={() => setShowMobileSync(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Sincronizar com Celular">
-              <Smartphone className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => setShowSubscriptionsModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Gerenciar Inscrições">
-              <BellRing className="w-5 h-5" />
-            </RippleButton>
-            <RippleButton onClick={() => setShowDonate(true)} className="w-10 h-10 rounded-full hover:bg-error/10 text-error hover:text-error flex items-center justify-center transition-colors" title={t('btnDonate')}>
-              <Heart className="w-5 h-5" />
-            </RippleButton>
-            
-            <div className="w-px h-8 bg-outline-variant/50 mx-2"></div>
-            
-            <div className="relative">
-              <RippleButton onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('btnConfigure')}>
-                <Settings className="w-5 h-5" />
-              </RippleButton>
-              {isAuthenticated && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 border-2 border-surface-container-highest rounded-full pointer-events-none"></span>
-              )}
-            </div>
-
-            <div className="w-px h-8 bg-outline-variant/50 mx-2"></div>
-            <WindowControls />
-          </div>
-        </div>
-      </div>
+      <TopAppBar
+        setShowConverter={setShowConverter}
+        setShowStudioModal={setShowStudioModal}
+        setShowShazamModal={setShowShazamModal}
+        setShowLibrary={setShowLibrary}
+        setShowHistory={setShowHistory}
+        checkForUpdates={checkForUpdates}
+        isCheckingUpdate={isCheckingUpdate}
+        setShowMobileSync={setShowMobileSync}
+        setShowSubscriptionsModal={setShowSubscriptionsModal}
+        setShowDonate={setShowDonate}
+        setShowSettings={setShowSettings}
+        isAuthenticated={isAuthenticated}
+      />
 
       {/* Queue Resume Modal */}
       <AnimatePresence>
@@ -1612,6 +1571,25 @@ function App() {
                     </div>
                   )}
 
+                  {mode === 'video' && metadata.subtitles && metadata.subtitles.length > 0 && (
+                    <div className="mb-4 p-4 bg-surface-container border border-outline-variant/30 rounded-2xl">
+                      <label className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2 block">
+                        Legendas
+                      </label>
+                      <select
+                        value={subtitle}
+                        onChange={(e) => setSubtitle(e.target.value)}
+                        className="w-full bg-surface-container-highest border-none rounded-xl px-3 py-3 text-on-surface text-sm font-medium outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                      >
+                        <option value="none">Sem legenda</option>
+                        <option value="all">Todas as legendas</option>
+                        {metadata.subtitles.map(sub => (
+                          <option key={sub.code} value={sub.code}>{sub.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2 block">
                       Qualidade ({mode === 'audio' ? 'Áudio' : 'Vídeo'})
@@ -1696,6 +1674,7 @@ function App() {
                               <p className="text-on-error-container text-sm font-medium">Nenhuma qualidade de vídeo encontrada.</p>
                             </div>
                           )}
+
                         </>
                       )}
                     </div>
@@ -1832,82 +1811,19 @@ function App() {
 
       {/* Queue Drawer */}
       <AnimatePresence>
-        {showQueue && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowQueue(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-md bg-surface border-l border-outline-variant z-[101] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
-            >
-              <div className="p-6 border-b border-outline-variant bg-surface-container-high">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-on-surface flex items-center gap-2">
-                    <List className="text-primary" />
-                    {t('queueTitle')}
-                  </h3>
-                  <button onClick={() => setShowQueue(false)} className="p-2 hover:bg-surface-variant text-on-surface-variant rounded-full">
-                    <X />
-                  </button>
-                </div>
-                <div className="flex justify-between items-center text-sm text-secondary">
-                  <span>{queue.length} itens</span>
-                  <button
-                    onClick={() => setQueue([])}
-                    disabled={isProcessingQueue}
-                    className="text-error hover:text-error/80 flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <Trash2 size={14} /> {t('queueClear')}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {queue.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-secondary opacity-50">
-                    <List size={48} className="mb-4" />
-                    <p>{t('queueEmpty')}</p>
-                  </div>
-                ) : (
-                  queue.map((item) => (
-                    <QueueItem
-                      key={item.uniqueId}
-                      item={item}
-                      getApiUrl={getApiUrl}
-                      removeFromQueue={removeFromQueue}
-                      setCurrentSong={setCurrentSong}
-                      updateQueueItem={updateQueueItem}
-                      job={globalJobs[item.jobId]} // Pass Global Job State
-                    />
-                  ))
-                )}
-              </div>
-
-              <div className="p-6 border-t border-outline-variant bg-surface-container-high">
-                <RippleButton
-                  id="start-downloads-btn"
-                  onClick={processQueue}
-                  disabled={isProcessingQueue || queue.filter(i => i.status === 'pending').length === 0}
-                  className="w-full py-4 bg-white text-black hover:bg-gray-200 disabled:bg-white/10 disabled:text-white/30 font-bold rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
-                >
-                  {isProcessingQueue ? (
-                    <><div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" /> {t('loading')}</>
-                  ) : (
-                    <><PlayCircle size={20} /> {t('confirmDownload')}</>
-                  )}
-                </RippleButton>
-              </div>
-            </motion.div>
-          </>
-        )}
+        <QueueDrawer
+        showQueue={showQueue}
+        setShowQueue={setShowQueue}
+        queue={queue}
+        setQueue={setQueue}
+        isProcessingQueue={isProcessingQueue}
+        processQueue={processQueue}
+        removeFromQueue={removeFromQueue}
+        setCurrentSong={setCurrentSong}
+        updateQueueItem={updateQueueItem}
+        globalJobs={globalJobs}
+        getApiUrl={getApiUrl}
+      />
       </AnimatePresence>
 
       <PlaylistModal
@@ -1944,65 +1860,14 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Custom Spotify/Apple/SoundCloud Modal */}
-      <AnimatePresence>
-        {showSpotifyModal && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg bg-surface-container border border-outline-variant/30 shadow-2xl rounded-[2rem] p-6 flex flex-col relative overflow-hidden"
-            >
-              <div className="flex justify-between items-center mb-6 relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
-                    <Music size={20} />
-                  </div>
-                  <h3 className="text-xl font-bold text-on-surface tracking-tight">Importar Playlist</h3>
-                </div>
-                <button onClick={() => setShowSpotifyModal(false)} className="p-2 text-on-surface-variant hover:text-on-surface bg-surface-container-high hover:bg-surface-variant rounded-full transition-colors"><X size={20}/></button>
-              </div>
-
-              <div className="relative z-10 space-y-4">
-                <p className="text-sm text-on-surface-variant">
-                  Cole o link da sua música ou Playlist do <b className="text-on-surface">Spotify</b>, <b className="text-on-surface">Apple Music</b> ou <b className="text-on-surface">SoundCloud</b>. O Lumina encontrará as músicas automaticamente.
-                </p>
-                <input
-                  type="text"
-                  placeholder="Ex: open.spotify.com/..., music.apple.com/... ou soundcloud.com/..."
-                  value={spotifyInputUrl}
-                  onChange={(e) => setSpotifyInputUrl(e.target.value)}
-                  className="w-full h-14 px-4 bg-surface-container-low border border-outline-variant/50 rounded-xl focus:outline-none focus:border-primary text-on-surface placeholder:text-on-surface-variant/50 transition-all"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && spotifyInputUrl) {
-                      setUrl(spotifyInputUrl);
-                      loadVideoDetails(spotifyInputUrl);
-                      setShowSpotifyModal(false);
-                      setSpotifyInputUrl('');
-                    }
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    if (spotifyInputUrl) {
-                      setUrl(spotifyInputUrl);
-                      loadVideoDetails(spotifyInputUrl);
-                      setShowSpotifyModal(false);
-                      setSpotifyInputUrl('');
-                    }
-                  }}
-                  disabled={!spotifyInputUrl}
-                  className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:bg-surface-container-highest disabled:text-on-surface-variant text-on-primary font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary/20"
-                >
-                  Confirmar e Buscar
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <SpotifyModal
+        showSpotifyModal={showSpotifyModal}
+        setShowSpotifyModal={setShowSpotifyModal}
+        spotifyInputUrl={spotifyInputUrl}
+        setSpotifyInputUrl={setSpotifyInputUrl}
+        setUrl={setUrl}
+        loadVideoDetails={loadVideoDetails}
+      />
 
       <LibraryModal
         isOpen={showLibrary}

@@ -12,7 +12,8 @@ export function TagEditorModal({ isOpen, onClose, song, getApiUrl, onSaved }) {
   const [fetchingLyrics, setFetchingLyrics] = useState(false);
   const [isCustomSearch, setIsCustomSearch] = useState(false);
   const [customQuery, setCustomQuery] = useState('');
-  const [status, setStatus] = useState(null); // { type: 'success'|'error', msg }
+  const [status, setStatus] = useState(null);
+  const [outputPath, setOutputPath] = useState(null); // { type: 'success'|'error', msg }
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -100,6 +101,13 @@ export function TagEditorModal({ isOpen, onClose, song, getApiUrl, onSaved }) {
       console.error(e);
       setStatus({ type: 'error', msg: 'Erro ao importar arquivo.' });
     }
+  };
+
+    const handleOpenExternal = async () => {
+    if (!outputPath) return;
+    try {
+      await axios.post(getApiUrl(`/api/open_external`), { file_path: outputPath });
+    } catch(e) { console.error(e); }
   };
 
   const handleSave = async () => {

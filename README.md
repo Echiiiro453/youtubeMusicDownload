@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="fotos/LL.jpg" alt="Lumina Logo" width="150" height="150" style="border-radius: 20%; margin-bottom: 20px;"/>
   <h1>Lumina</h1>
   <p>A professional, lightweight solution for downloading high-fidelity music and videos from YouTube, Spotify, and Apple Music.</p>
 
@@ -19,19 +20,24 @@
 Lumina is an advanced media downloader built for performance and reliability. It features a modern desktop interface and powerful backend capable of handling massive playlists, bypassing anti-bot protections, and separating audio tracks using artificial intelligence.
 
 <div align="center">
-  <img src="fotos/4985593682559962246.jpg" alt="Lumina Dashboard" width="800"/>
+  <img src="fotos/4997249450707192834.jpg" alt="Lumina Dashboard" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
 ### Key Features
 - **High Fidelity Audio**: Support for MP3 (320kbps), M4A, and FLAC (Lossless) formats.
 - **4K Video**: Download high-resolution videos up to 60fps.
 - **Smart Metadata**: Automatic embedding of album covers, artists, titles, and lyrics directly into your audio files.
+- **Offline Voice Commands**: Full hands-free control built into the app! Powered by a local Vosk engine ensuring 100% privacy without sending audio to the cloud.
 - **Multi-Platform**: Native desktop experience built with PyWebView and FastAPI.
 - **Magic Search**: Search and download songs by directly pasting Spotify, Deezer, SoundCloud, or Apple Music links.
 - **Infinite Radio**: Automatically discover and stream similar tracks when your local playlist ends.
 - **Sleep Timer & Crossfade**: Fall asleep to your music and enjoy gapless, smooth transitions between songs.
 - **Discord Rich Presence**: Show off what you're listening to directly on your Discord status.
 - **Lumina Sync**: Seamlessly sync your music to your mobile phone over local Wi-Fi with secure QR Code pairing.
+
+<div align="center">
+  <img src="fotos/4997249450707192835.jpg" alt="Lumina Features" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
+</div>
 
 - **Smart Retry & Proxy Survival**: Intelligent system utilizing fallback clients and rotating proxies to bypass IP blocks and download thousands of songs seamlessly.
 - **Queue Memory**: Automatically saves pending downloads allowing you to resume interrupted sessions anytime.
@@ -40,7 +46,7 @@ Lumina is an advanced media downloader built for performance and reliability. It
 - **Global Localization**: Dynamic UI translation supporting English (US), Spanish (ES), and Portuguese (BR).
 
 <div align="center">
-  <img src="fotos/4985593682559962247.jpg" alt="Lumina Studio AI" width="800"/>
+  <img src="fotos/4997249450707192836.jpg" alt="Lumina Studio AI" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
 **Note on Video Playback**: The default Windows Media Player or "Movies & TV" app may struggle to play certain downloaded `.mp4` videos due to missing modern codecs. We highly recommend using [VLC Media Player](https://www.videolan.org/vlc/).
@@ -52,6 +58,9 @@ Lumina is an advanced media downloader built for performance and reliability. It
 youtubeMusicDownload/
 ├── backend/           # Core Python Logic (FastAPI + yt-dlp + PyInstaller)
 ├── frontend/          # Web/Desktop Interface (React)
+├── scripts/           # Development and utility scripts
+├── debug/             # Local logs and test files
+├── fotos/             # Documentation assets
 ├── README.md          # Documentation
 ├── TERMS.md           # Terms of Use
 └── PRIVACY.md         # Privacy Policy
@@ -115,23 +124,29 @@ python build_exe.py
 O Lumina é uma solução avançada para download de mídias, construída para entregar performance e estabilidade. O software conta com uma interface moderna para desktop e um backend robusto capaz de lidar com playlists gigantes, desviar de proteções antibot e separar faixas de áudio usando inteligência artificial.
 
 <div align="center">
-  <img src="fotos/4985593682559962246.jpg" alt="Dashboard do Lumina" width="800"/>
+  <img src="fotos/4997249450707192834.jpg" alt="Dashboard do Lumina" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
 ### Funcionalidades Principais
 - **Áudio de Alta Fidelidade**: Suporte para os formatos MP3 (320kbps), M4A e FLAC (Lossless).
 - **Vídeo em 4K**: Download de vídeos em alta resolução de até 60fps.
 - **Metadados Inteligentes**: Inserção automática de capas de álbum, artistas, títulos e letras diretamente nos seus arquivos de áudio.
+- **Comandos de Voz Offline**: Controle total do aplicativo por voz! Impulsionado pelo motor Vosk rodando localmente na sua máquina, garantindo 100% de privacidade (nenhum áudio vai para a internet).
 - **Multi-Plataforma**: Experiência desktop nativa construída com PyWebView e FastAPI.
 - **Magic Search**: Busque e baixe músicas simplesmente colando links do Spotify, Deezer, SoundCloud ou Apple Music.
 - **Smart Retry & Proxy Survival**: Sistema inteligente que utiliza clientes de fallback e proxies rotativos para ignorar bloqueios de IP e baixar milhares de músicas sem interrupções.
 - **Memória de Fila**: Salva automaticamente seus downloads pendentes, permitindo que você retome sessões interrompidas a qualquer momento.
+
+<div align="center">
+  <img src="fotos/4997249450707192835.jpg" alt="Recursos do Lumina" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
+</div>
+
 - **Lumina Studio AI**: Separador de vocais e instrumentais integrado, alimentado pelo Demucs (Inteligência Artificial de ponta desenvolvida pela Meta Research).
 - **Laboratório Shazam**: Corretor de metadados nativo alimentado pelo Shazamio para reconhecer arquivos MP3 desconhecidos e injetar tags ID3 e capas de álbuns automaticamente.
 - **Localização Global**: Interface com tradução dinâmica e suporte nativo a Inglês (US), Espanhol (ES) e Português (BR).
 
 <div align="center">
-  <img src="fotos/4985593682559962247.jpg" alt="Lumina Studio AI" width="800"/>
+  <img src="fotos/4997249450707192836.jpg" alt="Lumina Studio AI" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
 **Aviso sobre Reprodução de Vídeo**: O Windows Media Player ou o aplicativo "Filmes e TV" padrão do Windows podem apresentar falhas ao reproduzir alguns vídeos `.mp4` baixados devido à falta de codecs modernos. Recomendamos fortemente o uso do [VLC Media Player](https://www.videolan.org/vlc/).
@@ -143,6 +158,9 @@ O Lumina é uma solução avançada para download de mídias, construída para e
 youtubeMusicDownload/
 ├── backend/           # Lógica central em Python (FastAPI + yt-dlp + PyInstaller)
 ├── frontend/          # Interface Web/Desktop (React)
+├── scripts/           # Scripts de desenvolvimento
+├── debug/             # Logs locais e arquivos de teste
+├── fotos/             # Recursos de documentação e imagens
 ├── README.md          # Documentação
 ├── TERMS.md           # Termos de Uso
 └── PRIVACY.md         # Política de Privacidade

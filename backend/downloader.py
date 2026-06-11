@@ -91,11 +91,13 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
 
     if request.mode == 'video':
         format_str = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
-        if request.quality == '4k':
-            format_str = 'bestvideo[height>=2160]+bestaudio/bestvideo+bestaudio/best'
-        elif request.quality.endswith('p') and request.quality[:-1].isdigit():
+        if request.quality.endswith('p') and request.quality[:-1].isdigit():
             height = int(request.quality[:-1])
-            format_str = f'bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best'
+            if height >= 1440:
+                # Force high res. If not found, throws format error and tries next strategy
+                format_str = f'bestvideo[height>={height}]+bestaudio'
+            else:
+                format_str = f'bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best'
         
         postprocessors.append({'key': 'FFmpegMetadata'})
     else:
@@ -230,6 +232,18 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
     ydl_opts["max_sleep_interval"] = 25
     ydl_opts["sleep_subtitles"] = 2
     
+    subtitle_lang = getattr(request, 'subtitle', 'none')
+    if request.mode == 'video' and subtitle_lang != 'none':
+        ydl_opts['writesubtitles'] = True
+        if subtitle_lang == 'all':
+            ydl_opts['subtitleslangs'] = ['all']
+        else:
+            ydl_opts['subtitleslangs'] = [subtitle_lang]
+        
+        # Avoid duplicating FFmpegMetadata or similar if we want to ensure embedsubtitles
+        postprocessors.append({'key': 'FFmpegEmbedSubtitle'})
+        # Also include automatic subtitles if requested language wasn't manually uploaded
+        ydl_opts['writeautomaticsub'] = True
 
     if request.cover_path and os.path.exists(request.cover_path):
         ydl_opts['writethumbnail'] = False
@@ -280,6 +294,7 @@ def download_with_retries(job_id: str, request):
         {"name": "mweb", "use_cookies": True, "client": "mweb", "impersonate": "chrome"},
         {"name": "force_ipv4", "use_cookies": True, "client": "web", "source_address": "0.0.0.0"},
         {"name": "force_ipv6", "use_cookies": True, "client": "web", "source_address": "::"},
+        {"name": "fallback_1080p", "format": "bestvideo+bestaudio/best" if request.mode == 'video' else None, "use_cookies": True, "client": "web", "impersonate": "chrome"},
         {"name": "fallback_quality", "format": "bestvideo[height<=720]+bestaudio/best" if request.mode == 'video' else "bestaudio[protocol^=http]", "use_cookies": True, "client": "web", "impersonate": "chrome"},
         {"name": "ytmusic_fallback", "use_ytmusic_search": True, "use_cookies": True, "client": "web_embedded", "impersonate": "chrome"} if request.mode != 'video' and getattr(request, 'title', None) else None,
         {"name": "invidious_fallback", "use_invidious": True, "use_cookies": False, "client": "web", "impersonate": "chrome"},
@@ -297,6 +312,7 @@ def download_with_retries(job_id: str, request):
         st.error = None
         if idx > 1:
             st.status = f"retry_method_{idx}"
+        st.speed_str = f"Buscando Método {idx}/{len(strategies)}..."
         
         try:
             ydl_opts = build_ydl_opts_for_strategy(job_id, request, strat)
@@ -463,13 +479,13 @@ async def worker_loop():
                 
             try:
                 task = asyncio.create_task(run_download(job_id, request))
-                done, pending = await asyncio.wait([task], timeout=300)
+                done, pending = await asyncio.wait([task], timeout=14400) # 4 hours timeout for large 4K files
 
                 if pending:
                     for t in pending: t.cancel()
                     if st:
                         st.status = "timeout"
-                        st.error = "Download cancelado por tempo excedido (timeout 5min)"
+                        st.error = "Download cancelado por tempo excedido (timeout 4 horas)"
                 else:
                     try:
                         await task

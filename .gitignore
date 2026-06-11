@@ -63,3 +63,10 @@ backend/history.json
 *.db-journal
 *.db-shm
 *.db-wal
+ 
+# Pastas de limpeza
+/debug/
+/archive/
+ 
+# Pesquisas de IA
+/resultado_ia/

@@ -57,6 +57,7 @@ from dataclasses import asdict
 
 from utils import get_base_dir, get_resource_path, get_data_dir, get_downloads_dir, get_cookies_path
 from database import init_db, get_conn, get_downloaded_ids, mark_missing_db, get_download_record, sync_db_with_disk, add_favorite, remove_favorite, get_favorites, is_favorite
+from voice_engine import VoiceEngine
 from downloader import jobs, download_queue, worker_loop, MAX_CONCURRENT_DOWNLOADS, JobState
 from urllib.parse import urlparse
 
@@ -93,7 +94,28 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-APP_VERSION = "3.6.0"
+# --- VOICE ENGINE INTEGRATION ---
+import asyncio
+
+main_loop = None
+
+@app.on_event("startup")
+async def startup_event():
+    global main_loop
+    main_loop = asyncio.get_running_loop()
+
+def on_voice_command(action_data):
+    try:
+        if main_loop:
+            asyncio.run_coroutine_threadsafe(manager.broadcast_json(action_data), main_loop)
+    except Exception as e:
+        print(f"Voice trigger error: {e}")
+
+voice_engine = VoiceEngine(on_voice_command)
+# --------------------------------
+
+
+APP_VERSION = "3.7.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -256,6 +278,7 @@ class DownloadRequest(BaseModel):
     playlist_id: Optional[str] = None
     video_id: Optional[str] = None
     organize: bool = False
+    subtitle: Optional[str] = "none"
 
 class InfoRequest(BaseModel):
     url: str
@@ -686,7 +709,9 @@ async def get_info(request: DownloadRequest):
                 'extract_flat': 'in_playlist',
                 'cookiefile': get_cookies_path(),
                 'js_runtimes': {'node': {}},
-                'remote_components': ['ejs:github']
+                'remote_components': ['ejs:github'],
+                'writesubtitles': True,
+                'writeautomaticsub': True
             }
             
             info = None
@@ -740,12 +765,22 @@ async def get_info(request: DownloadRequest):
                     if f.get('vcodec') != 'none' and f.get('height'): res_set.add(f['height'])
                 resolutions = sorted(list(res_set), reverse=True)
 
+        subs_list = []
+        if info.get('subtitles'):
+            for lang in info['subtitles'].keys():
+                subs_list.append({"code": lang, "name": f"{lang.upper()}", "is_auto": False})
+        if info.get('automatic_captions'):
+            for lang in info['automatic_captions'].keys():
+                if not any(s['code'] == lang for s in subs_list):
+                    subs_list.append({"code": lang, "name": f"{lang.upper()} (Auto)", "is_auto": True})
+
         return {
             "status": "success",
             "title": info['entries'][0].get('title') if ('entries' in info and 'v=' in request.url) else info.get('title'),
             "thumbnail": magic_cover or info.get('thumbnail'),
             "url": info.get('webpage_url', request.url),
             "resolutions": resolutions,
+            "subtitles": subs_list,
             "is_playlist": is_playlist,
             "duration": info.get('duration'),
             "duration_string": duration_str,
@@ -1069,20 +1104,36 @@ def get_download_folder():
 
 @app.post("/api/settings/choose_folder")
 def choose_folder():
+    import threading
+    result_folder = {"folder": ""}
+    
+    def open_dialog():
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            folder = filedialog.askdirectory(parent=root, title="Selecione a Pasta de Downloads")
+            root.destroy()
+            result_folder["folder"] = folder
+        except Exception:
+            pass
+            
     try:
-        import webview
-        if webview.windows:
-            window = webview.windows[0]
-            result = window.create_file_dialog(webview.FOLDER_DIALOG)
-            if result and len(result) > 0:
-                folder = result[0]
-                conn = get_conn()
-                cur = conn.cursor()
-                cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('download_folder', ?)", (folder,))
-                conn.commit()
-                conn.close()
-                return {"status": "ok", "folder": folder}
-        return {"status": "error", "message": "Nenhuma janela ativa ou ação cancelada."}
+        t = threading.Thread(target=open_dialog)
+        t.start()
+        t.join()
+        
+        folder = result_folder["folder"]
+        if folder:
+            conn = get_conn()
+            cur = conn.cursor()
+            cur.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('download_folder', ?)", (folder,))
+            conn.commit()
+            conn.close()
+            return {"status": "ok", "folder": folder}
+        return {"status": "error", "message": "Nenhuma ação realizada ou cancelada pelo usuário."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -2403,10 +2454,26 @@ try:
 except Exception as e:
     print(f"Could not mount data dir: {e}")
 
+# --- VOICE ENGINE API ROUTES ---
+@app.get("/api/voice/status")
+def get_voice_status():
+    return {"status": voice_engine.get_status()}
+
+@app.post("/api/voice/toggle")
+def toggle_voice():
+    current_status = voice_engine.get_status()
+    if current_status == "running" or current_status == "downloading":
+        voice_engine.stop()
+    else:
+        voice_engine.start()
+    return {"status": voice_engine.get_status()}
+# -------------------------------
+
 static_dir = get_resource_path("static")
 if os.path.exists(static_dir):
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Start FastAPI server on port 8000, disabling access logs to prevent console spam
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info", access_log=False)

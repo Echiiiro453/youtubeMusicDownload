@@ -61,7 +61,13 @@ def run_server():
             
     os.environ["PATH"] = resource_dir + os.pathsep + os.environ.get("PATH", "")
 
-    uvicorn.run(main.app, host="0.0.0.0", port=8000, reload=False, log_level="warning")
+    try:
+        uvicorn.run(main.app, host="0.0.0.0", port=8000, reload=False, log_level="warning")
+    except Exception as e:
+        import traceback
+        with open("UvicornCrash.log", "w") as f:
+            f.write("UVICORN CRASHED:\n")
+            f.write(traceback.format_exc())
 
 import time
 import socket

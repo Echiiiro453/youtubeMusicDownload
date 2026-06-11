@@ -16,7 +16,32 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   const [metadata, setMetadata] = useState(null);
   const [isLooping, setIsLooping] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showEqModal, setShowEqModal] = useState(false);
+  // Lumina Extra Features
+  const [sleepTimer, setSleepTimer] = useState(null);
+  const [sleepTimeLeft, setSleepTimeLeft] = useState(null);
+  const [showSleepMenu, setShowSleepMenu] = useState(false);
+  const crossfadeGainRef = useRef(null);
 
+
+  // --- Voice Commands Listener ---
+  useEffect(() => {
+    const handleVoice = (e) => {
+      const action = e.detail;
+      console.log('Voice action received:', action);
+      if (action === 'pause') {
+        if (isPlaying) togglePlay();
+      } else if (action === 'play') {
+        if (!isPlaying) togglePlay();
+      } else if (action === 'next' && onNext) {
+        onNext();
+      } else if (action === 'prev' && onPrev) {
+        onPrev();
+      }
+    };
+    window.addEventListener('voiceCommand', handleVoice);
+    return () => window.removeEventListener('voiceCommand', handleVoice);
+  }, [isPlaying, onNext, onPrev]);
 
   // Sleep Timer Countdown
   useEffect(() => {
@@ -98,7 +123,6 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
   const animationRef = useRef(null);
 
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
-  const [showEqModal, setShowEqModal] = useState(false);
   const [eqPreset, setEqPreset] = useState(() => localStorage.getItem('appmusica_eq_preset') || 'Normal');
   const [eqGains, setEqGains] = useState(() => {
     try {
@@ -108,6 +132,14 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
     return EQ_PRESETS['Normal'] || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   });
   const eqFiltersRef = useRef([]);
+  const handleGainChange = (bandIndex, value) => {
+    setEqGains(prev => {
+      const newGains = [...prev];
+      newGains[bandIndex] = value;
+      return newGains;
+    });
+    setEqPreset('Personalizado');
+  };
 
   useEffect(() => {
     localStorage.setItem('appmusica_eq_preset', eqPreset);
@@ -696,7 +728,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
                 </div>
                 
                 <RippleButton 
- 
+                  onClick={() => setShowInfo(true)}
                   className="text-on-surface-variant/50 hover:text-on-surface transition-colors" 
                   title="Informações da Faixa"
                 >
@@ -838,6 +870,17 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showEqModal && (
+        <EqualizerModal
+          isOpen={showEqModal}
+          onClose={() => setShowEqModal(false)}
+          preset={eqPreset}
+          setPreset={setEqPreset}
+          gains={eqGains}
+          setGains={setEqGains}
+        />
+      )}
     </>
   );
 }

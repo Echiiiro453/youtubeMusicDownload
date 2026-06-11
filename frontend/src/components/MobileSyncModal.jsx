@@ -10,23 +10,50 @@ export default function MobileSyncModal({ isOpen, onClose }) {
   const [token, setToken] = useState(null);
   const [pendingDevice, setPendingDevice] = useState(null);
 
+  const handleApprove = () => {
+    fetch(`http://localhost:8000/api/mobile/token/approve?token=${token}`, { method: 'POST' })
+      .then(() => onClose())
+      .catch(console.error);
+  };
+
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
       setError(null);
-      fetch('http://localhost:8000/api/network/ip')
-        .then(res => res.json())
-        .then(data => {
-          setIp(data.ip);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setError('Não foi possível obter o IP local. Verifique se o servidor está em execução.');
-          setLoading(false);
-        });
+      
+      Promise.all([
+        fetch('http://localhost:8000/api/network/ip').then(res => res.json()),
+        fetch('http://localhost:8000/api/mobile/token/create', { method: 'POST' }).then(res => res.json())
+      ])
+      .then(([ipData, tokenData]) => {
+        setIp(ipData.ip);
+        setToken(tokenData.token);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setError('Não foi possível obter o IP ou token. Verifique se o servidor está em execução.');
+        setLoading(false);
+      });
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    let interval;
+    if (isOpen && token && !pendingDevice) {
+      interval = setInterval(() => {
+        fetch(`http://localhost:8000/api/mobile/token/status?token=${token}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.device_name) {
+              setPendingDevice(data.device_name);
+            }
+          })
+          .catch(console.error);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isOpen, token, pendingDevice]);
 
   if (!isOpen) return null;
 

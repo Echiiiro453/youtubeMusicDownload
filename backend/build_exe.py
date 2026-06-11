@@ -27,7 +27,8 @@ def main():
     datas = [
         ("static", "static"),
         ("../TERMS.md", "."),
-        ("lyrics_fetcher.py", ".")
+        ("lyrics_fetcher.py", "."),
+        ("C:/Users/andrey/AppData/Local/Programs/Python/Python310/Lib/site-packages/vosk", "vosk")
     ]
     
     # Imports ocultos (Essenciais para uvicorn e yt-dlp)
@@ -48,6 +49,10 @@ def main():
         "config",
         "yt_dlp.extractor",
         "curl_cffi",
+        "vosk",
+        "sounddevice",
+        "cffi",
+        "voice_engine",
         "webview",
         "webview.platforms.edgechromium",
         "syncedlyrics",
@@ -80,7 +85,9 @@ def main():
         "--collect-all", "torch",
         "--collect-all", "tls_client",
         "--collect-all", "spotapi",
-        "--collect-all", "SpotipyFree"
+        "--collect-all", "SpotipyFree",
+        "--collect-all", "vosk",
+        "--collect-all", "sounddevice"
     ]
     
     for src, dst in binaries:
