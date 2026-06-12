@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { t } from '../i18n';
 import { motion } from 'framer-motion';
 import { X, Trash2, ExternalLink, BellRing, AlertCircle } from 'lucide-react';
 
@@ -93,7 +94,7 @@ export function SubscriptionsModal({ isOpen, onClose }) {
           {loading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-on-surface-variant text-sm">Carregando...</p>
+              <p className="text-on-surface-variant text-sm">{t('loading') || 'Carregando...'}</p>
             </div>
           ) : subs.length === 0 ? (
             <div className="text-center py-14 flex flex-col items-center gap-4">
@@ -158,7 +159,7 @@ export function SubscriptionsModal({ isOpen, onClose }) {
                   >
                     <h5 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Historico de Downloads</h5>
                     {loadingDownloads && !subDownloads[sub.id] ? (
-                      <p className="text-xs text-on-surface-variant">Carregando...</p>
+                      <p className="text-xs text-on-surface-variant">{t('loading') || 'Carregando...'}</p>
                     ) : subDownloads[sub.id]?.length > 0 ? (
                       <ul className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                         {subDownloads[sub.id].map(d => (

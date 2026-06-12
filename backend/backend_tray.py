@@ -10,7 +10,12 @@ import io
 # IMPORTANTE: Não redirecionar se for o processo filho do Demucs (--run-demucs) ou Spotify (--run-spotify), senão a saída/progresso quebra!
 if '--run-demucs' not in sys.argv and '--run-spotify' not in sys.argv:
     if sys.stdout is None or getattr(sys, 'frozen', False):
-        log_file = open('AppMusica.log', 'wb')
+        import tempfile
+        log_path = os.path.join(tempfile.gettempdir(), 'Lumina.log')
+        try:
+            log_file = open(log_path, 'ab')
+        except Exception:
+            log_file = io.BytesIO()
         sys.stdout = io.TextIOWrapper(log_file, encoding='utf-8')
         sys.stderr = io.TextIOWrapper(log_file, encoding='utf-8')
 else:
@@ -24,16 +29,39 @@ else:
 # Import at top-level so PyInstaller statically detects it, but after stdout fix
 import main
 
+# --- Single Instance & External File Open ---
+if len(sys.argv) > 1 and not sys.argv[1].startswith('--'):
+    import urllib.request
+    import json
+    file_path = sys.argv[1]
+    if os.path.exists(file_path):
+        try:
+            # Ping the running instance
+            req = urllib.request.Request(
+                'http://localhost:8000/api/play_external',
+                data=json.dumps({"file_path": file_path}).encode('utf-8'),
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            urllib.request.urlopen(req, timeout=1.0)
+            # Success! The primary instance took it. Exit quietly.
+            sys.exit(0)
+        except Exception:
+            # Server is not running. We must start it, but remember the file.
+            os.environ["LUMINA_INITIAL_FILE"] = file_path
+
 def ensure_firewall_rule():
     """Cria automaticamente uma regra de firewall para a porta 8000 (Mobile Sync).
     Silencioso — não mostra nada para o usuário se já existir ou se falhar."""
     import subprocess
+    import sys
     rule_name = "AppMusica Mobile Sync"
+    cflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000) if sys.platform == 'win32' else 0
     try:
         # Checa se a regra já existe
         check = subprocess.run(
             ["netsh", "advfirewall", "firewall", "show", "rule", f"name={rule_name}"],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=5, creationflags=cflags
         )
         if "Nenhuma regra" in check.stdout or "No rules" in check.stdout or check.returncode != 0:
             # Cria a regra silenciosamente
@@ -41,7 +69,7 @@ def ensure_firewall_rule():
                 ["netsh", "advfirewall", "firewall", "add", "rule",
                  f"name={rule_name}", "dir=in", "action=allow",
                  "protocol=TCP", "localport=8000"],
-                capture_output=True, timeout=5
+                capture_output=True, timeout=5, creationflags=cflags
             )
     except Exception:
         pass  # Falha silenciosa — não bloqueia o startup do app

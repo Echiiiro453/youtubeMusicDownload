@@ -55,7 +55,7 @@ const TopAppBar = ({
           <RippleButton onClick={() => checkForUpdates(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('btnUpdateTitle')}>
             <RefreshCw className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
           </RippleButton>
-          <RippleButton onClick={() => setShowMobileSync(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Sincronizar com Celular">
+          <RippleButton onClick={() => setShowMobileSync(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title={t('syncWithMobile') || 'Sincronizar com Celular'}>
             <Smartphone className="w-5 h-5" />
           </RippleButton>
           <RippleButton onClick={() => setShowSubscriptionsModal(true)} className="w-10 h-10 rounded-full hover:bg-on-surface/10 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Gerenciar Inscrições">

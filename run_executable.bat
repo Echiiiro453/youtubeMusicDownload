@@ -1,9 +1,8 @@
 @echo off
-echo Iniciando AppMusica Executavel...
+echo Iniciando Lumina Executavel...
 cd backend\dist
-start AppMusica.exe
-echo AppMusica iniciado!
-echo Verifique se uma janela preta (Console) abriu e se o navegador abriu em http://localhost:8000
+start Lumina.exe
+echo Lumina iniciado!
+echo Verifique se o aplicativo foi aberto corretamente ou olhe na bandeja do sistema.
 timeout /t 5
-:: start http://localhost:8000
 pause

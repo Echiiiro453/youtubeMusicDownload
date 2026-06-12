@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, Check } from 'lucide-react';
 
@@ -32,7 +33,7 @@ export function TermsModal({ showTerms, termsLoading, termsContent, handleAccept
                 {termsLoading ? (
                   <div className="flex flex-col items-center justify-center gap-4 py-8">
                     <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p>Carregando termos...</p>
+                    <p>{t('loadingTerms') || 'Carregando termos...'}</p>
                   </div>
                 ) : termsContent}
               </div>

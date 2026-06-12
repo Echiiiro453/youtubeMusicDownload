@@ -215,7 +215,7 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-secondary uppercase">Qualidade (Redução de Ruído)</label>
+            <label className="text-xs font-semibold text-secondary uppercase">{t('studioQuality') || 'Qualidade (Redução de Ruído)'}</label>
             <select 
               value={quality}
               onChange={(e) => setQuality(e.target.value)}
@@ -342,7 +342,7 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                   onClick={() => handleInstallDemucs(false)}
                   className="w-full py-3 bg-primary hover:bg-primary/90 text-on-primary font-bold rounded-lg transition-colors flex justify-center items-center gap-2 shadow-lg"
                >
-                  Baixar e Instalar Inteligência Artificial
+                  {t('studioDownloadAI') || 'Baixar e Instalar Inteligência Artificial'}
                </button>
                <p className="text-[10px] text-on-surface-variant text-center uppercase tracking-wider font-bold mt-1">O Python foi detectado no sistema.</p>
             </div>
@@ -356,7 +356,7 @@ export default function StudioModal({ isOpen, onClose, apiUrl }) {
                <div className="bg-surface-container-low p-3 rounded-lg border border-outline-variant/30 space-y-2">
                  <p className="text-xs text-on-surface font-bold">Opção Recomendada (Segura):</p>
                  <a href="https://www.python.org/downloads/" target="_blank" rel="noreferrer" className="w-full py-2 bg-green-600/80 hover:bg-green-500 text-on-primary text-sm font-bold rounded-lg transition-colors flex justify-center items-center">
-                    1. Baixar Python (Site Oficial)
+                    1. {t('studioDownloadPython') || 'Baixar Python (Site Oficial)'}
                  </a>
                  <p className="text-[10px] text-on-surface-variant text-center leading-tight">Instale o Python no seu PC marcando a opção "Add to PATH". Em seguida, feche o app e tente novamente.</p>
                </div>

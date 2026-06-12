@@ -69,7 +69,8 @@ class VoiceEngine:
             self.is_running = False
 
     def _parse_command(self, text):
-        if "lumina" in text:
+        aliases = ["lumina", "luminaria", "luminária", "ilumina", "domina", "numina", "mina"]
+        if any(alias in text for alias in aliases):
             if "pausar" in text or "pausa" in text or "parar" in text:
                 self.callback({"type": "voice_command", "action": "pause"})
             elif "tocar" in text or "play" in text or "continuar" in text:

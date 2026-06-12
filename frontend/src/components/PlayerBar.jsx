@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { t } from '../i18n';
 import { Music, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, X, Maximize2, Minimize2, ExternalLink, Repeat, Shuffle, Info, Activity, Layers, SlidersHorizontal, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RippleButton } from './Ripple';
@@ -474,7 +475,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-4 bg-surface-container-high rounded-2xl">
-                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Duração</span>
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">{t('duration') || 'Duração'}</span>
                     <span className="text-on-surface font-mono">{formatTime(duration)}</span>
                   </div>
                   <div className="p-4 bg-surface-container-high rounded-2xl">
@@ -489,7 +490,7 @@ export function PlayerBar({ currentSong, onClose, onFinish, onNext, onPrev, isSh
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-4 bg-surface-container-high rounded-2xl">
-                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">Qualidade</span>
+                    <span className="block text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-1">{t('quality') || 'Qualidade'}</span>
                     <span className="text-on-surface tracking-widest font-mono text-xs">{currentSong.quality || "Local"}</span>
                   </div>
                   <div className="p-4 bg-surface-container-high rounded-2xl">

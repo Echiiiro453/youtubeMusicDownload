@@ -1,7 +1,7 @@
 <div align="center">
   <img src="fotos/LL.jpg" alt="Lumina Logo" width="150" height="150" style="border-radius: 20%; margin-bottom: 20px;"/>
-  <h1>Lumina</h1>
-  <p>A professional, lightweight solution for downloading high-fidelity music and videos from YouTube, Spotify, and Apple Music.</p>
+  <h1>Lumina 3.9.0</h1>
+  <p>A professional, lightweight, and incredibly fast solution for downloading high-fidelity music and videos from YouTube, Spotify, and Apple Music without ads, cookies, or limits.</p>
 
   [![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/youtubeMusicDownload/)
   [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -16,205 +16,127 @@
 
 ## English
 
-### Overview
-Lumina is an advanced media downloader built for performance and reliability. It features a modern desktop interface and powerful backend capable of handling massive playlists, bypassing anti-bot protections, and separating audio tracks using artificial intelligence.
+### Why Lumina?
+Most open-source video downloaders use outdated UI frameworks, consume gigabytes of RAM (due to Electron), and break frequently because they rely on basic browser scraping. **Lumina is different.**
+Built on an ultra-lightweight **React + PyWebView** architecture, Lumina consumes a fraction of the RAM of standard desktop apps while providing a dynamic *Material You* UI. Under the hood, it uses advanced **Client Impersonation** (Android VR, iOS, Web Creator) combined with an embedded Node.js engine to bypass JavaScript challenges, ensuring you get **True 4K HDR** downloads. It also securely supports your browser cookies for downloading age-restricted or premium content!
 
 <div align="center">
   <img src="fotos/4997249450707192834.jpg" alt="Lumina Dashboard" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
-### Key Features
-- **High Fidelity Audio**: Support for MP3 (320kbps), M4A, and FLAC (Lossless) formats.
-- **4K Video**: Download high-resolution videos up to 60fps.
-- **Smart Metadata**: Automatic embedding of album covers, artists, titles, and lyrics directly into your audio files.
-- **Offline Voice Commands**: Full hands-free control built into the app! Powered by a local Vosk engine ensuring 100% privacy without sending audio to the cloud.
-- **Multi-Platform**: Native desktop experience built with PyWebView and FastAPI.
-- **Magic Search**: Search and download songs by directly pasting Spotify, Deezer, SoundCloud, or Apple Music links.
-- **Infinite Radio**: Automatically discover and stream similar tracks when your local playlist ends.
-- **Sleep Timer & Crossfade**: Fall asleep to your music and enjoy gapless, smooth transitions between songs.
-- **Discord Rich Presence**: Show off what you're listening to directly on your Discord status.
-- **Lumina Sync**: Seamlessly sync your music to your mobile phone over local Wi-Fi with secure QR Code pairing.
+### Quick Start (No Installation Required)
+Lumina requires absolutely no installation or registry changes. It is a 100% portable executable.
+1. Download the latest `Lumina.exe` from the Releases page.
+2. Double click the file.
+3. Paste a YouTube, Spotify, or Apple Music URL and watch the magic happen!
 
-<div align="center">
-  <img src="fotos/4997249450707192835.jpg" alt="Lumina Features" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
-</div>
+> **Note on Windows Defender:** Because Lumina is an indie open-source project and isn't signed with a $400/year corporate certificate, Windows SmartScreen may show an "Unknown Publisher" warning on the first run. Click **More Info** -> **Run Anyway**.
 
-- **Smart Retry & Proxy Survival**: Intelligent system utilizing fallback clients and rotating proxies to bypass IP blocks and download thousands of songs seamlessly.
-- **Queue Memory**: Automatically saves pending downloads allowing you to resume interrupted sessions anytime.
-- **Lumina Studio AI**: Built-in vocal and instrumental separator powered by Demucs (State-of-the-art music source separation by Meta Research).
-- **Shazam Lab**: Native metadata fixer powered by Shazamio to recognize unknown MP3 files and automatically inject ID3 tags and album covers.
-- **Global Localization**: Dynamic UI translation supporting English (US), Spanish (ES), and Portuguese (BR).
+### Features in Detail
+- **True 4K & HDR Video**: Preserves high frame rates (60fps/120fps) and HDR metadata perfectly.
+- **High Fidelity Audio**: Export as M4A or 320kbps MP3.
+- **Lumina Studio AI**: Built-in Meta Demucs integration. Separate vocals, drums, and instruments from any downloaded track using local Neural Networks (100% private, no cloud uploads).
+- **Voice Control**: Say "Lumina, pause!" or "Lumina, next!" to control your music hands-free via our embedded offline Vosk AI model.
+- **Shazam Lab**: Automatically scans unknown audio files and injects ID3 tags, album art, and lyrics.
+- **Lumina Sync**: Scan a QR code on your PC to instantly transfer your downloaded music to your smartphone via Local Wi-Fi.
+- **Anti-Ban Architecture**: 16 layers of evasion including rotating proxies, fallback clients, and embedded JS deciphering.
 
 <div align="center">
   <img src="fotos/4997249450707192836.jpg" alt="Lumina Studio AI" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
-**Note on Video Playback**: The default Windows Media Player or "Movies & TV" app may struggle to play certain downloaded `.mp4` videos due to missing modern codecs. We highly recommend using [VLC Media Player](https://www.videolan.org/vlc/).
+### 📦 Full Setup (For Developers)
+If you want to build Lumina from source or contribute to the code:
+```bash
+# 1. Clone the repository
+git clone https://github.com/Echiiiro453/youtubeMusicDownload.git
+cd youtubeMusicDownload
 
-**Note on AI Processing**: The Lumina Studio AI feature utilizes up to 100% of your CPU cores during audio separation. This is because it performs heavy local Neural Network inference via PyTorch. This consumption is completely safe, expected, and ensures maximum privacy as no audio is uploaded to the cloud.
+# 2. Build the React Frontend
+cd frontend
+npm install
+npm run build
+cd ..
 
-### Project Structure
-```text
-youtubeMusicDownload/
-├── backend/           # Core Python Logic (FastAPI + yt-dlp + PyInstaller)
-├── frontend/          # Web/Desktop Interface (React)
-├── scripts/           # Development and utility scripts
-├── debug/             # Local logs and test files
-├── fotos/             # Documentation assets
-├── README.md          # Documentation
-├── TERMS.md           # Terms of Use
-└── PRIVACY.md         # Privacy Policy
+# 3. Setup Python Backend Environment (Python 3.10+ Required)
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+
+# 4. Compile the final portable .exe
+python build_exe.py
 ```
 
-### Legal Disclaimer & Privacy
-Please read the [Terms of Use](TERMS.md) and [Privacy Policy](PRIVACY.md) before using this software. Lumina is intended for personal and educational use only. The developer does not promote or endorse copyright infringement.
-
-### Desktop Setup (Development)
-1. Install [Node.js](https://nodejs.org/) and [Python 3.10+](https://www.python.org/).
-2. Setup Frontend: `cd frontend && npm install && npm run build`
-3. Setup Backend: `cd backend && pip install -r requirements.txt`
-4. Build Portable `.exe`: `python build_exe.py`
-
-### Linux Usage
-
-**Option 1: Wine/Proton (Recommended)**
-Since the compiled release is a Windows executable (`.exe`), the easiest way to run it on Linux is via [Wine](https://www.winehq.org/) or [Proton](https://github.com/ValveSoftware/Proton) (via Steam or [Bottles](https://usebottles.com/)).
+### 🐧 Linux Usage
+Since the official release is a Windows `.exe`, the easiest way to run Lumina on Linux is via **Wine** or **Proton** (Bottles/Steam).
 ```bash
 wine Lumina.exe
 ```
-
-**Option 2: Native Execution (Source Code)**
-To run natively from the source code, you must install the `pywebview` dependencies for Linux (GTK and WebKit2) based on your distribution:
-
-**Ubuntu/Debian:**
-```bash
-sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
-```
-
-**Arch Linux / Manjaro:**
-```bash
-sudo pacman -S python base-devel gobject-introspection cairo gtk3 webkit2gtk
-```
-
-**Fedora:**
-```bash
-sudo dnf install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
-```
-
-Then follow the Desktop Setup instructions using a virtual environment:
-```bash
-# 1. Setup Frontend
-cd frontend && npm install && npm run build && cd ..
-
-# 2. Setup Backend inside a Virtual Environment
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# 3. Build Portable Linux Executable
-python build_exe.py
-```
+Alternatively, follow the Developer instructions above to build natively on Linux. Make sure to install `webkit2gtk` and `python3-dev` dependencies for PyWebView!
 
 ---
 
 ## Português
 
-### Visão Geral
-O Lumina é uma solução avançada para download de mídias, construída para entregar performance e estabilidade. O software conta com uma interface moderna para desktop e um backend robusto capaz de lidar com playlists gigantes, desviar de proteções antibot e separar faixas de áudio usando inteligência artificial.
+### Por que o Lumina?
+A maioria dos baixadores de vídeo open-source usa interfaces antigas, consome gigabytes de RAM (por usarem Electron) e falha constantemente ao baixar vídeos porque dependem de técnicas básicas. **O Lumina é diferente.**
+Construído em uma arquitetura ultraleve de **React + PyWebView**, o Lumina consome uma fração da RAM de apps convencionais, mantendo um design dinâmico *Material You*. Por trás dos panos, ele usa **Personificação de Cliente** (Android VR, iOS, Web Creator) combinado com um motor Node.js embutido para burlar desafios de JavaScript. Isso garante downloads em **4K HDR Real**, além de contar com suporte nativo e seguro para os cookies do seu navegador, permitindo baixar conteúdos restritos de forma nativa!
 
 <div align="center">
   <img src="fotos/4997249450707192834.jpg" alt="Dashboard do Lumina" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
-### Funcionalidades Principais
-- **Áudio de Alta Fidelidade**: Suporte para os formatos MP3 (320kbps), M4A e FLAC (Lossless).
-- **Vídeo em 4K**: Download de vídeos em alta resolução de até 60fps.
-- **Metadados Inteligentes**: Inserção automática de capas de álbum, artistas, títulos e letras diretamente nos seus arquivos de áudio.
-- **Comandos de Voz Offline**: Controle total do aplicativo por voz! Impulsionado pelo motor Vosk rodando localmente na sua máquina, garantindo 100% de privacidade (nenhum áudio vai para a internet).
-- **Multi-Plataforma**: Experiência desktop nativa construída com PyWebView e FastAPI.
-- **Magic Search**: Busque e baixe músicas simplesmente colando links do Spotify, Deezer, SoundCloud ou Apple Music.
-- **Smart Retry & Proxy Survival**: Sistema inteligente que utiliza clientes de fallback e proxies rotativos para ignorar bloqueios de IP e baixar milhares de músicas sem interrupções.
-- **Memória de Fila**: Salva automaticamente seus downloads pendentes, permitindo que você retome sessões interrompidas a qualquer momento.
+### Começo Rápido (Sem Instalação)
+O Lumina não requer instalação e não suja o registro do seu sistema. Ele é 100% portátil.
+1. Baixe o último `Lumina.exe` na aba de Releases.
+2. Dê dois cliques no arquivo.
+3. Cole o link de um vídeo do YouTube, Spotify ou Apple Music e veja a mágica acontecer!
+
+> **Aviso do Windows Defender:** Como o Lumina é um projeto indie de código aberto e não possui um certificado corporativo pago de 400 dólares por ano, o SmartScreen do Windows pode mostrar um aviso de "Fornecedor Desconhecido" na primeira vez. Clique em **Mais Informações** -> **Executar Assim Mesmo**.
+
+### Funcionalidades em Detalhes
+- **Vídeos 4K e HDR**: Preserva altas taxas de quadros (60fps/120fps) e cores HDR perfeitamente.
+- **Áudio de Alta Fidelidade**: Exporte como M4A ou MP3 em 320kbps.
+- **Lumina Studio AI**: Integração nativa com o Meta Demucs. Separe vocais, baterias e instrumentos de qualquer música usando Redes Neurais locais (100% privado, sem envios para nuvem).
+- **Controle por Voz**: Diga "Lumina, pausar!" ou "Lumina, próxima!" para controlar suas músicas usando nosso modelo de IA Vosk embutido e offline.
+- **Laboratório Shazam**: Escaneia automaticamente arquivos desconhecidos e injeta capas de álbum, artistas e letras (ID3 tags).
+- **Lumina Sync**: Escaneie o QR Code na tela do PC e transfira suas músicas recém-baixadas instantaneamente para o seu celular via Wi-Fi Local.
+- **Arquitetura Anti-Ban**: 16 camadas de evasão incluindo proxies rotativos, clientes de fallback e quebra nativa de criptografia JS.
 
 <div align="center">
   <img src="fotos/4997249450707192835.jpg" alt="Recursos do Lumina" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
 </div>
 
-- **Lumina Studio AI**: Separador de vocais e instrumentais integrado, alimentado pelo Demucs (Inteligência Artificial de ponta desenvolvida pela Meta Research).
-- **Laboratório Shazam**: Corretor de metadados nativo alimentado pelo Shazamio para reconhecer arquivos MP3 desconhecidos e injetar tags ID3 e capas de álbuns automaticamente.
-- **Localização Global**: Interface com tradução dinâmica e suporte nativo a Inglês (US), Espanhol (ES) e Português (BR).
+### 📦 Setup Completo (Para Desenvolvedores)
+Se você quiser compilar o Lumina do zero ou contribuir com o código:
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/Echiiiro453/youtubeMusicDownload.git
+cd youtubeMusicDownload
 
-<div align="center">
-  <img src="fotos/4997249450707192836.jpg" alt="Lumina Studio AI" width="800" style="border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
-</div>
+# 2. Compilar a Interface React
+cd frontend
+npm install
+npm run build
+cd ..
 
-**Aviso sobre Reprodução de Vídeo**: O Windows Media Player ou o aplicativo "Filmes e TV" padrão do Windows podem apresentar falhas ao reproduzir alguns vídeos `.mp4` baixados devido à falta de codecs modernos. Recomendamos fortemente o uso do [VLC Media Player](https://www.videolan.org/vlc/).
+# 3. Configurar Ambiente Python (Requer Python 3.10+)
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
 
-**Aviso sobre Processamento de IA**: O recurso Lumina Studio AI utiliza até 100% dos núcleos do seu processador durante a separação de áudio. Isso ocorre porque o sistema realiza cálculos matemáticos pesados de Rede Neural localmente via PyTorch. Esse consumo é totalmente seguro, esperado e garante máxima privacidade, pois nenhum áudio é enviado para a nuvem.
-
-### Estrutura do Projeto
-```text
-youtubeMusicDownload/
-├── backend/           # Lógica central em Python (FastAPI + yt-dlp + PyInstaller)
-├── frontend/          # Interface Web/Desktop (React)
-├── scripts/           # Scripts de desenvolvimento
-├── debug/             # Logs locais e arquivos de teste
-├── fotos/             # Recursos de documentação e imagens
-├── README.md          # Documentação
-├── TERMS.md           # Termos de Uso
-└── PRIVACY.md         # Política de Privacidade
+# 4. Compilar o .exe final
+python build_exe.py
 ```
 
-### Termos de Uso e Privacidade (Aviso Legal)
-Por favor, leia os [Termos de Uso](TERMS.md) e a [Política de Privacidade](PRIVACY.md) antes de utilizar este software. O Lumina é destinado exclusivamente para uso pessoal e educacional. O desenvolvedor não promove ou endossa a pirataria ou infração de direitos autorais.
-
-### Configuração Desktop (Desenvolvimento)
-1. Instale o [Node.js](https://nodejs.org/) e o [Python 3.10+](https://www.python.org/).
-2. Frontend: `cd frontend && npm install && npm run build`
-3. Backend: `cd backend && pip install -r requirements.txt`
-4. Compilar `.exe` portátil: `python build_exe.py`
-
-### Uso no Linux
-
-**Opção 1: Wine/Proton (Recomendado)**
-Como o aplicativo final é um executável Windows (`.exe`), a maneira mais fácil e rápida de rodar no Linux é usando o [Wine](https://www.winehq.org/) ou o [Proton](https://github.com/ValveSoftware/Proton) (através da Steam ou do [Bottles](https://usebottles.com/)).
+### 🐧 Uso no Linux
+Como a versão oficial é um executável Windows (`.exe`), a maneira mais fácil de usar o Lumina no Linux é via **Wine** ou **Proton** (Bottles/Steam).
 ```bash
 wine Lumina.exe
 ```
-
-**Opção 2: Execução Nativa (Código Fonte)**
-Para rodar nativamente pelo código fonte, você precisa instalar as dependências do `pywebview` para Linux (GTK e WebKit2) no seu terminal, dependendo da sua distribuição:
-
-**Ubuntu/Debian:**
-```bash
-sudo apt install python3-dev build-essential libgirepository1.0-dev libcairo2-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1
-```
-
-**Arch Linux / Manjaro:**
-```bash
-sudo pacman -S python base-devel gobject-introspection cairo gtk3 webkit2gtk
-```
-
-**Fedora:**
-```bash
-sudo dnf install python3-devel gcc cairo-devel gobject-introspection-devel gtk3-devel webkit2gtk4.1-devel
-```
-
-Depois, siga os passos de Configuração Desktop utilizando um ambiente virtual (venv):
-```bash
-# 1. Compilar Frontend
-cd frontend && npm install && npm run build && cd ..
-
-# 2. Configurar Backend num Ambiente Virtual (venv)
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# 3. Compilar Executável Nativo para Linux
-python build_exe.py
-```
+Alternativamente, siga as instruções de Desenvolvedor acima para compilar nativamente. Certifique-se de instalar as dependências `webkit2gtk` e `python3-dev` para o PyWebView!
 
 ---
 *Developed by [Echiiiro453](https://github.com/Echiiiro453)*

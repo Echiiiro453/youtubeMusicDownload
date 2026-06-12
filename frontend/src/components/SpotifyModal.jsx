@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, X } from 'lucide-react';
 
@@ -25,7 +26,7 @@ const SpotifyModal = ({
                 <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
                   <Music size={20} />
                 </div>
-                <h3 className="text-xl font-bold text-on-surface tracking-tight">Importar Playlist</h3>
+                <h3 className="text-xl font-bold text-on-surface tracking-tight">{t('importPlaylist') || 'Importar Playlist'}</h3>
               </div>
               <button onClick={() => setShowSpotifyModal(false)} className="p-2 text-on-surface-variant hover:text-on-surface bg-surface-container-high hover:bg-surface-variant rounded-full transition-colors"><X size={20}/></button>
             </div>

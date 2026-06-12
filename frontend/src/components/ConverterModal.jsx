@@ -112,7 +112,7 @@ export function ConverterModal({ isOpen, onClose, apiUrl }) {
 
           {/* Format Selection */}
           <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/30 space-y-3">
-            <h4 className="font-bold text-on-surface text-sm">Formato de Saída</h4>
+            <h4 className="font-bold text-on-surface text-sm">{t('outputFormat') || 'Formato de Saída'}</h4>
             <div className="grid grid-cols-5 gap-2">
               {['mp3', 'wav', 'flac', 'm4a', 'ogg'].map((fmt) => (
                 <button

@@ -74,7 +74,14 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
     downloads_dir = get_downloads_dir()
     os.makedirs(downloads_dir, exist_ok=True)
     
-    if getattr(request, 'organize', False):
+    organize_by_artist = getattr(request, 'organize', False)
+    organize_by_playlist = getattr(request, 'organize_by_playlist', False)
+    
+    if organize_by_playlist and organize_by_artist:
+        outtmpl = os.path.join(downloads_dir, '%(playlist_title|Avulsas)s', '%(artist,uploader|Unknown Artist)s', '%(title)s.%(ext)s')
+    elif organize_by_playlist:
+        outtmpl = os.path.join(downloads_dir, '%(playlist_title|Avulsas)s', '%(title)s.%(ext)s')
+    elif organize_by_artist:
         outtmpl = os.path.join(downloads_dir, '%(artist,uploader|Unknown Artist)s', '%(album|Singles)s', '%(title)s.%(ext)s')
     else:
         outtmpl = os.path.join(downloads_dir, '%(title)s.%(ext)s')
@@ -90,14 +97,20 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
     postprocessors = []
 
     if request.mode == 'video':
+        video_codec = getattr(request, 'video_codec', 'auto')
+        vc_map = {'h264': 'avc', 'vp9': 'vp9', 'av1': 'av01'}
+        vc = vc_map.get(video_codec, '')
+
         format_str = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+        if vc:
+            format_str = f'bestvideo[vcodec^={vc}]+bestaudio/bestvideo+bestaudio/best'
+
         if request.quality.endswith('p') and request.quality[:-1].isdigit():
             height = int(request.quality[:-1])
             if height >= 1440:
-                # Force high res. If not found, throws format error and tries next strategy
-                format_str = f'bestvideo[height>={height}]+bestaudio'
+                format_str = f'bestvideo[height>={height}][vcodec^={vc}]+bestaudio/bestvideo[height>={height}]+bestaudio' if vc else f'bestvideo[height>={height}]+bestaudio'
             else:
-                format_str = f'bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best'
+                format_str = f'bestvideo[height<={height}][vcodec^={vc}]+bestaudio/bestvideo[height<={height}]+bestaudio' if vc else f'bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best'
         
         postprocessors.append({'key': 'FFmpegMetadata'})
     else:
@@ -125,6 +138,10 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
         postprocessors.append({'key': 'FFmpegMetadata'})
 
     postprocessor_args = {}
+    
+    if getattr(request, 'compress_video', False) and request.mode == 'video':
+        postprocessor_args['video'] = ['-c:v', 'libx264', '-crf', '28', '-preset', 'fast', '-b:v', '0']
+        
     af_filters = []
     if request.pitch != 0 or request.speed != 1.0:
          pitch_factor = 2 ** (request.pitch / 12.0)
@@ -216,12 +233,10 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
         'progress_hooks': [local_progress_hook],
         'noplaylist': not request.playlist,
         'merge_output_format': 'mp4' if request.mode == 'video' else None,
-        'js_runtimes': {'node': {}}, 
         'extract_flat': False,
         'cookiefile': get_cookies_path(),
         'no_overwrites': True,
         'extractor_args': {'youtube': {'player_client': ['tv']}},
-        'remote_components': ['ejs:github'],
         'concurrent_fragment_downloads': 16,
     }
     
@@ -248,7 +263,14 @@ def build_ydl_opts(job_id: str, request) -> Dict[str, Any]:
     if request.cover_path and os.path.exists(request.cover_path):
         ydl_opts['writethumbnail'] = False
         postprocessors = [p for p in postprocessors if p.get('key') != 'EmbedThumbnail']
-        ydl_opts['postprocessors'] = postprocessors
+
+    if getattr(request, 'sponsorblock_enabled', False):
+        postprocessors.extend([
+            {'key': 'SponsorBlock'},
+            {'key': 'ModifyChapters', 'remove_sponsor_segments': ['sponsor', 'intro', 'outro', 'selfpromo']}
+        ])
+
+    ydl_opts['postprocessors'] = postprocessors
 
     return ydl_opts
 
@@ -285,6 +307,8 @@ def download_with_retries(job_id: str, request):
     strategies = [
         {"name": "tv_embedded", "use_cookies": True, "client": "tv_embedded"},
         {"name": "web_embedded", "use_cookies": True, "client": "web_embedded", "impersonate": "chrome"},
+        {"name": "web_creator", "use_cookies": True, "client": "web_creator", "impersonate": "chrome"},
+        {"name": "android_vr", "use_cookies": True, "client": "android_vr"},
         {"name": "ios_music", "use_cookies": True, "client": "ios_music"},
         {"name": "android_music", "use_cookies": True, "client": "android_music"},
         {"name": "standard_web", "use_cookies": True, "client": "web", "impersonate": "chrome"},
@@ -339,6 +363,31 @@ def download_with_retries(job_id: str, request):
                         entries = list(info['entries'])
                         if not entries:
                             raise Exception(f"Nenhum resultado encontrado na busca do YouTube para: {target_url}")
+                        
+                        # --- Lumina M3U Generator ---
+                        if len(entries) > 1 and getattr(request, 'organize_by_playlist', False):
+                            playlist_title = info.get('title', 'Playlist').replace('/', '_').replace('\\', '_')
+                            first_file = ydl.prepare_filename(entries[0])
+                            playlist_dir = os.path.dirname(first_file)
+                            m3u_path = os.path.join(playlist_dir, f"{playlist_title}.m3u")
+                            
+                            try:
+                                with open(m3u_path, "w", encoding="utf-8") as f:
+                                    f.write("#EXTM3U\n")
+                                    for entry in entries:
+                                        if entry is None: continue
+                                        entry_file = ydl.prepare_filename(entry)
+                                        base_p, _ = os.path.splitext(entry_file)
+                                        if request.mode == 'video': final_p = base_p + '.mp4'
+                                        elif request.quality == 'flac': final_p = base_p + '.flac'
+                                        elif request.quality == 'best': final_p = base_p + '.m4a'
+                                        else: final_p = base_p + '.mp3'
+                                        rel_path = os.path.basename(final_p)
+                                        f.write(f"#EXTINF:-1,{entry.get('title', 'Unknown')}\n")
+                                        f.write(f"{rel_path}\n")
+                            except Exception as e:
+                                print(f"  \033[33mWARN Erro ao gerar playlist M3U: {e}\033[0m")
+                        
                         info = entries[0]
                         if info is None:
                             raise Exception(f"Resultado vazio retornado pelo YouTube para: {target_url}")

@@ -4,7 +4,7 @@ import TopAppBar from './components/TopAppBar';
 import QueueDrawer from './components/QueueDrawer';
 import SpotifyModal from './components/SpotifyModal';
 import { t, getLanguage, setLanguage } from './i18n';
-import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, ArrowRightLeft, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu, Mic, Smartphone, BellRing } from 'lucide-react';
+import { Search, Download, Music, AlertCircle, CheckCircle, ArrowRight, ArrowRightLeft, Settings, Upload, FileText, Check, Scissors, Sliders, X, List, Trash2, Plus, PlayCircle, Minimize2, Save, FolderOpen, AlertTriangle, Info, Power, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Heart, Copy, Github, RefreshCw, Wand2, Clock, Menu, Mic, Smartphone, BellRing, ClipboardPaste } from 'lucide-react';
 import { RippleButton } from './components/Ripple';
 import { QueueItem } from './components/QueueItem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -63,6 +63,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // 'success', 'error'
   const [message, setMessage] = useState('');
+
+  // Advanced Settings
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [videoCodec, setVideoCodec] = useState('auto');
+  const [compressVideo, setCompressVideo] = useState(false);
   const [downloadInfo, setDownloadInfo] = useState(null);
 
   // Auto-detect mode when URL changes
@@ -173,6 +178,14 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [organizeByArtist, setOrganizeByArtist] = useState(() => {
     const saved = localStorage.getItem('organizeByArtist');
+    return saved === 'true';
+  });
+  const [organizeByPlaylist, setOrganizeByPlaylist] = useState(() => {
+    const saved = localStorage.getItem('organizeByPlaylist');
+    return saved === 'true';
+  });
+  const [sponsorblockEnabled, setSponsorblockEnabled] = useState(() => {
+    const saved = localStorage.getItem('sponsorblockEnabled');
     return saved === 'true';
   });
 
@@ -379,6 +392,20 @@ function App() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.type === 'PLAY_EXTERNAL') {
+            const fileName = data.file_path.split(/[/\\]/).pop();
+            const externalSong = {
+              title: fileName,
+              author: "Local",
+              file: data.file_path,
+              quality: "Local",
+              status: "completed",
+              uniqueId: `local-${Date.now()}`
+            };
+            setQueue(prev => [externalSong, ...prev]);
+            setCurrentSong(externalSong);
+            return;
+          }
           if (data.type === 'voice_command') {
             window.dispatchEvent(new CustomEvent('voiceCommand', { detail: data.action }));
             return;
@@ -418,12 +445,12 @@ function App() {
             quality: quality,
             file: job.filename
           });
-          addToast('Download concluído!', 'success', { label: 'Abrir Pasta', onClick: openDownloadsFolder });
+          addToast(t('statusDone') || 'Download concluído!', 'success', { label: t('openFolder'), onClick: openDownloadsFolder });
           setStep('result');
           setCurrentJobId(null);
         } else if (job.status === 'error' || job.status === 'timeout') {
-          addToast('Falha no download.', 'error');
-          setMessage(job.error || 'Erro desconhecido');
+          addToast(t('statusError') || 'Falha no download.', 'error');
+          setMessage(job.error || t('statusError'));
           setStatus('error');
           setStep('confirm');
           setCurrentJobId(null);
@@ -701,7 +728,6 @@ function App() {
       addedAt: Date.now()
     };
     setQueue(prev => [...prev, newItem]);
-    setQueue(prev => [...prev, newItem]);
     addToast('Adicionado à fila!', 'success');
     setTimeout(() => setStatus(null), 1500);
   };
@@ -744,7 +770,11 @@ function App() {
         mode: mode,
         pitch: item.pitch !== undefined ? item.pitch : pitch,
         speed: item.speed !== undefined ? item.speed : speed,
-        organize: organizeByArtist
+        organize: organizeByArtist,
+        organize_by_playlist: organizeByPlaylist,
+        sponsorblock_enabled: sponsorblockEnabled,
+        video_codec: videoCodec,
+        compress_video: compressVideo
       });
 
       const { job_id } = response.data;
@@ -827,6 +857,8 @@ function App() {
         speed: item.speed !== undefined ? item.speed : speed,
         subtitle: item.subtitle !== undefined ? item.subtitle : (mode === 'video' ? subtitle : 'none'),
         organize: organizeByArtist,
+        organize_by_playlist: organizeByPlaylist,
+        sponsorblock_enabled: sponsorblockEnabled,
         title: item.title,
         artist: item.uploader,
         cover_path: item.thumbnail,
@@ -1087,6 +1119,10 @@ function App() {
         isAuthenticated={isAuthenticated}
         organizeByArtist={organizeByArtist}
         setOrganizeByArtist={setOrganizeByArtist}
+        organizeByPlaylist={organizeByPlaylist}
+        setOrganizeByPlaylist={setOrganizeByPlaylist}
+        sponsorblockEnabled={sponsorblockEnabled}
+        setSponsorblockEnabled={setSponsorblockEnabled}
         apiUrl={API_URL}
         onLanguageChange={handleLanguageChange}
         onUploadSuccess={() => {
@@ -1229,11 +1265,26 @@ function App() {
                 <input
                   type="text"
                   placeholder={t('searchPlaceholderText')}
-                  className="w-full h-14 pl-12 pr-4 bg-surface-container-high border border-outline-variant/30 rounded-full focus:outline-none focus:border-primary transition-all text-lg placeholder:text-on-surface-variant text-on-surface shadow-md"
+                  className="w-full h-14 pl-12 pr-12 bg-surface-container-high border border-outline-variant/30 rounded-full focus:outline-none focus:border-primary transition-all text-lg placeholder:text-on-surface-variant text-on-surface shadow-md"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   autoFocus
                 />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      if (text) setUrl(text);
+                    } catch (err) {
+                      console.error("Failed to read clipboard:", err);
+                    }
+                  }}
+                  className="absolute inset-y-0 right-4 flex items-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                  title="Colar da Área de Transferência"
+                >
+                  <ClipboardPaste className="w-5 h-5" />
+                </button>
 
                 {/* Progresso visual imediato */}
                 {(loading || isSearching) && (
@@ -1590,10 +1641,63 @@ function App() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2 block">
-                      Qualidade ({mode === 'audio' ? 'Áudio' : 'Vídeo'})
-                    </label>
+                  <div className="relative">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-xs font-semibold text-secondary uppercase tracking-wider block">
+                        Qualidade ({mode === 'audio' ? 'Áudio' : 'Vídeo'})
+                      </label>
+                      <button 
+                        onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                        className={`p-1.5 rounded-full transition-colors ${showAdvancedSettings ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-highest'}`}
+                        title="Configurações Avançadas"
+                      >
+                        <Settings size={16} />
+                      </button>
+                    </div>
+
+                    {showAdvancedSettings && (
+                      <div className="absolute z-10 w-full mt-1 bg-surface-container-high rounded-[24px] shadow-lg border border-outline-variant/30 p-4 mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-bold text-on-surface">Download Avançado</span>
+                          <button onClick={() => setShowAdvancedSettings(false)} className="p-1 text-on-surface-variant rounded-full hover:bg-surface-container-highest">
+                            <X size={16} />
+                          </button>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <label className="text-xs font-medium text-on-surface-variant mb-2 block">Codec de Vídeo</label>
+                          <div className="flex bg-surface-container-highest rounded-full p-1 border border-outline-variant/20">
+                            {['auto', 'h264', 'vp9', 'av1'].map(codec => (
+                              <button
+                                key={codec}
+                                onClick={() => setVideoCodec(codec)}
+                                className={`flex-1 py-1.5 px-2 text-xs font-bold rounded-full transition-all ${videoCodec === codec ? 'bg-secondary-container text-on-secondary-container shadow-sm' : 'text-on-surface-variant hover:bg-surface-variant'}`}
+                              >
+                                {codec.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-[10px] text-on-surface-variant mt-1 px-1">
+                            {videoCodec === 'auto' && "Automático (Recomendado)"}
+                            {videoCodec === 'h264' && "Alta compatibilidade (Telas antigas)"}
+                            {videoCodec === 'vp9' && "Melhor qualidade (Padrão web atual)"}
+                            {videoCodec === 'av1' && "Menor tamanho (Lento para processar)"}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/20">
+                          <div>
+                            <span className="text-sm font-bold text-on-surface block">Compressão Otimizada</span>
+                            <span className="text-[10px] text-on-surface-variant">Re-codifica para o menor tamanho possível via FFmpeg</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" className="sr-only peer" checked={compressVideo} onChange={(e) => setCompressVideo(e.target.checked)} />
+                            <div className="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="grid grid-cols-1 gap-2">
                       {mode === 'audio' ? (
                         <>
@@ -1754,13 +1858,13 @@ function App() {
                       onClick={reset}
                       className="px-6 py-2 bg-surface hover:bg-white/10 rounded-xl text-sm font-medium transition-colors"
                     >
-                      Baixar Outra
+                      {t('downloadAnother') || "Baixar Outra"}
                     </button>
                     <button
                       onClick={() => axios.post(getApiUrl('/open_folder'))}
                       className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
                     >
-                      📂 Abrir Pasta
+                      📂 {t('openFolder') || "Abrir Pasta"}
                     </button>
                   </div>
                 </div>

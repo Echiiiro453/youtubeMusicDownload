@@ -22,6 +22,7 @@ try:
     import torch
     import torchaudio
     import shazamio
+    import register_windows
 except ImportError:
     pass
 
@@ -115,7 +116,7 @@ voice_engine = VoiceEngine(on_voice_command)
 # --------------------------------
 
 
-APP_VERSION = "3.7.0"
+APP_VERSION = "3.9.0"
 GITHUB_REPO = "Echiiiro453/youtubeMusicDownload"
 
 log_buffer = collections.deque(maxlen=500)
@@ -129,6 +130,18 @@ class LogInterceptor:
         if text.strip():
             # Remove ANSI color codes for the web viewer
             clean_text = re.sub(r'\x1b\[[0-9;]*m', '', text)
+            # Filter known harmless yt-dlp noise to keep the UI log clean
+            _noise = [
+                'No supported JavaScript runtime could be found',
+                'Only deno is enabled by default',
+                'YouTube extraction without a JS runtime has been deprecated',
+                'js-runtimes RUNTIME[:PATH]',
+                'yt-dlp/wiki/EJS',
+                'Skipping unsupported client "tv_embedded"',
+                'Skipping unsupported client "web_embedded"',
+            ]
+            if any(n in clean_text for n in _noise):
+                return
             log_buffer.append(clean_text)
 
     def flush(self):
@@ -195,6 +208,13 @@ async def check_update():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    import os
+    if "LUMINA_INITIAL_FILE" in os.environ:
+        try:
+            await websocket.send_json({"type": "PLAY_EXTERNAL", "file_path": os.environ["LUMINA_INITIAL_FILE"]})
+            del os.environ["LUMINA_INITIAL_FILE"]
+        except Exception:
+            pass
     try:
         while True:
             data = await websocket.receive_text()
@@ -273,11 +293,15 @@ class DownloadRequest(BaseModel):
     artist: Optional[str] = None
     cover_path: Optional[str] = None
     browser_cookies: Optional[str] = None
+    video_codec: Optional[str] = "auto"
+    compress_video: Optional[bool] = False
     cookies_path: Optional[str] = None
     eq_preset: Optional[str] = None
     playlist_id: Optional[str] = None
     video_id: Optional[str] = None
     organize: bool = False
+    organize_by_playlist: bool = False
+    sponsorblock_enabled: bool = False
     subtitle: Optional[str] = "none"
 
 class InfoRequest(BaseModel):
@@ -688,10 +712,23 @@ def parse_magic_url(url: str):
         pseudo_playlist, is_magic, magic_source, cover_url, new_url = res
         return new_url, pseudo_playlist, is_magic, magic_source, cover_url
     return url, None, False, None, None
+
+def clean_url(url: str) -> str:
+    import urllib.parse
+    try:
+        parsed = urllib.parse.urlparse(url)
+        qs = urllib.parse.parse_qs(parsed.query)
+        for param in ["si", "pp", "utm_source", "utm_medium", "utm_campaign", "gclid", "fbclid"]:
+            qs.pop(param, None)
+        new_query = urllib.parse.urlencode(qs, doseq=True)
+        return urllib.parse.urlunparse(parsed._replace(query=new_query))
+    except:
+        return url
+
 @app.post("/info")
 async def get_info(request: DownloadRequest):
     try:
-        url = request.url
+        url = clean_url(request.url)
         url, pseudo_playlist, is_magic, magic_source, magic_cover = await asyncio.to_thread(parse_magic_url, url)
 
         if pseudo_playlist:
@@ -708,15 +745,13 @@ async def get_info(request: DownloadRequest):
                 'nocheckcertificate': True,
                 'extract_flat': 'in_playlist',
                 'cookiefile': get_cookies_path(),
-                'js_runtimes': {'node': {}},
-                'remote_components': ['ejs:github'],
                 'writesubtitles': True,
                 'writeautomaticsub': True
             }
             
             info = None
             last_err = None
-            for client in ['tv_embedded', 'web_embedded', 'ios_music', 'android_music', 'tv', 'web']:
+            for client in ['android_vr', 'tv_embedded', 'web_embedded', 'ios_music', 'android_music', 'tv', 'web', 'web_creator']:
                 try:
                     if client != 'web': ydl_opts['extractor_args'] = {'youtube': {'player_client': [client]}}
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -877,6 +912,7 @@ async def retry_download(req: RetryRequest):
 @app.post("/download/enqueue")
 @app.post("/download")
 async def enqueue_download(req: DownloadRequest):
+    req.url = clean_url(req.url)
     job_id = str(uuid.uuid4())
     jobs[job_id] = JobState(id=job_id, status="queued", progress=0.0, created_at=time.time(), title=req.title)
     await download_queue.put((job_id, req))
@@ -1214,6 +1250,9 @@ async def convert_file(request: ConvertRequest):
 class OpenExternalRequest(BaseModel):
     file_path: str
 
+class PlayExternalRequest(BaseModel):
+    file_path: str
+
 
 
 class MiniplayerStateRequest(BaseModel):
@@ -1267,6 +1306,43 @@ def open_external(request: OpenExternalRequest):
         return {"status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/play_external")
+async def play_external(request: PlayExternalRequest):
+    import os
+    abs_path = os.path.abspath(request.file_path)
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Broadcast to frontend to play immediately
+    await manager.broadcast_json({"type": "PLAY_EXTERNAL", "file_path": abs_path})
+    
+    # Bring window to front
+    try:
+        import webview
+        windows = webview.windows
+        if windows:
+            windows[0].show()
+            windows[0].restore()
+    except Exception:
+        pass
+    
+    return {"status": "success"}
+
+@app.post("/api/set_default_player")
+async def set_default_player():
+    import os
+    import sys
+    try:
+        if os.name == 'nt':
+            import register_windows
+            register_windows.run_registration()
+            return {"status": "success", "message": "Lumina registrado com sucesso no Windows!"}
+        else:
+            raise HTTPException(status_code=400, detail="Recurso apenas para Windows.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/library")
 def get_library():

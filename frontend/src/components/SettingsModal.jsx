@@ -298,19 +298,19 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
               onClick={() => setActiveTab('appearance')}
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all text-sm whitespace-nowrap ${activeTab === 'appearance' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}`}
             >
-              <Palette size={18} /> Aparência
+              <Palette size={18} /> {t('settingsTabAppearance') || 'Aparência'}
             </button>
             <button
               onClick={() => setActiveTab('downloads')}
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all text-sm whitespace-nowrap ${activeTab === 'downloads' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}`}
             >
-              <Download size={18} /> Downloads
+              <Download size={18} /> {t('settingsTabDownloads') || 'Downloads'}
             </button>
             <button
               onClick={() => setActiveTab('system')}
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all text-sm whitespace-nowrap ${activeTab === 'system' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}`}
             >
-              <Monitor size={18} /> Sistema
+              <Monitor size={18} /> {t('settingsTabSystem') || 'Sistema'}
             </button>
           </div>
         </div>
@@ -322,7 +322,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
           {activeTab === 'appearance' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6 border-b border-outline-variant/20 pb-4">
-                <Palette className="w-5 h-5 text-primary" /> Aparência & Interface
+                <Palette className="w-5 h-5 text-primary" /> {t('settingsHeaderAppearance') || 'Aparência & Interface'}
               </h3>
 
               {/* Language Selector */}
@@ -331,7 +331,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                   <Globe className="w-4 h-4 text-primary" />
                   <h4 className="font-bold text-white text-sm">{t('settingsLanguage')}</h4>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {LANGUAGES.map(lang => (
                     <button
                       key={lang.code}
@@ -351,10 +351,10 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                             {/* Voice Command Toggle */}
               <div className="p-4 bg-surface-container-high rounded-3xl border border-outline-variant/30 space-y-3">
                 <h4 className="font-bold text-white flex items-center gap-2">
-                  <Mic className="w-4 h-4 text-primary" /> Comandos de Voz (BETA)
+                  <Mic className="w-4 h-4 text-primary" /> {t('settingsVoiceCommand') || 'Comandos de Voz (BETA)'}
                 </h4>
                 <p className="text-xs text-warning/80 bg-warning/10 p-2 rounded-xl">
-                  ⚠️ <b>Aviso:</b> Esta função está em fase de testes. Controle músicas offline dizendo "Lumina Pausar", "Lumina Próxima", etc. Ao ativar pela 1ª vez, o app baixará 40MB do motor de IA.
+                  {t('settingsVoiceWarning') || '⚠️ Aviso: Esta função está em fase de testes.'}
                 </p>
                 <button 
                   onClick={toggleVoice} 
@@ -369,22 +369,22 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                 >
                   <Mic size={16} className={voiceStatus === 'running' ? 'animate-pulse' : ''} />
                   {voiceStatus === 'running' 
-                    ? 'Microfone Ligado (Escutando...)' 
+                    ? t('settingsVoiceOn') || 'Microfone Ligado (Escutando...)' 
                     : voiceStatus === 'downloading' 
-                      ? 'Baixando Motor de Voz (40MB)...' 
-                      : 'Ativar Reconhecimento de Voz'}
+                      ? t('settingsVoiceDownloading') || 'Baixando Motor de Voz (40MB)...' 
+                      : t('settingsVoiceActivate') || 'Ativar Reconhecimento de Voz'}
                 </button>
               </div>
 
 {/* Wallpaper Personalization */}
               <div className="p-4 bg-surface-container-high rounded-3xl border border-outline-variant/30 space-y-3">
                 <h4 className="font-bold text-white flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-primary" /> Wallpaper / Tema Monet
+                  <Upload className="w-4 h-4 text-primary" /> {t('settingsWallpaperHeader') || 'Wallpaper / Tema Monet'}
                 </h4>
-                <p className="text-xs text-on-surface-variant">Escolha uma imagem ou vídeo para colorir o app dinamicamente (M3).</p>
+                <p className="text-xs text-on-surface-variant">{t('settingsWallpaperDesc') || 'Escolha uma imagem ou vídeo para colorir o app dinamicamente (M3).'}</p>
                 <div className="flex gap-2">
                   <label className="flex-1 cursor-pointer bg-primary hover:bg-primary/90 text-on-primary text-sm font-bold py-2 rounded-full transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                    <Upload size={16} /> Escolher Arquivo
+                    <Upload size={16} /> {t('settingsWallpaperChoose') || 'Escolher Arquivo'}
                     <input type="file" accept="image/*,video/*" className="hidden" onChange={handleWallpaperUpload} />
                   </label>
                   {wallpaper && (
@@ -392,20 +392,20 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
                       onClick={handleClearWallpaper}
                       className="px-4 py-2 bg-error/20 hover:bg-error/30 text-error rounded-full text-sm font-bold transition-colors"
                     >
-                      Remover
+                      {t('settingsWallpaperRemove') || 'Remover'}
                     </button>
                   )}
                 </div>
 
                 {wallpaper && (
                   <div className="pt-2">
-                    <h4 className="font-bold text-white text-xs mb-2">Intensidade do Desfoque</h4>
+                    <h4 className="font-bold text-white text-xs mb-2">{t('settingsBlurLevel') || 'Intensidade do Desfoque'}</h4>
                     <div className="flex gap-2 bg-surface-container-low p-1 rounded-2xl border border-outline-variant/20">
                       {[
-                        { id: 'none', label: 'Sem Desfoque' },
-                        { id: 'sm', label: 'Suave' },
-                        { id: 'md', label: 'Médio' },
-                        { id: '3xl', label: 'Forte' },
+                        { id: 'none', label: t('settingsBlurNone') || 'Sem Desfoque' },
+                        { id: 'sm', label: t('settingsBlurSm') || 'Suave' },
+                        { id: 'md', label: t('settingsBlurMd') || 'Médio' },
+                        { id: '3xl', label: t('settingsBlur3xl') || 'Forte' },
                       ].map(b => (
                         <button
                           key={b.id}
@@ -432,7 +432,7 @@ export function SettingsModal({ isOpen, onClose, isAuthenticated, organizeByArti
           {activeTab === 'downloads' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6 border-b border-outline-variant/20 pb-4">
-                <Download className="w-5 h-5 text-primary" /> Downloads & Autenticação
+                <Download className="w-5 h-5 text-primary" /> {t('settingsDownloadsHeader') || 'Downloads & Autenticação'}
               </h3>
 
               {/* Auth Status */}

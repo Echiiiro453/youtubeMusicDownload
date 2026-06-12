@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { t } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, FolderOpen, RefreshCw, Music, Users, ChevronLeft, Disc, Mic, Heart, Edit3, Search } from 'lucide-react';
 import axios from 'axios';
@@ -294,7 +295,7 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong, onEditTag
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary-container rounded-full"><Music className="text-on-primary-container" size={22} /></div>
               <div>
-                <h2 className="text-2xl font-bold text-on-surface">Sua Biblioteca</h2>
+                <h2 className="text-2xl font-bold text-on-surface">{t('libraryTitle') || 'Sua Biblioteca'}</h2>
                 <p className="text-sm text-on-surface-variant">{library.length} músicas salvas no seu PC</p>
               </div>
             </div>
@@ -310,9 +311,9 @@ export function LibraryModal({ isOpen, onClose, getApiUrl, onPlaySong, onEditTag
                 />
               </div>
               <button onClick={openFolder} className="flex items-center gap-2 px-4 py-2 bg-surface-variant hover:bg-surface-container-highest text-on-surface-variant rounded-full transition-colors text-sm font-medium">
-                <FolderOpen size={16} /><span className="hidden md:inline">Abrir Pasta</span>
+                <FolderOpen size={16} /><span className="hidden md:inline">{t('openFolder') || 'Abrir Pasta'}</span>
               </button>
-              <button onClick={fetchLibrary} className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-full transition-colors" title="Atualizar">
+              <button onClick={fetchLibrary} className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-full transition-colors" title={t('refresh') || 'Atualizar'}>
                 <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
               </button>
               <button onClick={onClose} className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-full transition-colors">

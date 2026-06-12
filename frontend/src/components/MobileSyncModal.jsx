@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { t } from '../i18n';
 import { QRCodeSVG } from 'qrcode.react';
 import { Smartphone, X, Wifi, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -91,7 +92,7 @@ export default function MobileSyncModal({ isOpen, onClose }) {
           {loading ? (
             <div className="py-12 text-on-surface-variant">
               <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm">Carregando informações da rede...</p>
+              <p className="text-sm">{t('loading') || 'Carregando informações da rede...'}</p>
             </div>
           ) : error ? (
             <div className="py-10 flex flex-col items-center gap-3">

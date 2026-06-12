@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 import { motion } from 'framer-motion';
 import { Download, X, Gift, AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -68,7 +69,7 @@ export function UpdateModal({ isOpen, onClose, updateData }) {
               className="flex-1 py-3 px-4 rounded-xl font-medium text-on-primary bg-primary hover:bg-primary/90 transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" />
-              Baixar Atualização
+              {t('updateDownload') || 'Baixar Atualização'}
             </a>
           </div>
         </div>

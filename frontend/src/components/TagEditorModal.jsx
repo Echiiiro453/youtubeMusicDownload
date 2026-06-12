@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { t } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Search, Music, User, Disc, Calendar, FileText, Image, Loader2, CheckCircle, AlertCircle, FolderOpen } from 'lucide-react';
 import axios from 'axios';
@@ -232,7 +233,7 @@ export function TagEditorModal({ isOpen, onClose, song, getApiUrl, onSaved }) {
                         onClick={handleImportLrc}
                         className="flex items-center gap-1.5 text-xs bg-surface-variant hover:bg-surface-container-highest text-on-surface-variant px-3 py-1.5 rounded-full transition-colors font-medium"
                       >
-                        <FolderOpen size={12} /> Importar .lrc
+                        <FolderOpen size={12} /> {t('importLrc') || 'Importar .lrc'}
                       </button>
                       <button
                         onClick={() => {
@@ -328,7 +329,7 @@ export function TagEditorModal({ isOpen, onClose, song, getApiUrl, onSaved }) {
             className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-full text-sm font-bold transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving ? 'Salvando...' : 'Salvar Tags'}
+            {saving ? (t('saving') || 'Salvando...') : (t('saveTags') || 'Salvar Tags')}
           </button>
         </div>
       </motion.div>

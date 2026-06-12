@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { t } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, CheckCircle, AlertCircle, Trash2, Download, RotateCcw, FolderOpen, Search } from 'lucide-react';
 import axios from 'axios';
