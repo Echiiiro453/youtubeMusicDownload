@@ -1,6 +1,6 @@
 <div align="center">
   <img src="fotos/LL.jpg" alt="Lumina Logo" width="150" height="150" style="border-radius: 20%; margin-bottom: 20px;"/>
-  <h1>Lumina 3.8.0</h1>
+  <h1>Lumina 4.0.0</h1>
   <p>A professional, lightweight, and incredibly fast solution for downloading high-fidelity music and videos from YouTube, Spotify, and Apple Music without ads, cookies, or limits.</p>
 
   [![Website](https://img.shields.io/badge/Website-Visit%20Page-ff0050?style=for-the-badge&logo=github)](https://Echiiiro453.github.io/youtubeMusicDownload/)
